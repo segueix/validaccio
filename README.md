@@ -7,7 +7,9 @@ Repositori de treball per a l'avaluació rigorosa, transparent i auditable de te
 ├── README.md                  # Aquest fitxer
 ├── docs/
 │   ├── marc_validacio.md      # Marc teòric + annex operatiu
-│   └── glossari.md            # Definicions de termes clau
+│   ├── glossari.md            # Definicions de termes clau
+│   ├── regles_derrota.md      # Regles de derrota i admissibilitat
+│   └── proporcio_esforc.md    # Proporció d'esforç recomanada
 ├── sources/
 │   ├── metadades/             # Un fitxer YAML per font (<citekey>.yaml)
 │   ├── notes_lectura/         # Notes de lectura per font (<citekey>.md)
@@ -40,3 +42,9 @@ Repositori de treball per a l'avaluació rigorosa, transparent i auditable de te
 ## Marc metodològic
 
 Documentat a [`docs/marc_validacio.md`](docs/marc_validacio.md).
+
+
+## Ordre d'execució
+
+1. Tancar el mètode (20%): fixar `marc_validacio.md`, `regles_derrota.md` i `glossari.md`. Commit etiquetat `v1.0-metode`.
+2. Aplicar el protocol a la teoria concreta (80%): hipòtesis → evidències → matriu → sensibilitat → redacció.
