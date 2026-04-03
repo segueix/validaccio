@@ -1,7 +1,9 @@
 # Hipòtesis competitives
 
 > Instruccions: formula totes les hipòtesis plausibles, inclosa com a mínim una hipòtesi ombra.
-> Cada hipòtesi ha d'incloure prediccions observables i supòsits explícits.
+> Cada hipòtesi ha d'incloure prediccions observables, supòsits explícits,
+> condicions d'abandonament i nucli no negociable.
+> Consulta `docs/regles_derrota.md` per a les regles d'admissibilitat.
 
 ---
 
@@ -16,6 +18,18 @@
 **Supòsits:**
 - [llista de supòsits necessaris perquè H1 sigui viable]
 
+**Condicions d'abandonament:**
+- Abandonaria H1 si es demostrés que...
+
+**Nucli no negociable:**
+- [la part de l'enunciat que no pot canviar sense que H1 sigui una altra hipòtesi]
+
+**Registre de modificacions:**
+
+| # | Data | Modificació | Motivació | Evidència |
+|---|------|-------------|-----------|-----------|
+| — | — | [cap modificació fins ara] | — | — |
+
 ---
 
 ## H2 — [Nom de la hipòtesi alternativa]
@@ -29,6 +43,18 @@
 **Supòsits:**
 - [llista de supòsits necessaris perquè H2 sigui viable]
 
+**Condicions d'abandonament:**
+- Abandonaria H2 si es demostrés que...
+
+**Nucli no negociable:**
+- [la part de l'enunciat que no pot canviar sense que H2 sigui una altra hipòtesi]
+
+**Registre de modificacions:**
+
+| # | Data | Modificació | Motivació | Evidència |
+|---|------|-------------|-----------|-----------|
+| — | — | [cap modificació fins ara] | — | — |
+
 ---
 
 ## H3 — [Hipòtesi ombra: alternativa plausible mínima]
@@ -41,3 +67,15 @@
 
 **Supòsits:**
 - [llista de supòsits necessaris perquè H3 sigui viable]
+
+**Condicions d'abandonament:**
+- Abandonaria H3 si es demostrés que...
+
+**Nucli no negociable:**
+- [la part de l'enunciat que no pot canviar sense que H3 sigui una altra hipòtesi]
+
+**Registre de modificacions:**
+
+| # | Data | Modificació | Motivació | Evidència |
+|---|------|-------------|-----------|-----------|
+| — | — | [cap modificació fins ara] | — | — |

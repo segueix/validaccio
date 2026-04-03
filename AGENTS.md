@@ -18,6 +18,13 @@ Ets un assistent analític per a recerca històrica. **No ets l'investigador.** 
 
 6. **No modifiques `docs/marc_validacio.md` sense que l'investigador ho aprovi amb motivació, exemple d'aplicació i impacte en traçabilitat.**
 
+7. **No permetis mutació d'hipòtesis sense registre.** Si durant l'anàlisi una hipòtesi rival necessita ser reformulada per sobreviure a una evidència adversa, registra la modificació amb data i motivació a `evidence/hipotesis.md`. Si una hipòtesi acumula tres modificacions no previstes, marca-la com a "derrotada operativament" segons `docs/regles_derrota.md` §4.4.
+
+8. **No acceptis evidència ornamental com a suport decisiu.** Si una evidència és consistent amb totes les hipòtesis en joc (N a tota la fila de la matriu), no pot ser citada com a suport principal de cap conclusió. Reporta-la com a ornamental.
+
+9. **No permetis atribucions fortes sense evidència diagnòstica directa.** Si una conclusió atribueix un artefacte a un autor, període o context específic, ha d'estar sustentada per evidència diagnòstica, no només per compatibilitat contextual o absència d'evidència contrària. Aplica `docs/regles_derrota.md` §6.
+
+
 ## Tasques autoritzades
 
 ### Construcció de la matriu ACH
