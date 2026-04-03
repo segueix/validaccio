@@ -1,0 +1,29 @@
+# Plantilla de metadades de font
+# Copiar i renombrar com a <citekey>.yaml
+
+citekey: ""
+tipus: "llibre|article|arxiu|manuscrit|moneda|imatge"
+autor: ""
+titol: ""
+any: ""
+editorial_o_arxiu: ""
+edicio: ""
+localitzacio: "biblioteca|URL|registre"
+url_acces: ""
+llicencia: "domini_public|CC-BY|CC-BY-NC|copyright|desconeguda"
+checksum_sha256: ""
+
+# Qualitat i fiabilitat
+fiabilitat_global: "alta|moderada|baixa"
+notes_fiabilitat: ""
+
+# Dependències
+fonts_derivades_de: []
+fonts_que_en_deriven: []
+tradicio_comuna: ""
+
+# OCR (només si aplica)
+ocr_inclòs: false
+motor_ocr: ""
+qualitat_ocr: "alta|mitjana|baixa"
+verificacio_ocr: ""
