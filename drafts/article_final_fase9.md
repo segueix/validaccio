@@ -20,7 +20,7 @@ Aquest text no formula una conclusió definitiva perquè la sensibilitat formal 
 
 ## 4. Documents de suport citats
 
-- `exports/matriu_validada.md`
+- `exports/matriu_validada_final.md`
 - `evidence/sensibilitat.md`
 - `exports/auditoria_recerca.md`
 - `exports/fase8_execucio_sensibilitat.md`

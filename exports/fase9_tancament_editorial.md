@@ -2,35 +2,31 @@
 
 Data: 2026-04-04
 
-## Estat de tancament (actualitzat)
+## Estat de tancament (final)
 
 ### Checklist de lliurament
 
-- [x] `evidence/hipotesis.md` tancat amb historial de modificacions operatiu.
-- [x] `evidence/evidencies.tsv` complet i sense EID orfes en la matriu actual.
-- [x] `evidence/ach_matrix.csv` validada i coherent amb EID vigents.
-- [ ] `evidence/sensibilitat.md` amb 3 escenaris formalment completats (**pendent priors**).
-- [x] `evidence/afirmacions.tsv` alineat amb l'esborrany de fase 5 i text final de fase 9.
-- [x] `drafts/esborrany_crani_tibies_fase5.md` revisat a `drafts/revisio_fase6.md`.
-- [x] `exports/matriu_validada.md` publicat com a base de decisió.
-- [x] `exports/auditoria_recerca.md` publicat com a annex estratègic.
-- [x] `drafts/article_final_fase9.md` generat com a peça final traçable.
+- [x] `evidence/hipotesis.md` actualitzat amb regressió de fase i registre de modificacions.
+- [x] `evidence/evidencies.tsv` complet (inclou EID-013 i EID-014).
+- [x] `evidence/ach_matrix.csv` recalculada amb EID-013/EID-014.
+- [x] `evidence/priors.md` configurat segons escenari adversarial de l'investigador.
+- [x] `evidence/sensibilitat.md` amb 3 escenaris completats.
+- [x] `evidence/afirmacions.tsv` disponible per traçabilitat AID→EID.
+- [x] `drafts/article_final_fase9.md` com a peça final traçable.
+- [x] `exports/matriu_validada_final.md` publicat com a nova base de decisió.
+- [x] `exports/auditoria_recerca.md` mantingut com annex estratègic.
 
-## Control de coherència final
+## Decisió de tancament
 
-1. Les frases factuals del text final mantenen traça AID→EID.
-2. No s'ha introduït atribució forta definitiva sense tancar sensibilitat.
-3. Es manté separació entre nucli factual i capa inferencial.
-4. El tancament editorial queda condicionat a completar Fase 8.
+- **Fase 9 tancada oficialment:** Sí.
+- **Diagnòstic final de robustesa:**
+  - H1 (post-1580 estricta): derrotada operativament per anacronisme material.
+  - H2 (convergència): robusta.
+  - H3 (Connexió Desplà-Caldentei 1488): robustesa moderada-alta, reforçada per proves d'or de datació.
 
-## Decisió de fase 9
+## Paquet immutable recomanat
 
-- **Part final completada:** Sí (document final traçable disponible).
-- **Fase 9 tancada definitivament:** No, pendent d'executar sensibilitat formal amb priors declarats.
-
-## Paquet immutable recomanat (quan es tanqui Fase 8)
-
-Crear tag de revisió amb:
+Crear tag de revisió final amb:
 - hash de commit,
 - data de congelació,
-- llista de fitxers finals (`evidence/*`, `drafts/article_final_fase9.md`, `exports/*`).
+- fitxers finals (`evidence/*`, `drafts/article_final_fase9.md`, `exports/*`).

@@ -1,28 +1,19 @@
 # Registre de priors per hipòtesi
 
-> Cada hipòtesi ha de tenir un prior declarat com a rang (no valor puntual),
-> amb una de tres categories justificatives.
+## H1 — Consens ortodox / Florentí post-1580
 
----
+- **Rang:** alta–molt alta
+- **Categoria:** prior informatiu per consens històric establert
+- **Justificació:** configuració fixada per l'investigador per sotmetre H3 a prova adversarial forta.
 
-## H1 — [nom]
+## H2 — Hipòtesi ombra / Convergència
 
-- **Rang:** [molt baixa | baixa | moderada | alta | molt alta]
-- **Categoria:** prior neutre | prior informatiu per consens | prior escèptic
-- **Justificació:** [explicació amb referència a fonts si és prior per consens]
+- **Rang:** moderada
+- **Categoria:** prior neutre
+- **Justificació:** configuració fixada per l'investigador com a hipòtesi alternativa no maximalista.
 
----
+## H3 — Teoria de l'autor / Connexió Desplà-Caldentei 1488
 
-## H2 — [nom]
-
-- **Rang:** [molt baixa | baixa | moderada | alta | molt alta]
-- **Categoria:** prior neutre | prior informatiu per consens | prior escèptic
-- **Justificació:** [explicació]
-
----
-
-## H3 — [hipòtesi ombra]
-
-- **Rang:** [molt baixa | baixa | moderada | alta | molt alta]
-- **Categoria:** prior neutre | prior informatiu per consens | prior escèptic
-- **Justificació:** [explicació]
+- **Rang:** baixa–moderada
+- **Categoria:** prior escèptic
+- **Justificació:** configuració fixada per l'investigador per penalitzar la teoria nova abans del recàlcul de sensibilitat.

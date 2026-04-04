@@ -1,22 +1,64 @@
 # Anàlisi de sensibilitat
 
-## Estat
+## Escenari base (amb EID-013 i EID-014)
 
-S'ha completat una primera iteració ACH amb H1-H2-H3, però encara no s'ha executat el recàlcul formal dels 3 escenaris perquè manca:
-- declaració operativa de priors aplicables al cas a `evidence/priors.md`,
-- confirmació humana de doble codificació de la matriu ACH.
+- Patró observat a la matriu: H1 acumula inconsistències estructurals (pre-1580), H2 manté alta compatibilitat transversal, H3 guanya robustesa per ancoratge material de finals del XV.
+- Lectura base: **H1 cau operativament**; contrast principal entre **H2 (convergència)** i **H3 (fixació barcelonina primerenca)**.
 
-## Buits identificats
+---
 
-1. **Punt crític de H3:** gran dependència de l'atribució interpretativa dels testimonis c.1488-1490 (EID-006/EID-007).
-2. **Dependència documental del claustre:** EID-008 indica pèrdues i reubicacions de lloses; això dificulta sèries contínues i augmenta incertesa cronològica fina.
-3. **Forat de pont de difusió:** entre focus barceloní (H3) i consolidació atlàntica (EID-003/EID-005/EID-012) calen més proves de transmissió explícita.
-4. **Evidència quasi-ornamental:** EID-004 i part d'EID-005 són útils per cronologia de difusió, però discriminen poc l'origen primari.
+## Escenari 1: sense la família de dependència dominant
 
-## Lectura preliminar (no conclusiva)
+**Família eliminada:** `datacio_material`
 
-- H1 manté robustesa moderada per la presència de diversos testimonis pre-1600 no limitats a l'àmbit britànic.
-- H2 és forta per explicar regularització i visibilitat massiva al XVII atlàntic.
-- H3 és plausible però sensible a la interpretació iconogràfica dels casos de Barcelona i a la manca d'una cadena documental de difusió completa.
+**Evidències retirades:** EID-013, EID-014
 
-> Aquesta secció és preliminar i no substitueix l'anàlisi de sensibilitat completa (família dominant, evidència dominant, variació de priors).
+**Resultat:**
+- H1: continua debilitada (es mantenen múltiples I per EID pre-1580).
+- H2: es manté estable.
+- H3: es debilita moderadament (perd el suport físic més diagnòstic), però no cau perquè conserva EID-006/007/009/010.
+- **La conclusió principal es manté parcialment:** H1 no es recupera; el duel H2-H3 queda més obert.
+
+---
+
+## Escenari 2: sense l'evidència dominant
+
+**Evidència eliminada:** EID-013
+
+**Per què és dominant:** prova material directa de datació (terminus post quem 1485) amb impacte anacrònic sobre H1.
+
+**Resultat:**
+- H1: segueix fortament tensionada (EID-014 + bloc pre-1580).
+- H2: estable.
+- H3: baixa lleument de força, però conserva suport material (EID-014) i contextual primerenc.
+- **La conclusió principal es manté:** l'anacronisme d'H1 persisteix.
+
+---
+
+## Escenari 3: priors variant dins de rangs declarats
+
+**Configuració aplicada (investigador):**
+- H1: alta–molt alta (prior informatiu per consens)
+- H2: moderada (prior neutre)
+- H3: baixa–moderada (prior escèptic)
+
+**Resultat:**
+- Tot i priors adversos per H3, les inconsistències materials i cronològiques d'H1 impedeixen recuperar-la.
+- H2 i H3 romanen competitives; H3 millora respecte escenaris previs per l'entrada d'EID-013/EID-014.
+- **Llindar de canvi:** H3 només cauria clarament si EID-013 i EID-014 fossin simultàniament invalidats o reclassificats.
+
+---
+
+## Resum de robustesa
+
+| Escenari | Estat H1 | Estat H2 | Estat H3 | Canvi principal |
+|----------|----------|----------|----------|-----------------|
+| Base | Cau operativament | Forta | Forta-moderada | Anacronisme H1 explícit |
+| Sense `datacio_material` | Debilitada | Forta | Moderada | Duel H2-H3 més obert |
+| Sense EID-013 | Debilitada | Forta | Forta-moderada | EID-014 sosté ancoratge XV |
+| Priors adversos H3 | Debilitada | Forta | Moderada-alta | H3 resisteix penalització |
+
+**Valoració global:**
+- **H1:** no robusta (derrota operativa per anacronisme material-cronològic).
+- **H2:** robusta com a model de convergència.
+- **H3:** robustesa **moderada-alta** després d'incorporar les proves d'or materials.
