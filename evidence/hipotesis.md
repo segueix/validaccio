@@ -57,24 +57,30 @@
 
 ---
 
-## H3 — [La Nova Teoria: pendent de formulació per l'investigador]
+## H3 — Nova teoria (origen barceloní)
 
-**Enunciat:** [pendent]
+**Enunciat:** La configuració moderna del símbol “calavera + cruïlla d’ossos” es fixa primer a la Barcelona de finals del segle XV, en l’entorn catedralici i sota patronatge de l’ardiaca Lluís Desplà (via programa iconogràfic de la *Pietat Desplà*, 1490, i usos funeraris del claustre), i des d’aquí es difon cap a altres espais mediterranis i, més tard, atlàntics.
 
 **Prediccions observables:**
-- [pendent]
+- Si H3 és certa, hauríem d’esperar testimonis molt primerencs (c. 1488–1490) a Barcelona, incloent context pictòric/devocional i ús funcional funerari.
+- Si H3 és certa, hauríem d’esperar una seqüència de difusió des de l’eix catalano-mediterrani cap a Itàlia i, posteriorment, altres àrees europees.
+- Si H3 és certa, NO esperaríem que els primers casos inequívocs del motiu es localitzessin exclusivament en context postreformat britànic.
 
 **Supòsits:**
-- [pendent]
+- El programa visual de la *Pietat Desplà* és interpretable com a formulació unitària (crani + dos ossos quasi creuats) i no com a mera dispersió d’ossos sense intenció emblemàtica.
+- La manca de sèries epigràfiques completes al claustre abans del 1600 pot ser deguda a pèrdues materials i no implica absència del símbol.
+- El paper de Lluís Desplà com a promotor permet connectar innovació iconogràfica, espai catedralici i adopció funerària.
 
 **Condicions d'abandonament:**
-- [pendent]
+- Abandonaria H3 si els suposats testimonis clau de Barcelona (1488–1490) no poguessin sostenir-se com a motiu unitari inequívoc.
+- Abandonaria H3 si aparegués una cadena anterior, ben datada i independent, fora de Barcelona que expliqués millor la gènesi formal.
+- Abandonaria H3 si la seqüència de difusió mediterrània fos inconsistent amb la cronologia documental coneguda.
 
 **Nucli no negociable:**
-- [pendent]
+- El punt de fixació creativa del signe modern és barceloní (finals del XV), i no una emergència primària del món britànic del XVII.
 
 **Registre de modificacions:**
 
 | # | Data | Modificació | Motivació | Evidència |
 |---|------|-------------|-----------|-----------|
-| — | — | [cap modificació fins ara] | — | — |
+| 1 | 2026-04-04 | Formulació inicial d'H3 (origen barceloní) a petició de l'investigador. | Incorporar hipòtesi trencadora per a contrast ACH amb H1/H2. | EID-006; EID-007; EID-011 |

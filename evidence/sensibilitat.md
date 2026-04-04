@@ -2,21 +2,21 @@
 
 ## Estat
 
-No s'ha executat encara el recàlcul formal de sensibilitat perquè manca:
-- formulació d'H3 (hipòtesi nova),
+S'ha completat una primera iteració ACH amb H1-H2-H3, però encara no s'ha executat el recàlcul formal dels 3 escenaris perquè manca:
 - declaració operativa de priors aplicables al cas a `evidence/priors.md`,
 - confirmació humana de doble codificació de la matriu ACH.
 
 ## Buits identificats
 
-1. **Hipòtesi sense evidència diagnòstica:** H3 no està formulada; no es pot avaluar diagnosticitat ni derrota.
-2. **Concentració diagnòstica en pocs EID:** la discriminació principal entre H1 i H2 recau sobretot en EID-001 i EID-002 (pre-1600).
-3. **Evidència potencialment ornamental o quasi-ornamental:**
-   - EID-003, EID-004 i EID-005 funcionen principalment com a proves de fixació/difusió setcentista i no resolen per si soles l'origen primerenc.
+1. **Punt crític de H3:** gran dependència de l'atribució interpretativa dels testimonis c.1488-1490 (EID-006/EID-007).
+2. **Dependència documental del claustre:** EID-008 indica pèrdues i reubicacions de lloses; això dificulta sèries contínues i augmenta incertesa cronològica fina.
+3. **Forat de pont de difusió:** entre focus barceloní (H3) i consolidació atlàntica (EID-003/EID-005/EID-012) calen més proves de transmissió explícita.
+4. **Evidència quasi-ornamental:** EID-004 i part d'EID-005 són útils per cronologia de difusió, però discriminen poc l'origen primari.
 
 ## Lectura preliminar (no conclusiva)
 
-- Si EID-001 i EID-002 es mantenen com a testimonis robustos, H1 guanya força en origen pre-1600.
-- Si EID-001 i EID-002 cauen per datació/lectura, H2 passa a explicar millor la fixació del signe.
+- H1 manté robustesa moderada per la presència de diversos testimonis pre-1600 no limitats a l'àmbit britànic.
+- H2 és forta per explicar regularització i visibilitat massiva al XVII atlàntic.
+- H3 és plausible però sensible a la interpretació iconogràfica dels casos de Barcelona i a la manca d'una cadena documental de difusió completa.
 
-> Aquesta secció és una observació metodològica preliminar; no substitueix l'anàlisi de sensibilitat completa dels 3 escenaris.
+> Aquesta secció és preliminar i no substitueix l'anàlisi de sensibilitat completa (família dominant, evidència dominant, variació de priors).
