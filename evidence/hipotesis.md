@@ -8,9 +8,9 @@
 
 ---
 
-## H1 — [El Consens/Ortodòxia]
+## H1 — El Consens/Ortodòxia: L'Atzar i la Dinàmica Lúdica
 
-**Enunciat:** [descripció clara i falsificable]
+**Enunciat:** El tauler canònic del Joc de l'Oca (63 caselles, oques intercalades cada 9 i hazards estables) s'explica principalment com a enginyeria lúdica i probabilística per regular ritme, tensió i durada de partida, sense requerir un programa esotèric com a condició necessària.
 
 **Prediccions observables:**
 - Si H1 és certa, esperaríem trobar...
@@ -33,9 +33,9 @@
 
 ---
 
-## H2 — [Hipòtesi Ombra: alternativa plausible mínima]
+## H2 — Hipòtesi Ombra: Numerologia Genèrica Renaixentista
 
-**Enunciat:** [descripció clara i falsificable]
+**Enunciat:** La forma canònica del Joc de l'Oca (63, patrons de 9 i iconografia d'obstacles) és compatible amb una codificació numerològica renaixentista genèrica (climacteris 7x9, enneada i metàfora moral del camí vital) sense atribució necessària a un únic autor.
 
 **Prediccions observables:**
 - Si H2 és certa, esperaríem trobar...

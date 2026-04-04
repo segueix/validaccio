@@ -1,2 +1,8 @@
 EID	font	pagines	tipus	data_interval	fiabilitat	familia_dep	interpretacio_minima
 EID-001	[citekey]	p.X-Y	documental|iconografica|arqueologica|numismatica|filologica|contextual	[data o interval]	alta|moderada|baixa	independent|[nom_familia]	[què diu literalment la font]
+EID-019	doc_red_teaming_triple_anomalia_9	s/d	matematica	s/d	moderada	independent	Llei de grans nombres i evitació de cicles infinits: el patró d'oques i excepcions inicials del 9 s'interpreta com a control probabilístic per impedir victòries automàtiques i bucles de resolució trivial.
+EID-020	doc_red_teaming_triple_anomalia_9	s/d	contextual	s/d	moderada	independent	Ritme de captura i disseny per fraccions: alternança d'acceleracions i aturades per modular la durada de la partida i mantenir tensió sostinguda.
+EID-021	doc_red_teaming_triple_anomalia_9	s/d	iconografica	s/d	moderada	independent	Problema geomètric del tancament i els daus: la combinació d'arribada exacta, retrocés per passada i caselles especials dels daus resol el tancament del recorregut final.
+EID-022	doc_red_teaming_triple_anomalia_9	s/d	historiografica	s/d	moderada	independent	Any climatèric i escala de la vida: lectura del 63 (7x9) com a gran climactèric en cultura renaixentista, aplicat al recorregut vital del tauler.
+EID-023	doc_red_teaming_triple_anomalia_9	s/d	iconografica	s/d	moderada	independent	Simbolisme clàssic dels paranys vitals: hostal, pou, laberint, presó i mort es llegeixen com a obstacles morals o existencials del camí.
+EID-024	doc_red_teaming_triple_anomalia_9	s/d	filologica	s/d	moderada	independent	Aritmètica del 9 com a Ennead neoplatònica: el 9 s'interpreta com a nombre de completitud i ordre, coherent amb una lectura simbòlica del patró de caselles.
