@@ -155,6 +155,13 @@ Un cop existeix un esborrany:
 - L'agent recorda a l'investigador que ha de validar cada afirmació de l'esborrany.
 - Ofereix assistència per verificar la traçabilitat amb `tools/validate_trace.py`.
 
+**Fase 7 — Auditoria i Línies de Recerca**
+Un cop generat l'esborrany de l'article (Fase 5/6 complerta), l'agent ha de generar proactivament un document d'auditoria estratègica i desar-lo a `exports/auditoria_recerca.md`. Aquest document no ha d'inventar dades, sinó analitzar matemàticament i lògica la matriu ACH per guiar la recerca futura de l'investigador. Ha de contenir obligatòriament:
+- **Vulnerabilitat Principal:** Quin és el punt més feble de l'H1 segons l'anàlisi de sensibilitat (ex: dependència d'una sola prova, manca de documentació escrita, etc.).
+- **Forats de Diagnosticitat:** Quines hipòtesis rivals (H2, H3) no han quedat prou refutades i per què.
+- **Tipologia de "Prova d'Or" (Evidència desitjada):** L'agent ha de descriure teòricament quin tipus d'evidència (arqueològica, filològica, documental d'un segle concret) hauria de buscar l'investigador als arxius. L'agent explicarà com aquesta prova teòrica modificaria els valors C/I/N de la matriu a favor de l'H1.
+- **Advertència de Camaleonisme:** Recomanacions sobre com l'investigador pot ajustar l'enunciat de l'H1 en el futur sense incórrer en la penalització per excés de mutacions (Regla de derrota §4.4 i §5).
+
 ### Regressió de fase
 
 El flux no és estrictament lineal. Si durant qualsevol fase es detecta una condició que invalida una fase anterior, l'agent ho comunica i proposa retrocedir:
