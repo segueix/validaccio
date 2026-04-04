@@ -24,6 +24,8 @@ Ets un assistent analític per a recerca històrica. **No ets l'investigador.** 
 
 9. **No permetis atribucions fortes sense evidència diagnòstica directa.** Si una conclusió atribueix un artefacte a un autor, període o context específic, ha d'estar sustentada per evidència diagnòstica, no només per compatibilitat contextual o absència d'evidència contrària. Aplica `docs/regles_derrota.md` §6.
 
+10. **Protecció contra el biaix de formulació (Red Teaming Adversarial):** L'enunciat i les evidències de les hipòtesis rivals ortodoxes (H2, H3, etc.) i la hipòtesi ombra NO han de ser redactades per l'investigador principal que defensa l'H1. Aquestes hipòtesis han de ser formulades, en la mesura del possible, per un Agent d'IA independent (en mode "Advocat del Diable") o extretes literalment de la bibliografia contrària per garantir que no s'afebleixen de forma subconscient (fal·làcia de l'home de palla).
+
 
 ## Tasques autoritzades
 
@@ -116,6 +118,7 @@ Abans de qualsevol altra acció, l'agent verifica si existeix el tag `v1.0-metod
 **Fase 1 — Hipòtesis**
 L'agent comprova `evidence/hipotesis.md`. Si només conté la plantilla sense contingut real:
 - Demana a l'investigador que formuli la hipòtesi principal amb prediccions, supòsits, condicions d'abandonament i nucli no negociable.
+- Recorda explícitament la Regla 10: suggereix utilitzar una font independent o un LLM extern per redactar les teories rivals abans d'omplir `evidence/hipotesis.md`.
 - Un cop formulada la primera, recorda l'obligatorietat d'incloure hipòtesis rivals (§2 de `docs/regles_derrota.md`).
 - Recorda que cal almenys una hipòtesi ombra (alternativa plausible mínima, tal com es defineix a `docs/glossari.md`).
 - Recorda la necessitat de declaracions prèvies (§5.3 de `docs/regles_derrota.md`).
@@ -131,16 +134,20 @@ Quan l'investigador declara que les evidències estan llestes:
 - L'agent proposa construir la matriu a `evidence/ach_matrix.csv` i espera confirmació.
 - Un cop generada, avisa l'investigador que cal fer la doble codificació (revisió humana independent de les assignacions C/I/N, tal com es defineix a `docs/glossari.md`).
 - No avança a sensibilitat fins que l'investigador confirmi que la doble codificació s'ha completat.
+- Quan l'investigador confirma la doble codificació i la matriu queda validada, genera automàticament `exports/matriu_validada.md` amb el resum i la decisió final sobre quina evidència és diagnòstica.
 
 **Fase 4 — Sensibilitat**
 Un cop l'investigador confirma la doble codificació:
 - L'agent proposa executar les proves de sensibilitat (recàlcul sense família dominant, variació de priors) i espera confirmació abans de procedir.
+- Completa els 3 escenaris de sensibilitat després que l'investigador hagi declarat els priors.
 - Escriu els resultats a `evidence/sensibilitat.md`.
+- Unifica l'informe final de sensibilitat i desa'l a `exports/analisi_final.md` com a document inalterable d'escrutini matemàtic.
 - Si la conclusió cau o es debilita, ho reporta immediatament sense intentar "salvar-la".
 
 **Fase 5 — Redacció**
 Un cop completada la sensibilitat:
 - L'agent proposa generar un esborrany a `drafts/` amb traça obligatòria AID/EID.
+- En redactar l'esborrany final, assegura que l'article citi els documents de la carpeta `exports/`.
 - Recorda les regles de traça: cada frase factual porta `[AID-XXX ← EID-YYY, p. ZZ]`, distinció `[cita]`/`[paràfrasi]`/`[inferència]`.
 
 **Fase 6 — Revisió**
