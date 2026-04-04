@@ -2,35 +2,35 @@
 
 Data: 2026-04-04
 
-## Objectiu
+## Estat de tancament (actualitzat)
 
-Definir el paquet mínim per tancar una versió auditables del cas, preparada per revisió externa.
+### Checklist de lliurament
 
-## Paquet de lliurament (checklist)
-
-- [ ] `evidence/hipotesis.md` tancat amb historial de modificacions al dia.
-- [ ] `evidence/evidencies.tsv` complet i sense EID orfes.
-- [ ] `evidence/ach_matrix.csv` validada i coherent amb EID vigents.
-- [ ] `evidence/sensibilitat.md` amb 3 escenaris completats.
-- [ ] `evidence/afirmacions.tsv` alineat amb l'esborrany final.
-- [ ] `drafts/esborrany_crani_tibies_fase5.md` revisat amb acceptació/rebuig per AID.
-- [ ] `exports/matriu_validada.md` publicat com a base de decisió.
-- [ ] `exports/auditoria_recerca.md` adjuntat com a annex estratègic.
+- [x] `evidence/hipotesis.md` tancat amb historial de modificacions operatiu.
+- [x] `evidence/evidencies.tsv` complet i sense EID orfes en la matriu actual.
+- [x] `evidence/ach_matrix.csv` validada i coherent amb EID vigents.
+- [ ] `evidence/sensibilitat.md` amb 3 escenaris formalment completats (**pendent priors**).
+- [x] `evidence/afirmacions.tsv` alineat amb l'esborrany de fase 5 i text final de fase 9.
+- [x] `drafts/esborrany_crani_tibies_fase5.md` revisat a `drafts/revisio_fase6.md`.
+- [x] `exports/matriu_validada.md` publicat com a base de decisió.
+- [x] `exports/auditoria_recerca.md` publicat com a annex estratègic.
+- [x] `drafts/article_final_fase9.md` generat com a peça final traçable.
 
 ## Control de coherència final
 
-1. Cap afirmació factual al text final sense traça AID→EID.
-2. Cap conclusió forta d'atribució sense evidència diagnòstica directa.
-3. Separació explícita entre descripció factual i capa inferencial.
-4. Coherència entre conclusions i resultats de sensibilitat.
+1. Les frases factuals del text final mantenen traça AID→EID.
+2. No s'ha introduït atribució forta definitiva sense tancar sensibilitat.
+3. Es manté separació entre nucli factual i capa inferencial.
+4. El tancament editorial queda condicionat a completar Fase 8.
 
-## Recomanació de versió
+## Decisió de fase 9
 
-Quan el checklist estigui complet, crear un paquet immutable de revisió (tag de projecte) i conservar:
+- **Part final completada:** Sí (document final traçable disponible).
+- **Fase 9 tancada definitivament:** No, pendent d'executar sensibilitat formal amb priors declarats.
+
+## Paquet immutable recomanat (quan es tanqui Fase 8)
+
+Crear tag de revisió amb:
 - hash de commit,
 - data de congelació,
-- fitxers d'entrada/sortida utilitzats.
-
-## Estat actual
-
-Fase 9 queda **preparada però no tancada**, pendent de completar Fase 8 (sensibilitat formal amb priors declarats).
+- llista de fitxers finals (`evidence/*`, `drafts/article_final_fase9.md`, `exports/*`).
