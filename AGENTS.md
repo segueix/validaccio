@@ -117,11 +117,11 @@ Abans de qualsevol altra acció, l'agent verifica si existeix el tag `v1.0-metod
 
 **Fase 1 — Hipòtesis**
 L'agent comprova `evidence/hipotesis.md`. Si només conté la plantilla sense contingut real:
-- Demana a l'investigador que formuli la hipòtesi principal amb prediccions, supòsits, condicions d'abandonament i nucli no negociable.
-- Recorda explícitament la Regla 10: suggereix utilitzar una font independent o un LLM extern per redactar les teories rivals abans d'omplir `evidence/hipotesis.md`.
-- Un cop formulada la primera, recorda l'obligatorietat d'incloure hipòtesis rivals (§2 de `docs/regles_derrota.md`).
-- Recorda que cal almenys una hipòtesi ombra (alternativa plausible mínima, tal com es defineix a `docs/glossari.md`).
-- Recorda la necessitat de declaracions prèvies (§5.3 de `docs/regles_derrota.md`).
+- Exigeix l'ordre nomenclàtric estàndard i immutable en hipòtesis i matrius: **H1 = Consens/Ortodòxia**, **H2 = Hipòtesi Ombra**, **H3 = Nova Teoria**.
+- Demana que **H1 (Consens/Ortodòxia)** es formuli amb prediccions, supòsits, condicions d'abandonament i nucli no negociable.
+- Recorda explícitament la Regla 10: H1 (consens) i les seves evidències han de ser redactades mitjançant Red Teaming (font independent, agent/LLM extern o bibliografia contrària), no per l'autor que defensa la teoria nova.
+- Demana que **H2** sigui l'alternativa plausible mínima (hipòtesi ombra) i que **H3** contingui la teoria trencadora que es vol validar.
+- Recorda l'obligatorietat d'incloure hipòtesis rivals (§2 de `docs/regles_derrota.md`) i declaracions prèvies (§5.3 de `docs/regles_derrota.md`).
 
 **Fase 2 — Evidències**
 Un cop `evidence/hipotesis.md` conté hipòtesis reals formulades:
