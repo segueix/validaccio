@@ -1,2 +1,11 @@
 AID	enunciat	hipotesis	estat	evidencies	tipus_traça
-AID-001	[proposició factual]	H1,H2	proposada|verificada|discutida	EID-001,EID-003	cita|parafrasi|inferencia
+AID-001	Hi ha testimonis funeraris pre-1600 del motiu de calavera amb ossos creuats a l'àmbit centreuropeu (1514, 1562).	H1	verificada	EID-001,EID-002	parafrasi
+AID-002	La cronologia de headstones escocesos documenta una concentració de casos a partir del segle XVII.	H2	verificada	EID-003,EID-012	parafrasi
+AID-003	En l'àmbit atlàntic purità, el death's head amb crossed bones es regularitza sobretot als segles XVII-XVIII.	H2	verificada	EID-005	parafrasi
+AID-004	El testimoni del tauler del Joc de l'Oca de Mallorca situa un ús visual del símbol en data c. 1488.	H3	discutida	EID-006	parafrasi
+AID-005	La Pietat Desplà (1490) mostra crani i dues tíbies quasi creuades dins un programa visual funerari/devocional barceloní.	H3	discutida	EID-007	parafrasi
+AID-006	Al claustre i entorn catedralici barceloní hi ha lloses del XVI (1547, 1570) compatibles amb adopció funerària local del motiu.	H3	verificada	EID-009,EID-010	parafrasi
+AID-007	Les dades de Pisa (1570, 1589) són compatibles amb una difusió mediterrània del motiu durant el XVI.	H1,H3	discutida	EID-011	inferencia
+AID-008	El bloc EID-004/EID-005 és útil per explicar difusió tardana però discrimina menys l'origen primari.	H1,H2,H3	discutida	EID-004,EID-005	inferencia
+AID-009	L'evidència diagnòstica principal de la matriu es concentra en els casos pre-1600 i en el contrast escocès de 1630+.	H1,H2,H3	verificada	EID-001,EID-002,EID-003,EID-006,EID-007,EID-009,EID-010,EID-012	inferencia
+AID-010	Amb l'estat actual, H1 i H2 mantenen suport fort en dimensions diferents, i H3 resta plausible però sensible a la interpretació de 1488-1490.	H1,H2,H3	discutida	EID-006,EID-007,EID-003,EID-012	inferencia
