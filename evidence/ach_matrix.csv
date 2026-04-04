@@ -1,7 +1,11 @@
 EID,H1,H2,H3,diagnostic,justificacio
-EID-019,C,N,I,si,Descriu el patró del 9 com a control probabilístic per evitar col·lapses de partida; encaixa amb H1 i contradiu l'afirmació d'H3 que no és base lúdica-probabilística.
-EID-020,C,N,I,si,Defineix la disposició com a modulació de ritme de joc per acceleracions i aturades; coherent amb H1 i inconsistent amb l'exclusió de motivació lúdica d'H3.
-EID-021,C,N,I,si,Presenta la regla de tancament (arribada exacta/retrocés/daus) com a solució geomètrica de disseny; reforça H1 i entra en tensió amb la tesi d'origen lul·lià necessari d'H3.
-EID-022,N,C,N,no,Interpreta el 63 com a any climactèric 7x9 en clau renaixentista general; dona suport a H2 però no discrimina directament contra H1 o H3.
-EID-023,N,C,N,no,El simbolisme dels paranys vitals és lectura moral/contextual compatible amb H2; no exclou de manera directa ni H1 ni H3.
-EID-024,N,C,I,si,Defineix el 9 com a enneada neoplatònica; és coherent amb H2 i inconsistent amb H3 perquè H3 rebutja una base neoplatònica/pitagòrica com a explicació central.
+EID-019,C,N,I,si,La prova formula el patró del 9 com a optimització probabilística del joc; encaixa amb H1 i contradiu l'afirmació d'H3 que rebutja una base primàriament atzarosa.
+EID-020,C,N,I,si,La modulació del ritme per fraccions i captures és lectura funcional lúdica; reforça H1 i entra en conflicte amb la tesi estructural lul·liana exclusiva d'H3.
+EID-021,C,N,I,si,El tancament geomètric i la regla dels daus s'expliquen com a resolució de disseny de partida; coherent amb H1 i inconsistent amb l'atribució lul·liana necessària d'H3.
+EID-022,N,C,N,no,El 63 climactèric (7x9) és coherent amb numerologia renaixentista genèrica; no discrimina de forma directa contra H1 ni contra H3.
+EID-023,N,C,N,no,El simbolisme dels paranys vitals dona suport contextual a H2 però no exclou mecànica lúdica (H1) ni lectura lul·liana (H3).
+EID-024,N,C,I,si,La lectura neoplatònica de l'enneada és compatible amb H2 i incompatible amb H3, que explicita que el 9 no és misticisme genèric.
+EID-025,I,I,C,si,La doble xarxa material del 9 com a Figura A opera com a correspondència estructural específica; contradiu H1 (atzar funcional) i H2 (numerologia genèrica) i suporta H3.
+EID-026,I,I,C,si,La regla 26/53 descrita com a codi combinatori d'admissió és un mecanisme formal específic; és inconsistent amb H1 i H2 i consistent amb H3.
+EID-027,I,I,C,si,La tecnificació lul·liana del 9 com a límit operatiu nega tant l'explicació lúdico-probabilística (H1) com la numerologia vaga renaixentista (H2), i reforça H3.
+EID-028,I,I,C,si,El 63 com a tancament autoreferent de base 9 és formulat com a màquina combinatòria; entra en conflicte amb H1 i H2 i és coherent amb H3.
