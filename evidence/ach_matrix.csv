@@ -1,2 +1,7 @@
 EID,H1,H2,H3,diagnostic,justificacio
-EID-001,C|I|N,C|I|N,C|I|N,si|no,[breu justificació de cada assignació]
+EID-019,C,N,I,si,Descriu el patró del 9 com a control probabilístic per evitar col·lapses de partida; encaixa amb H1 i contradiu l'afirmació d'H3 que no és base lúdica-probabilística.
+EID-020,C,N,I,si,Defineix la disposició com a modulació de ritme de joc per acceleracions i aturades; coherent amb H1 i inconsistent amb l'exclusió de motivació lúdica d'H3.
+EID-021,C,N,I,si,Presenta la regla de tancament (arribada exacta/retrocés/daus) com a solució geomètrica de disseny; reforça H1 i entra en tensió amb la tesi d'origen lul·lià necessari d'H3.
+EID-022,N,C,N,no,Interpreta el 63 com a any climactèric 7x9 en clau renaixentista general; dona suport a H2 però no discrimina directament contra H1 o H3.
+EID-023,N,C,N,no,El simbolisme dels paranys vitals és lectura moral/contextual compatible amb H2; no exclou de manera directa ni H1 ni H3.
+EID-024,N,C,I,si,Defineix el 9 com a enneada neoplatònica; és coherent amb H2 i inconsistent amb H3 perquè H3 rebutja una base neoplatònica/pitagòrica com a explicació central.
