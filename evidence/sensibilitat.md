@@ -1,52 +1,22 @@
 # Anàlisi de sensibilitat
 
-> Recalcular conclusions sota tres escenaris per verificar robustesa.
+## Estat
 
----
+No s'ha executat encara el recàlcul formal de sensibilitat perquè manca:
+- formulació d'H3 (hipòtesi nova),
+- declaració operativa de priors aplicables al cas a `evidence/priors.md`,
+- confirmació humana de doble codificació de la matriu ACH.
 
-## Escenari 1: sense la família de dependència dominant
+## Buits identificats
 
-**Família eliminada:** [nom]
+1. **Hipòtesi sense evidència diagnòstica:** H3 no està formulada; no es pot avaluar diagnosticitat ni derrota.
+2. **Concentració diagnòstica en pocs EID:** la discriminació principal entre H1 i H2 recau sobretot en EID-001 i EID-002 (pre-1600).
+3. **Evidència potencialment ornamental o quasi-ornamental:**
+   - EID-003, EID-004 i EID-005 funcionen principalment com a proves de fixació/difusió setcentista i no resolen per si soles l'origen primerenc.
 
-**Evidències retirades:** EID-XXX, EID-YYY
+## Lectura preliminar (no conclusiva)
 
-**Resultat:**
-- H1 passa de [nivell] a [nivell]
-- H2 passa de [nivell] a [nivell]
-- **La conclusió principal [es manté | es debilita | cau]**
+- Si EID-001 i EID-002 es mantenen com a testimonis robustos, H1 guanya força en origen pre-1600.
+- Si EID-001 i EID-002 cauen per datació/lectura, H2 passa a explicar millor la fixació del signe.
 
----
-
-## Escenari 2: sense l'evidència dominant
-
-**Evidència eliminada:** EID-ZZZ
-
-**Per què és dominant:** [és l'única diagnòstica per a..., o té el pes més alt]
-
-**Resultat:**
-- H1 passa de [nivell] a [nivell]
-- H2 passa de [nivell] a [nivell]
-- **La conclusió principal [es manté | es debilita | cau]**
-
----
-
-## Escenari 3: priors variant dins de rangs
-
-**Variació aplicada:** [ex: H1 prior de "alta" a "baixa"; H2 prior de "baixa" a "moderada"]
-
-**Resultat:**
-- Amb priors escèptics per a H1, la conclusió [es manté | es debilita | cau]
-- **Llindar de canvi:** la conclusió canvia si el prior de H1 baixa per sota de [nivell]
-
----
-
-## Resum de robustesa
-
-| Escenari | Conclusió principal | Canvia? |
-|----------|--------------------:|:-------:|
-| Base | H1 [nivell] | — |
-| Sense família dominant | H1 [nivell] | [sí/no] |
-| Sense evidència dominant | H1 [nivell] | [sí/no] |
-| Priors escèptics | H1 [nivell] | [sí/no] |
-
-**Valoració global:** [la conclusió és robusta / moderadament robusta / fràgil]
+> Aquesta secció és una observació metodològica preliminar; no substitueix l'anàlisi de sensibilitat completa dels 3 escenaris.

@@ -1,2 +1,6 @@
 EID,H1,H2,H3,diagnostic,justificacio
-EID-001,C|I|N,C|I|N,C|I|N,si|no,[breu justificació de cada assignació]
+EID-001,C,I,N,si,"Pre-1600 i tipologia explícita de calavera amb ossos creuats: reforça la cristal·lització prèvia (H1) i contradiu una fixació només post-1620 (H2). H3 pendent de formulació."
+EID-002,C,I,N,si,"Segon testimoni pre-1600 en context funerari religiós: dona continuïtat mínima a H1 i tensiona H2. H3 pendent de formulació."
+EID-003,N,C,N,no,"Descriu infraestructura postreformada (headstones) que explica expansió/fixació setcentista; compatible amb H1 com a fase de difusió i coherent amb H2. Sense H3 formulada."
+EID-004,N,C,N,no,"Objecte de c. 1671 confirma circulació autònoma al XVII; no discrimina origen inicial i per tant és neutral per H1 però consistent amb H2."
+EID-005,N,C,N,no,"Regularització atlàntica XVII-XVIII del death’s head amb crossed bones: evidencia difusió forta tardana, compatible amb H1 i H2, però afavoreix lectura de fixació tardana (H2)."
