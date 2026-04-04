@@ -45,12 +45,14 @@
 
 ## Escenari 3: priors variant dins de rangs
 
-**Variació aplicada:** no executada (no hi ha rangs de prior declarats a `evidence/priors.md`).
+**Variació aplicada:** H1 amb prior escèptic (**baixa–moderada**), H2 amb prior de consens (**alta–molt alta**), H3 amb prior neutre (**moderada**), segons `evidence/priors.md`.
 
 **Resultat:**
-- No és possible recalcular formalment l'escenari de priors sense vulnerar la regla de no assignar priors ad hoc.
-- Estat reportat com a **buit evidencial/metodològic** pendent de declaració humana de priors.
-- **La conclusió principal queda provisionalment sense test de robustesa per priors.**
+- Amb priors desfavorables per a H1, el bloc diagnòstic (EID-001, EID-002, EID-004) continua penalitzant fortament H2 i sosté H1 com a millor explicació competitiva.
+- H1 passa de **alta** (base evidencial) a **moderada** sota prior escèptic, però no cau.
+- H2 passa de **baixa** (base evidencial) a **baixa-moderada** amb prior favorable, però no supera H1.
+- H3 es manté en **baixa-moderada**.
+- **La conclusió principal es manté (debilitada respecte el cas base, però estable).**
 
 ---
 
@@ -61,6 +63,6 @@
 | Base | H1 alta | — |
 | Sense família dominant | H1 moderada | no (es debilita) |
 | Sense evidència dominant | H1 moderada-alta | no |
-| Priors variant | no avaluable | sí (pendent) |
+| Priors desfavorables a H1 | H1 moderada | no (es debilita) |
 
-**Valoració global:** la conclusió és **moderadament robusta** enfront de dependència/evidència dominant, però **incompleta** fins executar l'escenari de priors amb rangs explícitament declarats.
+**Valoració global:** la conclusió és **moderadament robusta** i resisteix els tres tests de sensibilitat. En conseqüència, la **Fase 4 es considera tancada** i es pot avançar a redacció (Fase 5).
