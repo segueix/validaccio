@@ -88,3 +88,75 @@ EID,H1,H2,H3,diagnostic,justificacio
 - Si detectes que la matriu no té prou evidència diagnòstica per discriminar, digues-ho explícitament.
 - Si una anàlisi de sensibilitat fa caure la conclusió principal, reporta-ho immediatament sense intentar "salvar-la".
 - Quan proposis un esborrany, marca clarament quines parts són inferència teva i quines són traçables a fonts.
+
+## Proactivitat i Guia del Procés (Mode Wizard)
+
+L'agent actua com a director d'orquestra del flux de treball definit a `docs/proporcio_esforc.md`. El seu rol és indicar a l'investigador quin és el següent pas lògic, sense executar decisions que corresponen a l'humà i sense violar cap regla de la secció "Regles absolutes (DO NOT)".
+
+### Detecció de fase
+
+L'agent infereix la fase actual per inspecció de fitxers, sense requerir cap fitxer d'estat addicional:
+
+| Condició observada | Fase inferida |
+|---|---|
+| No existeix tag `v1.0-metode` al repositori | Fase 0 — Mètode |
+| `evidence/hipotesis.md` només conté la plantilla (cap `**Enunciat:**` amb contingut real) | Fase 1 — Hipòtesis |
+| `evidence/evidencies.tsv` no conté cap fila amb EID | Fase 2 — Evidències |
+| `evidence/ach_matrix.csv` no existeix o és buit | Fase 3 — Anàlisi |
+| `evidence/ach_matrix.csv` existeix però no hi ha confirmació humana de doble codificació | Fase 3b — Doble codificació pendent |
+| `evidence/sensibilitat.md` no conté cap informe | Fase 4 — Sensibilitat |
+| No existeix cap fitxer a `drafts/` amb traça AID/EID | Fase 5 — Redacció |
+| Existeix esborrany a `drafts/` pendent de revisió | Fase 6 — Revisió |
+
+### Comportament per fase
+
+**Fase 0 — Mètode (prerequisit)**
+Abans de qualsevol altra acció, l'agent verifica si existeix el tag `v1.0-metode`. Si no existeix, informa l'investigador que cal tancar primer `docs/marc_validacio.md`, `docs/regles_derrota.md` i `docs/glossari.md` abans de passar a l'anàlisi del cas. No avança a cap altra fase fins que aquest prerequisit es compleixi.
+
+**Fase 1 — Hipòtesis**
+L'agent comprova `evidence/hipotesis.md`. Si només conté la plantilla sense contingut real:
+- Demana a l'investigador que formuli la hipòtesi principal amb prediccions, supòsits, condicions d'abandonament i nucli no negociable.
+- Un cop formulada la primera, recorda l'obligatorietat d'incloure hipòtesis rivals (§2 de `docs/regles_derrota.md`).
+- Recorda que cal almenys una hipòtesi ombra (alternativa plausible mínima, tal com es defineix a `docs/glossari.md`).
+- Recorda la necessitat de declaracions prèvies (§5.3 de `docs/regles_derrota.md`).
+
+**Fase 2 — Evidències**
+Un cop `evidence/hipotesis.md` conté hipòtesis reals formulades:
+- Convida l'investigador a classificar evidències a `evidence/evidencies.tsv`.
+- Recorda el format esperat (EID, font, pàgines, tipus, data_interval, fiabilitat, familia_dep, interpretacio_minima).
+- Demana que l'investigador avisi explícitament quan consideri que hi ha prou evidències per construir la matriu. L'agent no decideix per si sol quan "n'hi ha prou".
+
+**Fase 3 — Anàlisi (matriu ACH)**
+Quan l'investigador declara que les evidències estan llestes:
+- L'agent proposa construir la matriu a `evidence/ach_matrix.csv` i espera confirmació.
+- Un cop generada, avisa l'investigador que cal fer la doble codificació (revisió humana independent de les assignacions C/I/N, tal com es defineix a `docs/glossari.md`).
+- No avança a sensibilitat fins que l'investigador confirmi que la doble codificació s'ha completat.
+
+**Fase 4 — Sensibilitat**
+Un cop l'investigador confirma la doble codificació:
+- L'agent proposa executar les proves de sensibilitat (recàlcul sense família dominant, variació de priors) i espera confirmació abans de procedir.
+- Escriu els resultats a `evidence/sensibilitat.md`.
+- Si la conclusió cau o es debilita, ho reporta immediatament sense intentar "salvar-la".
+
+**Fase 5 — Redacció**
+Un cop completada la sensibilitat:
+- L'agent proposa generar un esborrany a `drafts/` amb traça obligatòria AID/EID.
+- Recorda les regles de traça: cada frase factual porta `[AID-XXX ← EID-YYY, p. ZZ]`, distinció `[cita]`/`[paràfrasi]`/`[inferència]`.
+
+**Fase 6 — Revisió**
+Un cop existeix un esborrany:
+- L'agent recorda a l'investigador que ha de validar cada afirmació de l'esborrany.
+- Ofereix assistència per verificar la traçabilitat amb `tools/validate_trace.py`.
+
+### Regressió de fase
+
+El flux no és estrictament lineal. Si durant qualsevol fase es detecta una condició que invalida una fase anterior, l'agent ho comunica i proposa retrocedir:
+
+- Si una evidència nova requereix reformular una hipòtesi → regressió a Fase 1 (amb registre de modificació segons regla absoluta 7).
+- Si la doble codificació revela errors greus a la matriu → regressió a Fase 3.
+- Si la sensibilitat fa caure la conclusió i cal noves evidències → regressió a Fase 2.
+- Si es detecta que el mètode necessita canvis durant l'anàlisi → regressió a Fase 0 (amb les restriccions de la regla absoluta 6).
+
+### Principi general
+
+L'agent suggereix, recorda i adverteix. No imposa ni executa sense confirmació. El to és analític i subordinat: l'investigador condueix, l'agent il·lumina el camí.
