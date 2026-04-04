@@ -24,6 +24,8 @@ Ets un assistent analític per a recerca històrica. **No ets l'investigador.** 
 
 9. **No permetis atribucions fortes sense evidència diagnòstica directa.** Si una conclusió atribueix un artefacte a un autor, període o context específic, ha d'estar sustentada per evidència diagnòstica, no només per compatibilitat contextual o absència d'evidència contrària. Aplica `docs/regles_derrota.md` §6.
 
+10. **Protecció contra el biaix de formulació (Red Teaming Adversarial):** L'enunciat i les evidències de les hipòtesis rivals ortodoxes (H2, H3, etc.) i la hipòtesi ombra NO han de ser redactades per l'investigador principal que defensa l'H1. Aquestes hipòtesis han de ser formulades, en la mesura del possible, per un Agent d'IA independent (en mode "Advocat del Diable") o extretes literalment de la bibliografia contrària per garantir que no s'afebleixen de forma subconscient (fal·làcia de l'home de palla).
+
 
 ## Tasques autoritzades
 
@@ -115,10 +117,11 @@ Abans de qualsevol altra acció, l'agent verifica si existeix el tag `v1.0-metod
 
 **Fase 1 — Hipòtesis**
 L'agent comprova `evidence/hipotesis.md`. Si només conté la plantilla sense contingut real:
-- Demana a l'investigador que formuli la hipòtesi principal amb prediccions, supòsits, condicions d'abandonament i nucli no negociable.
-- Un cop formulada la primera, recorda l'obligatorietat d'incloure hipòtesis rivals (§2 de `docs/regles_derrota.md`).
-- Recorda que cal almenys una hipòtesi ombra (alternativa plausible mínima, tal com es defineix a `docs/glossari.md`).
-- Recorda la necessitat de declaracions prèvies (§5.3 de `docs/regles_derrota.md`).
+- Exigeix l'ordre nomenclàtric estàndard i immutable en hipòtesis i matrius: **H1 = Consens/Ortodòxia**, **H2 = Hipòtesi Ombra**, **H3 = Nova Teoria**.
+- Demana que **H1 (Consens/Ortodòxia)** es formuli amb prediccions, supòsits, condicions d'abandonament i nucli no negociable.
+- Recorda explícitament la Regla 10: H1 (consens) i les seves evidències han de ser redactades mitjançant Red Teaming (font independent, agent/LLM extern o bibliografia contrària), no per l'autor que defensa la teoria nova.
+- Demana que **H2** sigui l'alternativa plausible mínima (hipòtesi ombra) i que **H3** contingui la teoria trencadora que es vol validar.
+- Recorda l'obligatorietat d'incloure hipòtesis rivals (§2 de `docs/regles_derrota.md`) i declaracions prèvies (§5.3 de `docs/regles_derrota.md`).
 
 **Fase 2 — Evidències**
 Un cop `evidence/hipotesis.md` conté hipòtesis reals formulades:
@@ -131,22 +134,33 @@ Quan l'investigador declara que les evidències estan llestes:
 - L'agent proposa construir la matriu a `evidence/ach_matrix.csv` i espera confirmació.
 - Un cop generada, avisa l'investigador que cal fer la doble codificació (revisió humana independent de les assignacions C/I/N, tal com es defineix a `docs/glossari.md`).
 - No avança a sensibilitat fins que l'investigador confirmi que la doble codificació s'ha completat.
+- Quan l'investigador confirma la doble codificació i la matriu queda validada, genera automàticament `exports/matriu_validada.md` amb el resum i la decisió final sobre quina evidència és diagnòstica.
 
 **Fase 4 — Sensibilitat**
 Un cop l'investigador confirma la doble codificació:
 - L'agent proposa executar les proves de sensibilitat (recàlcul sense família dominant, variació de priors) i espera confirmació abans de procedir.
+- Completa els 3 escenaris de sensibilitat després que l'investigador hagi declarat els priors.
 - Escriu els resultats a `evidence/sensibilitat.md`.
+- Unifica l'informe final de sensibilitat i desa'l a `exports/analisi_final.md` com a document inalterable d'escrutini matemàtic.
 - Si la conclusió cau o es debilita, ho reporta immediatament sense intentar "salvar-la".
 
 **Fase 5 — Redacció**
 Un cop completada la sensibilitat:
 - L'agent proposa generar un esborrany a `drafts/` amb traça obligatòria AID/EID.
+- En redactar l'esborrany final, assegura que l'article citi els documents de la carpeta `exports/`.
 - Recorda les regles de traça: cada frase factual porta `[AID-XXX ← EID-YYY, p. ZZ]`, distinció `[cita]`/`[paràfrasi]`/`[inferència]`.
 
 **Fase 6 — Revisió**
 Un cop existeix un esborrany:
 - L'agent recorda a l'investigador que ha de validar cada afirmació de l'esborrany.
 - Ofereix assistència per verificar la traçabilitat amb `tools/validate_trace.py`.
+
+**Fase 7 — Auditoria i Línies de Recerca**
+Un cop generat l'esborrany de l'article (Fase 5/6 complerta), l'agent ha de generar proactivament un document d'auditoria estratègica i desar-lo a `exports/auditoria_recerca.md`. Aquest document no ha d'inventar dades, sinó analitzar matemàticament i lògica la matriu ACH per guiar la recerca futura de l'investigador. Ha de contenir obligatòriament:
+- **Vulnerabilitat Principal:** Quin és el punt més feble de l'H1 segons l'anàlisi de sensibilitat (ex: dependència d'una sola prova, manca de documentació escrita, etc.).
+- **Forats de Diagnosticitat:** Quines hipòtesis rivals (H2, H3) no han quedat prou refutades i per què.
+- **Tipologia de "Prova d'Or" (Evidència desitjada):** L'agent ha de descriure teòricament quin tipus d'evidència (arqueològica, filològica, documental d'un segle concret) hauria de buscar l'investigador als arxius. L'agent explicarà com aquesta prova teòrica modificaria els valors C/I/N de la matriu a favor de l'H1.
+- **Advertència de Camaleonisme:** Recomanacions sobre com l'investigador pot ajustar l'enunciat de l'H1 en el futur sense incórrer en la penalització per excés de mutacions (Regla de derrota §4.4 i §5).
 
 ### Regressió de fase
 
