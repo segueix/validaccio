@@ -32,4 +32,13 @@
 
 **Prior:** Probabilitat prèvia assignada a una hipòtesi abans d'incorporar l'evidència. En aquest marc es declara com a rang, no com a valor puntual, amb justificació explícita.
 
-**Probabilitat epistèmica:** Grau de confiança racional en una proposició donada l'evidència disponible. Diferent de la probabilitat estadística (freqüència) i de la subjectiva (creença personal).
+**Probabilitat epistèmica:** Grau de confiança racional en una proposició donada l'evidència disponible. Diferent de la probabilitat estadística (freqüència) i de la subjectiva (creença personal). Només s'ha d'invocar explícitament si el document inclou model bayesià amb likelihoods justificats.
+
+
+**Bifurcació de la certesa:** Estàndard de conclusions duals que obliga a separar el dictamen incondicional (fets mecànics verificables) del dictamen condicional (atribucions a autor/tradició/context).
+
+**Plausibilitat lògica:** Grau de sostenibilitat racional d'una hipòtesi quan no hi ha model formal de likelihoods. És la terminologia per defecte en absència de quantificació bayesiana explícita.
+
+**Principi de parsimònia:** Criteri que prefereix, a igualtat d'ajust amb les evidències, la hipòtesi amb menys supòsits no verificats.
+
+**Rigor semàntic:** Norma metodològica que prohibeix usar llenguatge estadístic (p. ex. "probabilitat", "estadísticament") en conclusions si no hi ha model bayesià explícit; en aquest cas s'ha d'usar llenguatge epistemològic.

@@ -59,6 +59,8 @@ Una hipòtesi es considera derrotada quan es compleix qualsevol d'aquestes condi
 ### 4.1 Inconsistència acumulada
 La hipòtesi és inconsistent amb tres o més evidències diagnòstiques independents (de famílies de dependència diferents).
 
+**Clàusula de bifurcació de famílies (obligatòria):** si un bloc d'evidències aparentment únic conté components verificables per vies diferents (p. ex. geometria nua, reglament escrit, aritmètica final), s'ha de desglossar obligatòriament en famílies de dependència independents abans de computar inconsistències. Aquesta bifurcació és condició necessària per habilitar el KO tècnic per independència real. No es pot mantenir un bloc agregat si això impedeix discriminar quins subcomponents derroten la hipòtesi.
+
 ### 4.2 Absència de suport diagnòstic
 La hipòtesi no té cap evidència diagnòstica que la sustenti — és a dir, tota l'evidència que la suporta és igualment consistent amb les rivals.
 
@@ -90,6 +92,14 @@ Abans de començar l'anàlisi, cada hipòtesi ha de declarar:
 - **Prediccions fortes:** què ha de ser cert perquè la hipòtesi sigui viable.
 - **Condicions d'abandonament:** quina evidència faria que l'investigador la descartés.
 - **Nucli no negociable:** quina part de l'enunciat no pot canviar sense que la hipòtesi sigui una altra.
+
+### 5.4 Límits de l'absorció (subsumpció)
+La regla d'absorció és universal i s'aplica a qualsevol parell entre hipòtesi general (HG) i hipòtesi particular (HP).
+
+- **Condició de validesa:** una HG només pot absorbir una evidència inicialment diagnòstica per a HP si existeix una **derivació mecànica explícita** que mostri, pas a pas i sense salts interpretatius, com l'evidència queda implicada per HG.
+- **Marcador obligatori:** tota absorció admesa s'ha d'etiquetar amb **[ABS]** a la matriu ACH i als informes de sensibilitat, amb referència al lloc on consta la derivació mecànica.
+- **Prohibició d'absorció retòrica:** la mera compatibilitat contextual, l'analogia narrativa o l'absència d'evidència contrària no compten com a derivació mecànica explícita i no permeten absorció.
+- **Efecte metodològic:** si no hi ha derivació mecànica explícita + etiqueta [ABS], l'evidència manté el seu valor diagnòstic original i no pot ser reclasificada com a neutral per subsumpció.
 
 ---
 

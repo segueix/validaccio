@@ -244,6 +244,23 @@ Si s'utilitza un agent d'IA (com Claude Code o similar) per assistir en l'anàli
 
 Per defecte, **no s'inclouen PDFs ni OCR complets al repositori**. Només metadades, checksums (SHA-256) i extractes breus justificats. L'excepció requereix simultàniament: base de drets clara (domini públic, llicència oberta o permís), repositori privat amb control d'accés, i etiqueta de qualitat d'OCR verificada per mostreig.
 
+### 8.9 Norma de rigor semàntic
+
+Per evitar inflació retòrica i falsa precisió, aquest marc adopta la norma següent:
+
+- **Prohibició terminològica condicionada:** no es poden usar termes com "probabilitat" o "estadísticament" en conclusions o síntesis si no es presenta explícitament un model bayesià amb likelihoods defensables.
+- **Terminologia per defecte:** quan no hi ha model formal de likelihoods, s'han d'usar expressions epistemològiques com **"plausibilitat lògica"** i **"principi de parsimònia"**.
+- **Traçabilitat del llenguatge:** qualsevol canvi des de llenguatge epistemològic cap a llenguatge probabilístic s'ha de justificar amb referència al model utilitzat i a les seves hipòtesis.
+
+### 8.10 Estàndard de conclusions duals (bifurcació de la certesa)
+
+Tota conclusió final s'ha de presentar en dues capes explícites i separades:
+
+1. **Dictamen incondicional (mecànic):** recull únicament fets estructurals del sistema que es mantenen per verificació tècnica directa (matriu C/I/N, independència de famílies, sensibilitat).
+2. **Dictamen condicional (atributiu):** recull atribucions a tradició, autor o context i queda sempre condicionat a la disponibilitat d'evidència documental diagnòstica.
+
+**Regla d'ús:** cap dictamen condicional pot rebaixar o alterar retroactivament el dictamen incondicional. Si falta suport documental diagnòstic, el dictamen condicional s'ha de reportar com a obert o provisional.
+
 ---
 
 ## 9. Bibliografia completa amb accés
