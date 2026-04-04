@@ -58,22 +58,22 @@
 
 ---
 
-## H3 — [La Nova Teoria: hipòtesi trencadora a validar]
+## H3 — La Nova Teoria: La Plenitud Operativa Lul·liana
 
-**Enunciat:** [descripció clara i falsificable]
+**Enunciat:** L'arquitectura matemàtica central del Joc de l'Oca no respon a la probabilitat lúdica (H1) ni al misticisme neoplatònic o pitagòric del Renaixement (H2). La "Triple Anomalia del 9" (l'alineació de les oques en múltiples i intermèdies de salt 9, la regla sumatòria dels daus inicials 26 i 53, i la resolució de la casella 63) és la translació física, material i ludològica de la combinatòria de base-9 de l'*Ars Magna* de Ramon Llull (concretament en la formulació de l'*Ars brevis* i l'*Ars generalis ultima*). L'autor del joc utilitza el 9 exactament amb la mateixa funció epistemològica que Llull: no com un valor esotèric abstracte, sinó com el paràmetre mecànic necessari per tancar una "màquina" lògica; una totalitat finita, exhaustiva i operativa que esgota totes les combinacions possibles dins d'un sistema tancat.
 
 **Prediccions observables:**
-- Si H3 és certa, esperaríem trobar...
-- Si H3 és certa, NO esperaríem trobar...
+- El tauler ha de funcionar com un sistema geomètric i aritmètic tancat, on les anomalies del 9 (els daus dibuixats i el tancament al 63) actuen com a vàlvules de seguretat mecànica per mantenir el jugador dins del cicle, a semblança de les rodes concèntriques lul·lianes.
+- S'ha de poder documentar que en el Lul·lisme històric el número 9 s'entenia com un límit operatiu de plenitud funcional, i no com una simple superstició.
 
 **Supòsits:**
 - [llista de supòsits necessaris perquè H3 sigui viable]
 
 **Condicions d'abandonament:**
-- Abandonaria H3 (nova teoria) si es demostrés que...
+- Aquesta hipòtesi es considerarà derrotada si es demostra historiogràficament que el creador del tauler podia aconseguir la mateixa exactitud mecànica i el mateix tancament de partida utilitzant qualsevol altra base numèrica (com el 7, el 10 o el 12), relegant l'elecció del 9 a una decisió merament estètica o de convenció lúdica.
 
 **Nucli no negociable:**
-- [la part de l'enunciat que no pot canviar sense que H3 sigui una altra hipòtesi]
+- L'omnipresència del número 9 al tauler té una naturalesa estructural i sistèmica, no purament al·legòrica. Hi ha una correspondència funcional directa entre el tancament de l'alfabet lul·lià (9 lletres, de la B a la K, que formen 9 dignitats i 9 relacions) i el motor de moviment del joc, demostrant que el tauler va ser concebut com un *Ars popularis* en un entorn intel·lectual lul·lista avançat (Barcelona/Mallorca, post-1480).
 
 **Registre de modificacions:**
 
