@@ -1,2 +1,6 @@
 EID,H1,H2,H3,diagnostic,justificacio
-EID-001,C|I|N,C|I|N,C|I|N,si|no,[breu justificació de cada assignació]
+EID-001,C,I,N,si,"H1: reforça etimologia romànica autòctona; H2: contradiu origen lèxic àrab directe; H3: no discrimina sobre convergència del joc"
+EID-002,C,I,N,si,"H1: absència andalusina és compatible amb origen no àrab; H2: absència en corpus andalusí contradiu predicció de mencions antigues; H3: evidència lingüística no prova ni refuta convergència"
+EID-003,C,C,C,no,"Presència de taulers al claustre és compatible amb H1, H2 i H3; no discrimina origen perquè només acredita existència local en s.XIV-XV"
+EID-004,C,I,C,si,"H1: compatible amb origen constructiu (Pam/Pam de Destre); H2: tensiona la gènesi com a joc importat; H3: compatible amb emergència local independent"
+EID-005,I,C,I,si,"H1: hipòtesi orientalista contradiu origen autòcton; H2: dona suport directe a transmissió islàmica; H3: model de difusió única contradiu nucli de convergència múltiple"
