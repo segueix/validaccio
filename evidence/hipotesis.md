@@ -53,36 +53,37 @@
 | # | Data | Modificació | Motivació | Evidència |
 |---|------|-------------|-----------|-----------|
 | 1 | 2026-04-05 | Formulació inicial carregada des del dossier de l'investigador | Inici de cas backgammon | EID-002 |
-| 2 | 2026-04-05 | Delimitació explícita: H2 admet revers funcional però exclou causalitat mat-ofegat/«fer taules» | Correcció metodològica d'aïllament entre H2 i H3 | EID-004 |
+| 2 | 2026-04-05 | Delimitació explícita: H2 admet revers funcional però exclou causalitat mat-ofegat/«fer taules» | Correcció metodològica d'aïllament entre H2 i H3.1 | EID-004 |
 
 ---
 
-## H3 — Nova Teoria: «origen català-mediterrani + causalitat de desempat escacs→taules»
+## H3.1 — Resemantització funcional i lingüística a la Mediterrània
 
-**Enunciat:** El joc anomenat modernament *backgammon* s'articula com a evolució de la tradició catalana i mediterrània de *taules/totes taules* i, en la seva funcionalitat d'origen, opera com a mecanisme de desempat dels escacs quan s'arriba a situació assimilada a *mat ofegat* (expressió «fer taules»), amb una mecànica de retirada que representa la fugida d'un exèrcit escapçat sense rei.
+**Enunciat:** H3.1 no postula la invenció absoluta dels components del joc (admet un origen oriental i cosmològic previ), sinó la seva resemantització a l'Europa mediterrània medieval: en integrar-se físicament amb els escacs en taulers reversibles, les taules adquireixen una utilitat de desempat dels escacs ofegats («fer taules») i una narrativa funcional de retirada d'un exèrcit escapçat sense rei.
 
 **Prediccions observables:**
-- Cadena documental catalana/aragonesa/valenciana/mallorquina de *taules* i *totes taules* amb cronologia coherent (s. XI–XV).
-- Evidència de taulers reversibles on escacs ocupa l'anvers i taules el revers, amb ús social recurrent.
-- Fonts textuals que vinculin la noció d'empat/«fer taules» en escacs amb l'entrada al joc de taules com a resolució funcional.
-- Convergència mecànica entre *totes taules* i backgammon (15 fitxes de rang idèntic, absència de rei, captura amb reentrada, cursa de retirada).
+- Evidència de corpus oriental antic que descrigui Nard/Taules com a model cosmològic autònom (sense dependència funcional d'escacs).
+- Evidència medieval mediterrània de taulers reversibles amb cohabitació escacs-taules.
+- Fonts que connectin «fer taules» i desempat en context escacs-taules.
+- Convergència mecànica de retirada (15 peces homogènies, absència de rei, captura amb reentrada) reinterpretada en clau funcional local.
 
 **Supòsits:**
-- La documentació ibèrica disponible és representativa d'una tradició de joc transferible culturalment.
-- La causalitat funcional escacs→taules és recuperable per convergència de terminologia, materialitat i mecànica.
-- La «naturalització anglesa» pot haver ocultat o diluït l'origen funcional anterior.
+- Els components bàsics del joc poden tenir origen extern i, alhora, experimentar canvi funcional i semàntic posterior.
+- La resemantització medieval és inferible per combinació de terminologia, materialitat i mecànica.
+- La naturalització anglesa posterior no anul·la l'etapa de transformació mediterrània.
 
 **Condicions d'abandonament:**
-- Evidència sòlida que negui el vincle funcional entre escenaris d'empat en escacs i ús del joc de taules.
-- Absència de continuïtat verificable entre *totes taules* medieval i pràctiques que arribin al context anglès modern.
-- Prova que la composició del joc (15 peces homogènies sense rei) no té cap lectura causal de retirada.
+- Evidència sòlida que negui la transició funcional cap al desempat escacs→taules.
+- Evidència que desvinculi «fer taules» de qualsevol ús de desempat en ecosistema escacs-taules.
+- Evidència que la integració reversible no alterés cap ús/reglament del joc en context mediterrani.
 
 **Nucli no negociable:**
-- H3 requereix simultàniament origen mediterrani, funció de desempat escacs→taules i lectura de retirada d'un cos sense rei.
+- Distinció entre **origen de components** (previ/oriental) i **invenció de funció-reglament integrat** (resemantització mediterrània).
 
 **Registre de modificacions:**
 
 | # | Data | Modificació | Motivació | Evidència |
 |---|------|-------------|-----------|-----------|
 | 1 | 2026-04-05 | Alta inicial d'H3 a partir de l'Apèndix II facilitat per l'investigador | Incorporació de nova teoria | EID-003 |
-| 2 | 2026-04-05 | Afegida causalitat explícita «mat ofegat/fer taules» i mecànica de fugida d'exèrcit escapçat sense rei | Correcció metodològica del nucli evidencial d'H3 | EID-004 |
+| 2 | 2026-04-05 | Afegida causalitat explícita «mat ofegat/fer taules» i mecànica de fugida d'exèrcit escapçat sense rei | Correcció metodològica del nucli evidencial | EID-004 |
+| 3 | 2026-04-05 | Reformulació a H3.1: incorpora origen oriental cosmològic i desplaça el focus a resemantització mediterrània | Transició metodològica sol·licitada (components vs funció integrada) | EID-005 |

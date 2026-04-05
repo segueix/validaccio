@@ -6,21 +6,21 @@ Data: 2026-04-05
 
 - Priors declarats: Perfil 1 (0.75/0.15/0.10), Perfil 2 (0.333/0.333/0.333), Perfil 3 (0.10/0.30/0.60).
 - Conversió ACH→versemblança: C=1.0, N=0.5, I=0.1.
-- Likelihoods amb EID-004:
-  - H1: 0.025
-  - H2: 0.025
-  - H3: 0.100
+- Likelihoods amb EID-005:
+  - H1: 0.0125
+  - H2: 0.0125
+  - H3.1: 0.1000
 
 ## Posteriors
 
-| Perfil | Posterior H1 | Posterior H2 | Posterior H3 | Hipòtesi líder |
+| Perfil | Posterior H1 | Posterior H2 | Posterior H3.1 | Hipòtesi líder |
 |---|---:|---:|---:|---|
-| 1 — Biaix ortodox | 57.69% | 11.54% | 30.77% | H1 |
-| 2 — Agnòstic | 16.67% | 16.67% | 66.67% | H3 |
-| 3 — Contextualitzat | 3.57% | 10.71% | 85.71% | H3 |
+| 1 — Biaix ortodox | 44.12% | 8.82% | 47.06% | H3.1 |
+| 2 — Agnòstic | 10.00% | 10.00% | 80.00% | H3.1 |
+| 3 — Contextualitzat | 1.92% | 5.77% | 92.31% | H3.1 |
 
 ## Lectura de robustesa
 
-- H3 lidera en 2 de 3 perfils.
-- H3 no supera encara H1 sota biaix ortodox extrem (Perfil 1).
-- Robustesa actual d'H3: **moderada-alta** (millora clara respecte l'estat anterior).
+- H3.1 lidera en 3 de 3 perfils, inclòs el biaix ortodox.
+- La clau explicativa és separar **origen de components** d'**invenció funcional-reglamentària integrada**.
+- Robustesa actual d'H3.1: **alta**.

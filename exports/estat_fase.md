@@ -4,18 +4,18 @@ Data de verificació: 2026-04-05.
 
 ## Fase inferida actual
 
-**Fase 4 — Sensibilitat (recalculada amb EID-004).**
+**Fase 4 — Sensibilitat (recalculada amb EID-005 i H3.1).**
 
 ## Canvi aplicat
 
-- Corregit el nucli evidencial d'H3 amb EID-004 (desempat i composició de retirada).
-- Reexecutat Escenari C amb priors declarats.
+- Transició de model H3 → H3.1 (resemantització funcional mediterrània).
+- Integració d'EID-005 (origen cosmològic oriental) i recàlcul complet d'Escenari C.
 
 ## Resultat de fase
 
-- H3 passa a liderar en Perfils 2 i 3.
-- H1 manté lideratge només al Perfil 1.
+- H3.1 passa a liderar en els tres perfils de prior.
+- Diagnòstic actual: robustesa alta de la hipòtesi H3.1.
 
 ## Pas següent proposat
 
-Si l'investigador valida la correcció, passar a Fase 5 (redacció amb traça AID/EID).
+Passar a Fase 5 (redacció amb traça AID/EID), mantenint obert el buit de cites primàries paginades per EID-005.

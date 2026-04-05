@@ -1,5 +1,6 @@
-EID,H1,H2,H3,diagnostic,justificacio
+EID,H1,H2,H3.1,diagnostic,justificacio
 EID-001,C,I,I,si,"Evidència lexicogràfica principal: afavoreix lectura mecànica de back i tensiona lectures locatives fortes."
-EID-002,N,C,C,si,"Materialitat de taulers reversibles/multi-joc és coherent amb lectura complementària i amb H3; no discrimina directament contra H1."
+EID-002,N,C,C,si,"Materialitat de taulers reversibles/multi-joc és coherent amb lectura complementària i amb H3.1; no discrimina directament contra H1."
 EID-003,N,N,C,si,"El corpus aportat per l'investigador articula explícitament la tesi catalana-mediterrània i la transferència cap a l'anglès."
-EID-004,I,N,C,si,"Funcionalitat de desempat («fer taules»/mat ofegat) + composició sense rei: inconsistent amb H1, neutral per H2 i estructuralment coherent amb H3."
+EID-004,I,N,C,si,"Funcionalitat de desempat («fer taules»/mat ofegat) + composició sense rei: inconsistent amb H1, neutral per H2 i estructuralment coherent amb H3.1."
+EID-005,N,N,C,si,"Origen cosmològic oriental del Nard/Taules: és inconsistent amb una invenció mediterrània absoluta, però consistent amb H3.1 perquè aquesta hipòtesi defensa resemantització funcional posterior."

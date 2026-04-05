@@ -12,21 +12,21 @@
 - Categoria: Alternativa
 - Justificació: hipòtesi funcional intermèdia, compatible amb part de la materialitat però no dominant en la tradició lexicogràfica.
 
-## H3 — Origen Mediterrani / totes taules
+## H3.1 — Resemantització funcional i lingüística
 
 - Rang base (metodològic): variable segons perfil (baixa / moderada / alta)
 - Categoria: Alternativa
-- Justificació: hipòtesi trencadora amb suport documental aportat al dossier, sotmesa a prova de sensibilitat contra biaix ortodox.
+- Justificació: hipòtesi de transició (origen de components previ + redefinició funcional mediterrània), sotmesa a prova de sensibilitat contra biaix ortodox.
 
 ---
 
 ## Perfils de prior declarats per l'investigador
 
-| Perfil | P(H1) | P(H2) | P(H3) | Lectura del perfil |
+| Perfil | P(H1) | P(H2) | P(H3.1) | Lectura del perfil |
 |---|---:|---:|---:|---|
 | Perfil 1 — Biaix ortodox | 0.75 | 0.15 | 0.10 | Estat historiogràfic favorable a H1 |
 | Perfil 2 — Agnòstic | 0.333 | 0.333 | 0.333 | Equiprobabilitat inicial |
-| Perfil 3 — Contextualitzat | 0.10 | 0.30 | 0.60 | Pes documental previ favorable a H3 |
+| Perfil 3 — Contextualitzat | 0.10 | 0.30 | 0.60 | Pes documental previ favorable a H3.1 |
 
 ---
 
@@ -38,4 +38,4 @@ Per convertir la matriu ACH en pes de versemblança s'aplica l'esquema explícit
 - N = 0.5
 - I = 0.1
 
-I es calcula, per hipòtesi, el producte de pesos sobre EID-001..003 abans de normalitzar amb cada perfil de priors.
+I es calcula, per hipòtesi, el producte de pesos sobre EID-001..005 abans de normalitzar amb cada perfil de priors.

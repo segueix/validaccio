@@ -42,3 +42,14 @@
 **Principi de parsimònia:** Criteri que prefereix, a igualtat d'ajust amb les evidències, la hipòtesi amb menys supòsits no verificats.
 
 **Rigor semàntic:** Norma metodològica que prohibeix usar llenguatge estadístic (p. ex. "probabilitat", "estadísticament") en conclusions si no hi ha model bayesià explícit; en aquest cas s'ha d'usar llenguatge epistemològic.
+
+## Abast Probabilístic: Components vs. Mecànica Funcional
+
+**Principi comparatiu (pilota vs futbol):**
+- La invenció independent de **components estructurals simples** (una esfera com a joguina, o un circuit de caselles amb daus) té probabilitat alta entre cultures diferents.
+- La invenció d'un **reglament funcional integrat** (com el futbol modern, o l'ús coordinat de taules com a mecanisme de resolució/desempat dels escacs amb semàntica associada de «fer taules») té probabilitat molt menor i depèn d'una evolució institucional/cultural específica.
+
+**Aplicació al cas Backgammon:**
+- El debat no s'ha de tancar en «qui inventa la fusta, els daus o el patró base».
+- El focus probabilístic rellevant és «qui articula la funció integrada i el règim de regles dins un ecosistema històric concret».
+- En aquesta lectura, H3.1 competeix en l'espai d'**invenció funcional i reglamentària** (equivalent al futbol), no en l'espai de components físics bàsics (equivalent a la pilota).
