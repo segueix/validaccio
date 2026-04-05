@@ -1,2 +1,7 @@
 AID	enunciat	hipotesis	estat	evidencies	tipus_traça
-AID-001	[proposició factual]	H1,H2	proposada|verificada|discutida	EID-001,EID-003	cita|parafrasi|inferencia
+AID-001	La tradició etimològica moderna associa backgammon a back + gamen amb back com a retrocés mecànic de peces.	H1	verificada	EID-001	parafrasi
+AID-002	Existeixen taulers reversibles medievals on escacs i taules coexisteixen en un mateix suport material.	H2,H3.1	verificada	EID-002	cita
+AID-003	Registres notarials catalans (s.XI–XV) documenten la presència primerenca i continuada de taules compartint suport amb escacs.	H3.1	verificada	EID-003	cita
+AID-004	L'expressió «fer taules» està documentada lexicogràficament (Aguiló, Alcover-Moll, Coromines) com a locució d'empat als escacs vinculada al mat ofegat.	H3.1	verificada	EID-004	cita
+AID-005	El Nard/Taules es descriu en fonts sassànides com a simulador autònom de cosmos (30 fitxes = dies del mes), compatible amb origen previ independent d'escacs.	H3.1	verificada	EID-005	parafrasi
+AID-006	La convergència d'evidència documental (EID-003) i filològica (EID-004) cap a H3.1 prové de vies de verificació independents (arqueologia documental vs. lexicografia), sense doble comptatge.	H3.1	verificada	EID-003,EID-004	inferencia
