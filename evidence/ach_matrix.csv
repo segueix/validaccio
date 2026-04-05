@@ -1,2 +1,4 @@
 EID,H1,H2,H3,diagnostic,justificacio
-EID-001,C|I|N,C|I|N,C|I|N,si|no,[breu justificació de cada assignació]
+EID-001,C,I,I,si,"Evidència lexicogràfica principal: afavoreix lectura mecànica de back i tensiona lectures locatives fortes."
+EID-002,N,C,C,si,"Materialitat de taulers reversibles/multi-joc és coherent amb lectura complementària i amb H3; no discrimina directament contra H1."
+EID-003,N,N,C,si,"El corpus aportat per l'investigador articula explícitament la tesi catalana-mediterrània i la transferència cap a l'anglès."
