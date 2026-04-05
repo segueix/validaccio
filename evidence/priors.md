@@ -1,66 +1,41 @@
-# Estructura de referència de priors (plantilla universal)
+# Priors del cas Backgammon (Escenari C)
 
-> Aquest fitxer és una plantilla metodològica per a qualsevol estudi.
-> No admet valors puntuals: cada prior s'ha de declarar com a rang i categoria.
-> La justificació és obligatòria per evitar biaix retrospectiu.
+## H1 — Ortodòxia (back = retrocés mecànic)
 
----
+- Rang base (metodològic): variable segons perfil (alta / moderada / baixa)
+- Categoria: Consens
+- Justificació: representa el pes de la historiografia generalista anglocèntrica abans del creuament amb la matriu.
 
-## 1) Rangs admesos
+## H2 — Funcional/Ombra (joc complementari)
 
-- **Alta**
-- **Moderada**
-- **Baixa**
+- Rang base (metodològic): variable segons perfil (moderada / baixa)
+- Categoria: Alternativa
+- Justificació: hipòtesi funcional intermèdia, compatible amb part de la materialitat però no dominant en la tradició lexicogràfica.
 
-## 2) Categories justificatives estàndard
+## H3 — Origen Mediterrani / totes taules
 
-- **Consens**
-  - Ús: quan el prior deriva d'un consens extern documentat.
-  - Requisit: citar fonts i explicar per què el consens és pertinent al cas.
-- **Alternativa**
-  - Ús: quan la hipòtesi competeix sense suport de consens dominant.
-  - Requisit: justificar l'elecció del rang amb criteris explícits de plausibilitat inicial.
-- **Escèptic**
-  - Ús: quan es força un prior conservador per provar robustesa.
-  - Requisit: justificar per què l'escenari escèptic és metodològicament exigent però admissible.
+- Rang base (metodològic): variable segons perfil (baixa / moderada / alta)
+- Categoria: Alternativa
+- Justificació: hipòtesi trencadora amb suport documental aportat al dossier, sotmesa a prova de sensibilitat contra biaix ortodox.
 
 ---
 
-## 3) Registre per hipòtesi
+## Perfils de prior declarats per l'investigador
 
-### [HIPÒTESI_A]
-
-- **Rang:** [Alta | Moderada | Baixa]
-- **Categoria:** [Consens | Alternativa | Escèptic]
-- **Justificació obligatòria:**
-  - Fonts/criteris utilitzats:
-  - Raó metodològica de l'assignació:
-  - Risc de biaix identificat i mitigació:
-
-### [HIPÒTESI_B]
-
-- **Rang:** [Alta | Moderada | Baixa]
-- **Categoria:** [Consens | Alternativa | Escèptic]
-- **Justificació obligatòria:**
-  - Fonts/criteris utilitzats:
-  - Raó metodològica de l'assignació:
-  - Risc de biaix identificat i mitigació:
-
-### [HIPÒTESI_C]
-
-- **Rang:** [Alta | Moderada | Baixa]
-- **Categoria:** [Consens | Alternativa | Escèptic]
-- **Justificació obligatòria:**
-  - Fonts/criteris utilitzats:
-  - Raó metodològica de l'assignació:
-  - Risc de biaix identificat i mitigació:
+| Perfil | P(H1) | P(H2) | P(H3) | Lectura del perfil |
+|---|---:|---:|---:|---|
+| Perfil 1 — Biaix ortodox | 0.75 | 0.15 | 0.10 | Estat historiogràfic favorable a H1 |
+| Perfil 2 — Agnòstic | 0.333 | 0.333 | 0.333 | Equiprobabilitat inicial |
+| Perfil 3 — Contextualitzat | 0.10 | 0.30 | 0.60 | Pes documental previ favorable a H3 |
 
 ---
 
-## 4) Control anti-biaix retrospectiu (obligatori)
+## Regla de càlcul usada a l'Escenari C
 
-Abans de calcular cap posterior, l'investigador ha de deixar registrat:
+Per convertir la matriu ACH en pes de versemblança s'aplica l'esquema explícit:
 
-1. Quin criteri ha usat per triar cada rang.
-2. Quina evidència **encara no incorporada** podria fer revisar el prior.
-3. Quin test de sensibilitat aplicarà per verificar que la conclusió no depèn d'una tria oportunista del prior.
+- C = 1.0
+- N = 0.5
+- I = 0.1
+
+I es calcula, per hipòtesi, el producte de pesos sobre EID-001..003 abans de normalitzar amb cada perfil de priors.

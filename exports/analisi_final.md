@@ -2,32 +2,29 @@
 
 Data: 2026-04-05
 
-## Escenari A — Sense família dominant
+## Mètode de l'Escenari C
 
-- Família retirada: `corpus_catala_mediterrani` (EID-003).
-- Efecte: H3 perd suport específic i es debilita de manera crítica.
-- Lectura: conclusió sobre tesi d'origen mediterrani és sensible a dependència de família.
+- Priors declarats per l'investigador: Perfils 1, 2 i 3.
+- Conversió ACH→versemblança: C=1.0, N=0.5, I=0.1.
+- Likelihoods de la matriu actual:
+  - H1: 0.25
+  - H2: 0.05
+  - H3: 0.10
 
-## Escenari B — Sense evidència dominant
+## Resultats de posterior per perfil
 
-- Evidència retirada: EID-001.
-- Efecte: H1 perd avantatge etimològic discriminatori.
-- Lectura: el nucli etimològic queda indeterminat sense aquesta prova.
+| Perfil | Posterior H1 | Posterior H2 | Posterior H3 | Hipòtesi líder |
+|---|---:|---:|---:|---|
+| 1 — Biaix ortodox | 91.46% | 3.66% | 4.88% | H1 |
+| 2 — Agnòstic | 62.50% | 12.50% | 25.00% | H1 |
+| 3 — Contextualitzat | 25.00% | 15.00% | 60.00% | H3 |
 
-## Escenari C — Variació de priors
+## Lectura de robustesa
 
-- Estat: no executable matemàticament amb el registre actual.
-- Motiu: `evidence/priors.md` continua en plantilla i sense rangs declarats per H1/H2/H3.
+- H3 **no** és capaç de doblegar el Perfil 1.
+- H3 només s'imposa quan ja arrenca amb prior favorable (Perfil 3).
+- Amb la matriu actual, la robustesa d'H3 és **baixa-moderada**.
 
-## Dictamen de robustesa
+## Implicació metodològica immediata
 
-- Robustesa global: **parcial**.
-- Part robusta: coexistència d'evidència material favorable a lectures funcionals (H2/H3).
-- Part fràgil: resolució etimològica depenent d'un únic eix fort (EID-001).
-
-## Acció requerida per completar la fase
-
-Per tancar completament sensibilitat:
-1. Declarar priors per H1/H2/H3 a `evidence/priors.md`.
-2. Reexecutar escenari C amb rangs explícits.
-3. Confirmar o revisar el dictamen de robustesa.
+Per elevar robustesa d'H3 cal incorporar noves evidències diagnòstiques independents que introdueixin inconsistències directes addicionals contra H1 sense dependre d'una sola família documental.
