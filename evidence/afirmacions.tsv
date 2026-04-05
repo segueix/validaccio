@@ -5,3 +5,17 @@ AID-003	Registres notarials catalans (s.XI–XV) documenten la presència primer
 AID-004	L'expressió «fer taules» està documentada lexicogràficament (Aguiló, Alcover-Moll, Coromines) com a locució d'empat als escacs vinculada al mat ofegat.	H3.1	verificada	EID-004	cita
 AID-005	El Nard/Taules es descriu en fonts sassànides com a simulador autònom de cosmos (30 fitxes = dies del mes), compatible amb origen previ independent d'escacs.	H3.1	verificada	EID-005	parafrasi
 AID-006	La convergència d'evidència documental (EID-003) i filològica (EID-004) cap a H3.1 prové de vies de verificació independents (arqueologia documental vs. lexicografia), sense doble comptatge.	H3.1	verificada	EID-003,EID-004	inferencia
+AID-007	L'any 1045, el testament de l'ardiaca Ramon al monestir de Sant Cugat constitueix la primera menció del joc de taules en terres catalanes.	H3.1	verificada	EID-003	cita
+AID-008	L'inventari d'Arnau Mir de Tost (1068) diferencia les peces (tabulas) del tauler (tabuler), documentant el joc amb taules d'argent.	H3.1	verificada	EID-003	cita
+AID-009	La primera menció registrada del joc de totes taules data del 1361 a Saragossa, capital del Regne d'Aragó.	H3.1	verificada	EID-003	cita
+AID-010	L'inventari del rei Martí (1410) registra taulers reversibles amb escacs a l'anvers i taules al revers.	H2,H3.1	verificada	EID-002,EID-003	cita
+AID-011	Inventaris catalans de 1449 i 1465 mostren l'estandardització a 15 peces per jugador, corresponent al joc de totes taules.	H3.1	verificada	EID-003	cita
+AID-012	El Diccionari Aguiló (1915-1932) defineix «fer taules» en relació al mat ofegat als escacs.	H3.1	verificada	EID-004	cita
+AID-013	El Diccionario de la Lengua Castellana de la RAE (1730) confirma la interrelació directa entre la terminologia d'empat i el joc de taules.	H3.1	verificada	EID-004	cita
+AID-014	El poema Scachs d'Amor (València, 1475) descriu el mat ofegat com a situació terminal als escacs.	H3.1	verificada	EID-004	cita
+AID-015	El Tirant lo Blanc (1460-1464) inclou referència a l'ús popular de «fer taules» com a sinònim d'empat.	H3.1	verificada	EID-004	cita
+AID-016	James Howell, agent comercial que va residir a Barcelona, València i Alacant (1617-1618), esmenta el Backgammon per primera vegada en una carta de 1635.	H3.1	verificada	EID-003	cita
+AID-017	Samuel Johnson (1756) proposa erròniament un origen gal·lès per al mot backgammon (bach gammon, «batalla petita»), il·lustrant la naturalització anglesa del terme.	H1	verificada	EID-001	cita
+AID-018	La interpretació de back com a retrocés mecànic és absent de les fonts del XVII-XVIII i apareix per primera vegada a la 9a edició de l'Encyclopædia Britannica (1876).	H1,H3.1	verificada	EID-001	cita
+AID-019	El joc de totes taules es juga amb dos daus i no admet la possibilitat d'empat ni que cap rei quedi ofegat, a diferència dels escacs.	H3.1	verificada	EID-003,EID-004	inferencia
+AID-020	La distinció entre origen de components (oriental/cosmològic) i invenció de funció-reglament integrat (resemantització mediterrània) és la clau explicativa d'H3.1.	H3.1	verificada	EID-003,EID-004,EID-005	inferencia
