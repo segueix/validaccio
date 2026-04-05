@@ -28,14 +28,14 @@
 
 ---
 
-## H2 — Hipòtesi Ombra: «lectura funcional-complementària no etimològica»
+## H2 — Hipòtesi Ombra: «lectura funcional-complementària del revers»
 
-**Enunciat:** Encara que el nom pugui no ser locatiu en sentit estricte, la pràctica històrica del joc de taules/backgammon en taulers reversibles amb escacs descriu funcionalment un «joc complementari» associat a atzar, mobilitat i gestió de contratemps.
+**Enunciat:** El joc de taules/backgammon s'interpreta com a joc complementari en taulers reversibles (escacs a una cara, taules a l'altra), amb funció de joc alternatiu de mobilitat i atzar; aquesta hipòtesi **no** incorpora com a nucli ni la causalitat específica del *mat ofegat* ni l'etimologia de «fer taules».
 
 **Prediccions observables:**
 - Evidència material medieval/renaixentista de taulers dobles o conjunts multi-joc (escacs + taules).
-- Concordança entre mecànica del joc (bearing off, captura no destructiva, reentrada) i lectura logística/retirada.
-- Persistència de vocabulari o pràctiques que vinculin escacs i taules en el mateix ecosistema d'ús.
+- Concordança entre mecànica del joc (bearing off, captura no destructiva, reentrada) i lectura logística/retirada general.
+- Persistència de vocabulari o pràctiques que vinculin escacs i taules en el mateix ecosistema d'ús, sense exigir funció formal de desempat.
 
 **Supòsits:**
 - La materialitat d'ús pot sostenir una lectura funcional robusta encara que no resolgui tota l'etimologia.
@@ -43,44 +43,46 @@
 
 **Condicions d'abandonament:**
 - Evidència que la cohabitació escacs-taules és marginal o excepcional en lloc de recurrent.
-- Evidència mecànica/contextual que contradigui la lectura de joc de retirada i reincorporació.
+- Evidència mecànica/contextual que contradigui la lectura de joc complementari de revers.
 
 **Nucli no negociable:**
-- La lectura funcional-complementària depèn de la convergència entre materialitat i mecànica, no només del nom.
+- La lectura funcional d'H2 depèn del revers del tauler, però sense vincle causal obligatori amb «fer taules»/mat ofegat.
 
 **Registre de modificacions:**
 
 | # | Data | Modificació | Motivació | Evidència |
 |---|------|-------------|-----------|-----------|
 | 1 | 2026-04-05 | Formulació inicial carregada des del dossier de l'investigador | Inici de cas backgammon | EID-002 |
+| 2 | 2026-04-05 | Delimitació explícita: H2 admet revers funcional però exclou causalitat mat-ofegat/«fer taules» | Correcció metodològica d'aïllament entre H2 i H3 | EID-004 |
 
 ---
 
-## H3 — Nova Teoria: «origen català-mediterrani de *totes taules* i transferència cap a l'anglès»
+## H3 — Nova Teoria: «origen català-mediterrani + causalitat de desempat escacs→taules»
 
-**Enunciat:** El joc anomenat modernament *backgammon* s'articula com a evolució de la tradició catalana i mediterrània de *taules/totes taules* (amb base documental medieval), i el nom anglès podria haver-se fixat inicialment com a descripció locativa del «joc del darrere» en taulers reversibles escacs-taules abans de la seva naturalització anglesa posterior.
+**Enunciat:** El joc anomenat modernament *backgammon* s'articula com a evolució de la tradició catalana i mediterrània de *taules/totes taules* i, en la seva funcionalitat d'origen, opera com a mecanisme de desempat dels escacs quan s'arriba a situació assimilada a *mat ofegat* (expressió «fer taules»), amb una mecànica de retirada que representa la fugida d'un exèrcit escapçat sense rei.
 
 **Prediccions observables:**
 - Cadena documental catalana/aragonesa/valenciana/mallorquina de *taules* i *totes taules* amb cronologia coherent (s. XI–XV).
 - Evidència de taulers reversibles on escacs ocupa l'anvers i taules el revers, amb ús social recurrent.
-- Fonts primerenques angleses (s. XVII–XVIII) amb ús del terme sense justificació mecànica explícita, i reinterpretació mecànica consolidada més tard.
-- Convergència mecànica entre *totes taules* i backgammon (15 fitxes, circuit, captura amb reentrada, cursa de retorn).
+- Fonts textuals que vinculin la noció d'empat/«fer taules» en escacs amb l'entrada al joc de taules com a resolució funcional.
+- Convergència mecànica entre *totes taules* i backgammon (15 fitxes de rang idèntic, absència de rei, captura amb reentrada, cursa de retirada).
 
 **Supòsits:**
 - La documentació ibèrica disponible és representativa d'una tradició de joc transferible culturalment.
-- La lectura locativa del terme en anglès és filològicament plausible en el context de taulers de doble cara.
+- La causalitat funcional escacs→taules és recuperable per convergència de terminologia, materialitat i mecànica.
 - La «naturalització anglesa» pot haver ocultat o diluït l'origen funcional anterior.
 
 **Condicions d'abandonament:**
-- Prova primerenca i explícita que el nom anglès neix amb sentit mecànic i no locatiu.
+- Evidència sòlida que negui el vincle funcional entre escenaris d'empat en escacs i ús del joc de taules.
 - Absència de continuïtat verificable entre *totes taules* medieval i pràctiques que arribin al context anglès modern.
-- Evidència que la dualitat anvers/revers no té rellevància en la tradició mediterrània aportada.
+- Prova que la composició del joc (15 peces homogènies sense rei) no té cap lectura causal de retirada.
 
 **Nucli no negociable:**
-- La tesi sosté una continuïtat històrica mediterrània rellevant i una lectura inicial locativa del nom en la seva transferència.
+- H3 requereix simultàniament origen mediterrani, funció de desempat escacs→taules i lectura de retirada d'un cos sense rei.
 
 **Registre de modificacions:**
 
 | # | Data | Modificació | Motivació | Evidència |
 |---|------|-------------|-----------|-----------|
 | 1 | 2026-04-05 | Alta inicial d'H3 a partir de l'Apèndix II facilitat per l'investigador | Incorporació de nova teoria | EID-003 |
+| 2 | 2026-04-05 | Afegida causalitat explícita «mat ofegat/fer taules» i mecànica de fugida d'exèrcit escapçat sense rei | Correcció metodològica del nucli evidencial d'H3 | EID-004 |

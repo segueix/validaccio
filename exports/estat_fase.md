@@ -4,19 +4,18 @@ Data de verificació: 2026-04-05.
 
 ## Fase inferida actual
 
-**Fase 4 — Sensibilitat (completada).**
+**Fase 4 — Sensibilitat (recalculada amb EID-004).**
 
 ## Canvi aplicat
 
-- Escenari C executat amb tres perfils de prior declarats per l'investigador.
-- Informe de sensibilitat consolidat a `evidence/sensibilitat.md` i `exports/analisi_final.md`.
+- Corregit el nucli evidencial d'H3 amb EID-004 (desempat i composició de retirada).
+- Reexecutat Escenari C amb priors declarats.
 
 ## Resultat de fase
 
-- H3 no imposa canvi de paradigma sota Perfil 1 (biaix ortodox).
-- H3 només lidera sota Perfil 3 (prior favorable contextualitzat).
-- Diagnòstic actual: robustesa d'H3 baixa-moderada amb matriu vigent.
+- H3 passa a liderar en Perfils 2 i 3.
+- H1 manté lideratge només al Perfil 1.
 
 ## Pas següent proposat
 
-Passar a **Fase 5 — Redacció** només si l'investigador accepta aquest diagnòstic provisional, o bé regressar a Fase 2 per cercar noves evidències diagnòstiques.
+Si l'investigador valida la correcció, passar a Fase 5 (redacció amb traça AID/EID).
