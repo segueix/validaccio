@@ -2,24 +2,21 @@
 
 Data de verificació: 2026-04-05.
 
-## Fase inferida
+## Fase inferida actual
 
-**Fase 0 — Mètode (prerequisit pendent).**
+**Fase 4 — Sensibilitat (en progrés).**
 
-## Evidència de bloqueig
+## Canvi aplicat
 
-- No existeix el tag de repositori `v1.0-metode`.
+- S'ha registrat l'ordre de l'investigador de passar a la fase següent.
+- S'ha consolidat una matriu de treball a `exports/matriu_validada.md`.
+- S'ha generat l'informe unificat de sensibilitat a `exports/analisi_final.md`.
 
-## Acció recomanada abans de continuar
+## Condició pendent per tancar fase 4
 
-Abans d'entrar en la construcció de matriu ACH del cas de backgammon, cal tancar i validar:
+- Falta declarar priors específics d'H1/H2/H3 a `evidence/priors.md`.
+- Sense priors, l'escenari C de sensibilitat queda incomplet.
 
-1. `docs/marc_validacio.md`
-2. `docs/regles_derrota.md`
-3. `docs/glossari.md`
+## Pas següent proposat
 
-Després, crear el tag `v1.0-metode` i confirmar-ho explícitament.
-
-## Pas següent proposat a l'investigador
-
-Quan el tag existeixi, es podrà passar a la fase d'hipòtesis/evidències del cas aportat i formalitzar-lo als fitxers de `evidence/`.
+Un cop es declarin priors, recalcular escenari C i passar a Fase 5 (redacció amb traça AID/EID).
