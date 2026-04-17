@@ -4,7 +4,8 @@
 > Cada hipòtesi ha d'incloure prediccions observables, supòsits explícits,
 > condicions d'abandonament i nucli no negociable.
 > Consulta `docs/regles_derrota.md` per a les regles d'admissibilitat.
-> Ordre nomenclàtric obligatori: **H1 = Consens/Ortodòxia**, **H2 = Hipòtesi Ombra**, **H3 = Nova Teoria**.
+> Ordre nomenclàtric base del marc: **H1 = Consens/Ortodòxia**, **H2 = Hipòtesi Ombra**, **H3 = Nova Teoria**.
+> **Excepció aplicada en aquest cas per instrucció explícita de l'investigador:** confrontació directa **H1 (tradicional)** vs **H2 (revisionista)**, sense hipòtesi ombra operativa.
 
 ---
 
@@ -62,32 +63,51 @@
 
 ---
 
-## H2 — [NO APLICABLE: l'investigador ha declarat explícitament que no hi ha hipòtesi ombra en aquesta confrontació]
+## H2 — Teoria revisionista: el T.I.6 és una compilació tardana (finals s. XV–XVI) atribuïda retrospectivament a Alfons X
 
-> La confrontació és estrictament **H1 (Consens alfonsí) vs. H3 (Teoria revisionista)**. La secció H2 es reserva buida conforme a la instrucció de l'investigador.
+> Formulació extreta de la font declarada `Hipotesis Revisionista.pdf`, reindexada com a **H2** per instrucció explícita de l'investigador i per confrontar-la directament amb **H1 (hipòtesi tradicional)**.
 
----
-
-## H3 — [Pendent de formulació: teoria revisionista de Daniel Mas de Xaxars]
-
-> Aquesta secció serà completada per l'agent en la fase següent, després de la revisió i aprovació de H1 per part de l'investigador.
-
-**Enunciat:** [pendent]
+**Enunciat:** El manuscrit T.I.6 no seria una obra original acabada al scriptorium alfonsí el 1283, sinó una compilació/reelaboració substancialment posterior (probablement entre finals del segle XV i finals del XVI), integrada en un context erudit granadí i atribuïda retrospectivament a Alfons X en la seva recepció tardana.
 
 **Prediccions observables:**
-- [pendent]
+
+*Si H2 és certa, esperaríem trobar…*
+- Una cadena de custòdia feble abans de 1591, amb atribució alfonsina tardana i no contínua en els inventaris previs.
+- Indicis interns semàntics i metadiscursius compatibles amb un horitzó redaccional posterior al s. XIII.
+- Estructura textual i arquitectures combinatòries més coherents amb síntesis tardomedievals/renaixentistes que amb una redacció unitària de 1283.
+- Tensions lingüístiques i terminològiques que apuntin a capes redaccionals diverses i possible circulació catalano-valenciana/castellana.
+- Evidència material (pigments/suport) compatible amb un terminus post quem que no obligui a fixar data al 1283.
+
+*Si H2 és certa, NO esperaríem trobar…*
+- Prova documental robusta i inequívoca d'atribució a Alfons X anterior al darrer terç del s. XVI.
+- Coherència absoluta de totes les capes del text amb una única campanya redaccional del s. XIII.
+- Evidència material que forci de manera exclusiva una datació tancada al 1283.
 
 **Supòsits:**
-- [pendent]
+
+1. L'atribució de 1591 pot reflectir una operació de recepció/canonització tardana, no necessàriament l'origen del text.
+2. La història redaccional dels corpus atribuïts a Alfons X pot incloure reelaboracions, interpolacions i anonimat col·laboratiu.
+3. Els indicis interns (semàntics, estructurals, zoològics i terminològics) tenen valor diagnòstic acumulatiu quan convergeixen.
+4. La compatibilitat material amb diverses finestres cronològiques no equival a prova positiva de datació 1283.
 
 **Condicions d'abandonament:**
-- [pendent]
+
+- Abandonaria H2 si aparegués documentació primària sòlida i inequívoca, anterior al s. XIV, que identifiqués explícitament el T.I.6 actual (no un altre còdex de jocs) com a obra alfonsina ja fixada.
+- Abandonaria H2 si es demostrés que els passatges adduïts com a indicis posteriors tenen una explicació filològica unívoca i completa dins d'un marc estrictament del s. XIII.
+- Abandonaria H2 si l'anàlisi material establís una datació convergent i exclusiva del conjunt (suport, tinta, pigments i estratigrafia) al voltant de 1283 sense cap fase posterior substantiva.
 
 **Nucli no negociable:**
-- [pendent]
+
+- El T.I.6 conservat és un objecte textual estratificat i la seva atribució forta a una redacció original alfonsina única de 1283 no queda demostrada; la hipòtesi de compilació/reelaboració tardana és metodològicament preferible mentre no hi hagi evidència diagnòstica contrària.
 
 **Registre de modificacions:**
 
 | # | Data | Modificació | Motivació | Evidència |
 |---|------|-------------|-----------|-----------|
-| — | — | [cap modificació fins ara] | — | — |
+| 1 | 2026-04-17 | Reindexació de la teoria revisionista a H2 i eliminació de l'espai reservat de hipòtesi ombra | Instrucció explícita de l'investigador per confrontació directa H1 vs H2 | Hipotesis Revisionista.pdf |
+
+---
+
+## H3 — [NO APLICABLE en aquesta confrontació]
+
+> Per instrucció explícita de l'investigador, la confrontació operativa d'aquest cas queda definida com **H1 (tradicional)** vs **H2 (revisionista)**.
