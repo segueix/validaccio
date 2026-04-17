@@ -13,6 +13,13 @@
 
 ## Què falta (obligatori)
 
+## Document a revisar ara (acció immediata)
+
+Revisa **primer** aquest fitxer:
+- `exports/matriu_per_doble_codificacio.md`
+
+Aquest és el document operatiu de revisió humana (doble codificació) i és el bloqueig actual abans de sensibilitat.
+
 ### 1) Validació humana de doble codificació (Fase 3b)
 
 Cal completar el checklist i registrar discrepàncies (si n'hi ha) al document:
