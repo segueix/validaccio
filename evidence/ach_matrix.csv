@@ -1,2 +1,6 @@
 EID,H1,H2,H3,diagnostic,justificacio
-EID-001,C|I|N,C|I|N,C|I|N,si|no,[breu justificació de cada assignació]
+EID-001,I,C,N,si,"La formulació de compilació tardana (XV–XVI) contradiu el nucli temporal d'H1 (1283) i és coherent amb H2; H3 és no operativa en aquest cas."
+EID-002,I,C,N,si,"Una cadena de custòdia pre-1591 feble és inconsistent amb l'atribució forta d'H1 i dona suport a H2; H3 queda neutral per no aplicable."
+EID-003,N,C,N,si,"La compatibilitat material amb finestres cronològiques àmplies no derrota per si sola H1, però és coherent amb la tesi de no-fixació de 1283 a H2; H3 neutral."
+EID-004,I,C,N,si,"La lectura dels inventaris 1483/1536/1591 com a objectes potencialment diferents debilita la continuïtat assumida per H1 i reforça H2."
+EID-005,I,C,N,si,"Si la primera atribució explícita a Alfons X és tardana (1591), això tensiona H1 i encaixa amb l'atribució retrospectiva plantejada per H2."
