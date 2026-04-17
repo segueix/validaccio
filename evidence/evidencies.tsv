@@ -1,2 +1,6 @@
 EID	font	pagines	tipus	data_interval	fiabilitat	familia_dep	interpretacio_minima
-EID-001	[citekey]	p.X-Y	documental|iconografica|arqueologica|numismatica|filologica|contextual	[data o interval]	alta|moderada|baixa	independent|[nom_familia]	[què diu literalment la font]
+EID-001	Hipotesis Revisionista.pdf	p. 1	filologica	c. 2026	moderada	marc_revisionista	El text formula explícitament que el T.I.6 seria una compilació tardana (finals s. XV–XVI) atribuïda retrospectivament a Alfons X.
+EID-002	Hipotesis Revisionista.pdf	p. 1-2	documental	c. 2026	moderada	cadena_custodia	S'afirma que la cadena de custòdia verificable abans de 1591 és insuficient per sostenir atribució forta al 1283.
+EID-003	Hipotesis Revisionista.pdf	p. 2	arqueologica	c. 2026	moderada	analisi_material	S'indica que l'evidència material de paleta/pigments, en clau de terminus post quem, no fixa necessàriament la data de 1283.
+EID-004	Hipotesis Revisionista.pdf	p. 9	documental	1483-1591	moderada	inventaris	Es presenten tres registres (1483, 1536, 1591) i es defensa que no està demostrat que descriguin inequívocament el mateix objecte codicològic.
+EID-005	Hipotesis Revisionista.pdf	p. 9	contextual	1591	moderada	atribucio_tardana	La primera atribució explícita a Alfons X es documenta al registre de 1591 segons el relat del document.
