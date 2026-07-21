@@ -3,6 +3,13 @@
 import { ChangeEvent, FormEvent, useEffect, useRef, useState } from "react";
 import ProjectManager from "./project-manager";
 import {
+  createProjectPackage,
+  MAX_PROJECT_PACKAGE_BYTES,
+  parseProjectPackage,
+  ProjectPackageError,
+  serializeProjectPackage,
+} from "../lib/project-package";
+import {
   createProjectRecord,
   duplicateProjectRecord,
   metadataRepository,
@@ -287,37 +294,72 @@ export default function Workspace() {
     setNotice(granted ? "Espai local protegit pel navegador" : "Còpia periòdica recomanada");
   }
 
-  function exportProject() {
-    const payload = JSON.stringify({ format: "validaccio-project", version: 1, project }, null, 2);
-    const blob = new Blob([payload], { type: "application/json" });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = `${project.id || "projecte"}.validaccio.json`;
-    link.click();
-    URL.revokeObjectURL(link.href);
-    setNotice("Còpia local exportada");
+  async function exportProject() {
+    try {
+      const projectPackage = await createProjectPackage(project);
+      const blob = new Blob([serializeProjectPackage(projectPackage)], {
+        type: "application/json",
+      });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = `${project.id || "projecte"}.validaccio.json`;
+      document.body.append(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(link.href), 0);
+      setNotice("Còpia verificada exportada");
+    } catch {
+      setNotice("No s’ha pogut preparar la còpia local");
+    }
   }
 
-  function importProject(event: ChangeEvent<HTMLInputElement>) {
+  async function importProject(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     if (!file) return;
-    file.text()
-      .then((text) => JSON.parse(text))
-      .then((data) => {
-        if (data?.format !== "validaccio-project" || !data.project?.title) throw new Error("format");
-        const importedProject = normalizeProjectRecord(data.project);
-        return projectRepository.save(importedProject);
-      })
-      .then((importedProject) => {
-        setProjects((current) => [
-          importedProject,
-          ...current.filter((item) => item.id !== importedProject.id),
-        ]);
-        setNotice("Projecte restaurat localment");
-        return openProject(importedProject);
-      })
-      .catch(() => setNotice("El fitxer no és un projecte Validacció vàlid"));
-    event.target.value = "";
+
+    try {
+      if (file.size > MAX_PROJECT_PACKAGE_BYTES) {
+        throw new ProjectPackageError(
+          "invalid-data",
+          "La còpia supera el límit de 5 MB.",
+        );
+      }
+
+      const imported = await parseProjectPackage(await file.text());
+      let projectToSave = imported.project;
+      const alreadyExists = projects.some(
+        (item) => item.id === imported.project.id,
+      );
+
+      if (alreadyExists) {
+        const replace = window.confirm(
+          `Ja existeix «${imported.project.title}». Vols substituir-ne les dades? Si cancel·les, s’importarà com una còpia independent.`,
+        );
+        if (!replace) {
+          projectToSave = duplicateProjectRecord(imported.project);
+        }
+      }
+
+      const savedProject = await projectRepository.save(projectToSave);
+      setProjects((current) => [
+        savedProject,
+        ...current.filter((item) => item.id !== savedProject.id),
+      ]);
+      await openProject(savedProject);
+      setNotice(
+        imported.source === "legacy"
+          ? "Còpia antiga restaurada i actualitzada"
+          : "Integritat verificada · projecte restaurat",
+      );
+    } catch (error) {
+      setNotice(
+        error instanceof ProjectPackageError
+          ? error.message
+          : "El fitxer no és un projecte Validacció vàlid",
+      );
+    } finally {
+      event.target.value = "";
+    }
   }
 
   return (
@@ -532,12 +574,12 @@ function ModuleView({
           <button className="action-card" onClick={onExport}>
             <span className="action-icon">↓</span>
             <strong>Exporta el projecte</strong>
-            <small>Descarrega les dades actuals en format Validacció JSON.</small>
+            <small>Descarrega un paquet versionat amb manifest i integritat SHA-256.</small>
           </button>
           <button className="action-card" onClick={onImport}>
             <span className="action-icon">↑</span>
             <strong>Restaura una còpia</strong>
-            <small>Importa un projecte desat anteriorment en aquest dispositiu.</small>
+            <small>Valida la còpia abans de restaurar-la o substituir dades locals.</small>
           </button>
         </section>
       ) : view === "capitols" ? (
