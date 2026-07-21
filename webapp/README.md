@@ -46,3 +46,11 @@ Proves específiques:
 ```bash
 npm run test:unit
 ```
+
+## Múltiples projectes
+
+La funció 003 afegeix una biblioteca local accessible des del selector superior.
+Permet crear, obrir, reanomenar, duplicar i arxivar projectes. Els projectes
+arxivats es poden restaurar o eliminar amb confirmació. L'identificador del
+projecte actiu es conserva a `metadata` i l'esquema local v3 migra els registres
+anteriors sense enviar cap dada fora del navegador.
