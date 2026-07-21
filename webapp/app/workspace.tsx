@@ -1,6 +1,12 @@
 "use client";
 
 import { ChangeEvent, FormEvent, useEffect, useRef, useState } from "react";
+import {
+  normalizeProjectRecord,
+  projectRepository,
+  PROJECT_DATA_VERSION,
+  type ProjectRecord,
+} from "../lib/local-db";
 
 type ViewId =
   | "tauler"
@@ -13,22 +19,17 @@ type ViewId =
   | "validacio"
   | "exporta";
 
-type Project = {
-  id: string;
-  title: string;
-  subtitle: string;
-  updatedAt: string;
-  phase: number;
-  chapters: number;
-  words: number;
-  notes: number;
-};
+type Project = ProjectRecord;
+
+const initialTimestamp = new Date().toISOString();
 
 const defaultProject: Project = {
   id: "origen-tarot",
   title: "L’origen del Tarot",
   subtitle: "Obra en preparació · espai local",
-  updatedAt: new Date().toISOString(),
+  createdAt: initialTimestamp,
+  updatedAt: initialTimestamp,
+  dataVersion: PROJECT_DATA_VERSION,
   phase: 1,
   chapters: 13,
   words: 58951,
@@ -108,34 +109,12 @@ const moduleCopy: Record<Exclude<ViewId, "tauler">, { eyebrow: string; title: st
   },
 };
 
-function openDb(): Promise<IDBDatabase> {
-  return new Promise((resolve, reject) => {
-    const request = indexedDB.open("validaccio-local", 1);
-    request.onupgradeneeded = () => {
-      const db = request.result;
-      if (!db.objectStoreNames.contains("workspace")) db.createObjectStore("workspace");
-    };
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error);
-  });
-}
-
-async function loadProject(): Promise<Project | null> {
-  const db = await openDb();
-  return new Promise((resolve, reject) => {
-    const request = db.transaction("workspace", "readonly").objectStore("workspace").get("project");
-    request.onsuccess = () => resolve((request.result as Project | undefined) ?? null);
-    request.onerror = () => reject(request.error);
-  });
+function loadProject(): Promise<Project | null> {
+  return projectRepository.get(defaultProject.id);
 }
 
 async function persistProject(project: Project) {
-  const db = await openDb();
-  return new Promise<void>((resolve, reject) => {
-    const request = db.transaction("workspace", "readwrite").objectStore("workspace").put(project, "project");
-    request.onsuccess = () => resolve();
-    request.onerror = () => reject(request.error);
-  });
+  await projectRepository.save(project);
 }
 
 function formatNumber(value: number) {
@@ -217,9 +196,10 @@ export default function Workspace() {
       .then((text) => JSON.parse(text))
       .then((data) => {
         if (data?.format !== "validaccio-project" || !data.project?.title) throw new Error("format");
+        const importedProject = normalizeProjectRecord(data.project);
         setSaved(false);
-        setProject(data.project as Project);
-        setDraftTitle(data.project.title);
+        setProject(importedProject);
+        setDraftTitle(importedProject.title);
         setNotice("Projecte restaurat localment");
         setView("tauler");
       })
