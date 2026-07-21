@@ -48,3 +48,8 @@ Documentat a [`docs/marc_validacio.md`](docs/marc_validacio.md).
 
 1. Tancar el mètode (20%): fixar `marc_validacio.md`, `regles_derrota.md` i `glossari.md`. Commit etiquetat `v1.0-metode`.
 2. Aplicar el protocol a la teoria concreta (80%): hipòtesis → evidències → matriu → sensibilitat → redacció.
+
+
+## Webapp local-first
+
+La primera interfície navegable és a [`webapp/`](webapp/). Mostra el mapa complet del producte i desa l’estat del projecte exclusivament al navegador. Les dades del manuscrit i de les fonts no formen part del codi.
