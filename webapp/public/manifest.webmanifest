@@ -1,0 +1,9 @@
+{
+  "name": "Validacció",
+  "short_name": "Validacció",
+  "description": "Espai local per validar teories històriques i redactar obres traçables.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f4f4ef",
+  "theme_color": "#153e36"
+}
