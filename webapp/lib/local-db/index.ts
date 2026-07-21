@@ -6,6 +6,8 @@ export {
 } from "./database.ts";
 export { metadataRepository, projectRepository } from "./repositories.ts";
 export {
+  createProjectRecord,
+  duplicateProjectRecord,
   normalizeProjectRecord,
   PROJECT_DATA_VERSION,
   type DatabaseMetadata,

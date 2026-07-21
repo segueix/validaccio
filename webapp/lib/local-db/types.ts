@@ -1,4 +1,4 @@
-export const PROJECT_DATA_VERSION = 1 as const;
+export const PROJECT_DATA_VERSION = 2 as const;
 
 export type ProjectRecord = {
   id: string;
@@ -7,6 +7,7 @@ export type ProjectRecord = {
   createdAt: string;
   updatedAt: string;
   dataVersion: number;
+  archivedAt: string | null;
   phase: number;
   chapters: number;
   words: number;
@@ -44,6 +45,7 @@ export function normalizeProjectRecord(
     createdAt: validDate(input.createdAt) ?? updatedAt,
     updatedAt,
     dataVersion: PROJECT_DATA_VERSION,
+    archivedAt: validDate(input.archivedAt),
     phase: nonNegativeInteger(input.phase),
     chapters: nonNegativeInteger(input.chapters),
     words: nonNegativeInteger(input.words),
@@ -59,4 +61,52 @@ function validDate(value: unknown): string | null {
 function nonNegativeInteger(value: unknown): number {
   if (typeof value !== "number" || !Number.isFinite(value)) return 0;
   return Math.max(0, Math.trunc(value));
+}
+
+
+export function createProjectRecord(
+  title: string,
+  id = createProjectId(),
+  date = new Date().toISOString(),
+): ProjectRecord {
+  return normalizeProjectRecord(
+    {
+      id,
+      title,
+      subtitle: "Obra en preparació · espai local",
+      createdAt: date,
+      updatedAt: date,
+      archivedAt: null,
+      phase: 0,
+      chapters: 0,
+      words: 0,
+      notes: 0,
+    },
+    date,
+  );
+}
+
+export function duplicateProjectRecord(
+  source: ProjectRecord,
+  id = createProjectId(),
+  date = new Date().toISOString(),
+): ProjectRecord {
+  return normalizeProjectRecord(
+    {
+      ...source,
+      id,
+      title: `${source.title} (còpia)`,
+      createdAt: date,
+      updatedAt: date,
+      archivedAt: null,
+    },
+    date,
+  );
+}
+
+function createProjectId() {
+  const suffix =
+    globalThis.crypto?.randomUUID?.() ??
+    `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  return `project-${suffix}`;
 }

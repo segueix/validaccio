@@ -2,7 +2,7 @@ import { normalizeProjectRecord, PROJECT_DATA_VERSION } from "./types.ts";
 
 export const LOCAL_DATABASE_SCHEMA = {
   name: "validaccio-local",
-  version: 2,
+  version: 3,
   dataVersion: PROJECT_DATA_VERSION,
   stores: {
     metadata: "metadata",
@@ -145,4 +145,18 @@ function upgradeDatabase(
       }
     };
   }
+  if (oldVersion < 3) {
+    const cursorRequest = projects.openCursor();
+    cursorRequest.onsuccess = () => {
+      const cursor = cursorRequest.result;
+      if (!cursor) return;
+      try {
+        cursor.update(normalizeProjectRecord(cursor.value));
+      } catch {
+        // Una entrada invàlida queda intacta per poder-la inspeccionar i recuperar.
+      }
+      cursor.continue();
+    };
+  }
+
 }

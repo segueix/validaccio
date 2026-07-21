@@ -50,6 +50,20 @@ class ProjectRepository extends IndexedDbRepository<ProjectRecord> {
     super("projects");
   }
 
+  override async get(id: string): Promise<ProjectRecord | null> {
+    const project = await super.get(id);
+    return project ? normalizeProjectRecord(project) : null;
+  }
+
+  override async getAll(): Promise<ProjectRecord[]> {
+    const projects = (await super.getAll()).map((project) =>
+      normalizeProjectRecord(project),
+    );
+    return projects.sort((left, right) =>
+      right.updatedAt.localeCompare(left.updatedAt),
+    );
+  }
+
   save(project: ProjectRecord): Promise<ProjectRecord> {
     return this.put(normalizeProjectRecord(project));
   }
