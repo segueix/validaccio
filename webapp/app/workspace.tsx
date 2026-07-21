@@ -1,7 +1,11 @@
 "use client";
 
 import { ChangeEvent, FormEvent, useEffect, useRef, useState } from "react";
+import ProjectManager from "./project-manager";
 import {
+  createProjectRecord,
+  duplicateProjectRecord,
+  metadataRepository,
   normalizeProjectRecord,
   projectRepository,
   PROJECT_DATA_VERSION,
@@ -30,6 +34,7 @@ const defaultProject: Project = {
   createdAt: initialTimestamp,
   updatedAt: initialTimestamp,
   dataVersion: PROJECT_DATA_VERSION,
+  archivedAt: null,
   phase: 1,
   chapters: 13,
   words: 58951,
@@ -109,12 +114,8 @@ const moduleCopy: Record<Exclude<ViewId, "tauler">, { eyebrow: string; title: st
   },
 };
 
-function loadProject(): Promise<Project | null> {
-  return projectRepository.get(defaultProject.id);
-}
-
-async function persistProject(project: Project) {
-  await projectRepository.save(project);
+function persistProject(project: Project) {
+  return projectRepository.save(project);
 }
 
 function formatNumber(value: number) {
@@ -127,20 +128,36 @@ export default function Workspace() {
   const [ready, setReady] = useState(false);
   const [saved, setSaved] = useState(true);
   const [notice, setNotice] = useState("Dades només en aquest dispositiu");
-  const [showRename, setShowRename] = useState(false);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [showProjects, setShowProjects] = useState(false);
+  const [renameTarget, setRenameTarget] = useState<Project | null>(null);
   const [draftTitle, setDraftTitle] = useState(defaultProject.title);
   const fileInput = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    loadProject()
-      .then((stored) => {
-        if (stored) {
-          setProject(stored);
-          setDraftTitle(stored.title);
-        } else {
-          return persistProject(defaultProject);
-        }
-      })
+    async function prepareWorkspace() {
+      let storedProjects = await projectRepository.getAll();
+      if (storedProjects.length === 0) {
+        storedProjects = [await persistProject(defaultProject)];
+      }
+
+      const activeMetadata = await metadataRepository.get("activeProjectId");
+      const activeId =
+        typeof activeMetadata?.value === "string" ? activeMetadata.value : null;
+      const activeProject =
+        storedProjects.find(
+          (stored) => stored.id === activeId && !stored.archivedAt,
+        ) ??
+        storedProjects.find((stored) => !stored.archivedAt) ??
+        storedProjects[0];
+
+      setProjects(storedProjects);
+      setProject(activeProject);
+      setDraftTitle(activeProject.title);
+      await metadataRepository.set("activeProjectId", activeProject.id);
+    }
+
+    prepareWorkspace()
       .catch(() => setNotice("No s’ha pogut obrir l’espai local"))
       .finally(() => setReady(true));
   }, []);
@@ -150,7 +167,13 @@ export default function Workspace() {
     const timer = window.setTimeout(() => {
       const next = { ...project, updatedAt: new Date().toISOString() };
       persistProject(next)
-        .then(() => setSaved(true))
+        .then((savedProject) => {
+          setProjects((current) => [
+            savedProject,
+            ...current.filter((item) => item.id !== savedProject.id),
+          ]);
+          setSaved(true);
+        })
         .catch(() => setNotice("Error en desar localment"));
     }, 350);
     return () => window.clearTimeout(timer);
@@ -160,13 +183,99 @@ export default function Workspace() {
     if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(() => undefined);
   }, []);
 
-  function renameProject(event: FormEvent) {
+  async function openProject(nextProject: Project) {
+    setProject(nextProject);
+    setDraftTitle(nextProject.title);
+    setView("tauler");
+    setShowProjects(false);
+    setSaved(true);
+    await metadataRepository.set("activeProjectId", nextProject.id);
+  }
+
+  async function createProject(title: string) {
+    const created = await projectRepository.save(createProjectRecord(title));
+    setProjects((current) => [created, ...current]);
+    setNotice("Projecte creat en aquest dispositiu");
+    await openProject(created);
+  }
+
+  function startRename(target: Project) {
+    setRenameTarget(target);
+    setDraftTitle(target.title);
+  }
+
+  async function renameProject(event: FormEvent) {
     event.preventDefault();
     const clean = draftTitle.trim();
-    if (!clean) return;
-    setSaved(false);
-    setProject((current) => ({ ...current, title: clean }));
-    setShowRename(false);
+    if (!clean || !renameTarget) return;
+
+    const renamed = await projectRepository.save({
+      ...renameTarget,
+      title: clean,
+      updatedAt: new Date().toISOString(),
+    });
+    setProjects((current) =>
+      current.map((item) => (item.id === renamed.id ? renamed : item)),
+    );
+    if (project.id === renamed.id) {
+      setProject(renamed);
+      setSaved(true);
+    }
+    setRenameTarget(null);
+    setNotice("Projecte reanomenat localment");
+  }
+
+  async function duplicateProject(source: Project) {
+    const duplicate = await projectRepository.save(
+      duplicateProjectRecord(source),
+    );
+    setProjects((current) => [duplicate, ...current]);
+    setNotice("Projecte duplicat en aquest dispositiu");
+    await openProject(duplicate);
+  }
+
+  async function archiveProject(target: Project) {
+    const activeProjects = projects.filter((item) => !item.archivedAt);
+    if (activeProjects.length <= 1) {
+      setNotice("Cal conservar almenys un projecte actiu");
+      return;
+    }
+
+    const archived = await projectRepository.save({
+      ...target,
+      archivedAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    });
+    const nextProjects = projects.map((item) =>
+      item.id === archived.id ? archived : item,
+    );
+    setProjects(nextProjects);
+    if (project.id === archived.id) {
+      const nextActive = nextProjects.find((item) => !item.archivedAt);
+      if (nextActive) await openProject(nextActive);
+    }
+    setShowProjects(true);
+    setNotice("Projecte arxivat");
+  }
+
+  async function restoreProject(target: Project) {
+    const restored = await projectRepository.save({
+      ...target,
+      archivedAt: null,
+      updatedAt: new Date().toISOString(),
+    });
+    setProjects((current) =>
+      current.map((item) => (item.id === restored.id ? restored : item)),
+    );
+    setNotice("Projecte restaurat");
+  }
+
+  async function deleteProject(target: Project) {
+    await projectRepository.delete(target.id);
+    setProjects((current) =>
+      current.filter((item) => item.id !== target.id),
+    );
+    setNotice("Projecte eliminat d’aquest dispositiu");
   }
 
   async function protectStorage() {
@@ -197,11 +306,15 @@ export default function Workspace() {
       .then((data) => {
         if (data?.format !== "validaccio-project" || !data.project?.title) throw new Error("format");
         const importedProject = normalizeProjectRecord(data.project);
-        setSaved(false);
-        setProject(importedProject);
-        setDraftTitle(importedProject.title);
+        return projectRepository.save(importedProject);
+      })
+      .then((importedProject) => {
+        setProjects((current) => [
+          importedProject,
+          ...current.filter((item) => item.id !== importedProject.id),
+        ]);
         setNotice("Projecte restaurat localment");
-        setView("tauler");
+        return openProject(importedProject);
       })
       .catch(() => setNotice("El fitxer no és un projecte Validacció vàlid"));
     event.target.value = "";
@@ -246,9 +359,12 @@ export default function Workspace() {
         <header className="topbar">
           <div className="project-switcher">
             <span className="book-chip">LT</span>
-            <button onClick={() => setShowRename(true)}>
+            <button
+              aria-label="Obre la biblioteca de projectes"
+              onClick={() => setShowProjects(true)}
+            >
               <strong>{project.title}</strong>
-              <small>{project.subtitle}</small>
+              <small>{projects.filter((item) => !item.archivedAt).length} projectes actius · canvia de projecte</small>
             </button>
           </div>
           <div className="top-actions">
@@ -271,8 +387,23 @@ export default function Workspace() {
 
       <input ref={fileInput} type="file" accept="application/json,.json" hidden onChange={importProject} />
 
-      {showRename && (
-        <div className="modal-backdrop" role="presentation" onMouseDown={() => setShowRename(false)}>
+      {showProjects && (
+        <ProjectManager
+          currentProjectId={project.id}
+          onArchive={archiveProject}
+          onClose={() => setShowProjects(false)}
+          onCreate={createProject}
+          onDelete={deleteProject}
+          onDuplicate={duplicateProject}
+          onOpen={openProject}
+          onRename={startRename}
+          onRestore={restoreProject}
+          projects={projects}
+        />
+      )}
+
+      {renameTarget && (
+        <div className="modal-backdrop" role="presentation" onMouseDown={() => setRenameTarget(null)}>
           <form className="modal" onSubmit={renameProject} onMouseDown={(event) => event.stopPropagation()}>
             <span className="eyebrow">Projecte local</span>
             <h2>Canvia el nom de l’obra</h2>
@@ -284,7 +415,7 @@ export default function Workspace() {
               onChange={(event) => setDraftTitle(event.target.value)}
             />
             <div className="modal-actions">
-              <button type="button" className="quiet-button" onClick={() => setShowRename(false)}>Cancel·la</button>
+              <button type="button" className="quiet-button" onClick={() => setRenameTarget(null)}>Cancel·la</button>
               <button className="primary-button" type="submit">Desa localment</button>
             </div>
           </form>
