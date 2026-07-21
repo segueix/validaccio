@@ -47,11 +47,11 @@ export type ProjectPackageErrorCode =
   | "integrity-mismatch";
 
 export class ProjectPackageError extends Error {
-  constructor(
-    readonly code: ProjectPackageErrorCode,
-    message: string,
-  ) {
+  readonly code: ProjectPackageErrorCode;
+
+  constructor(code: ProjectPackageErrorCode, message: string) {
     super(message);
+    this.code = code;
     this.name = "ProjectPackageError";
   }
 }
