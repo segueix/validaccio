@@ -1,0 +1,148 @@
+import { normalizeProjectRecord, PROJECT_DATA_VERSION } from "./types.ts";
+
+export const LOCAL_DATABASE_SCHEMA = {
+  name: "validaccio-local",
+  version: 2,
+  dataVersion: PROJECT_DATA_VERSION,
+  stores: {
+    metadata: "metadata",
+    projects: "projects",
+    legacyWorkspace: "workspace",
+  },
+} as const;
+
+export type LocalStoreName =
+  | typeof LOCAL_DATABASE_SCHEMA.stores.metadata
+  | typeof LOCAL_DATABASE_SCHEMA.stores.projects;
+
+let databasePromise: Promise<IDBDatabase> | null = null;
+
+export function openLocalDatabase(): Promise<IDBDatabase> {
+  if (databasePromise) return databasePromise;
+
+  databasePromise = new Promise((resolve, reject) => {
+    const request = indexedDB.open(
+      LOCAL_DATABASE_SCHEMA.name,
+      LOCAL_DATABASE_SCHEMA.version,
+    );
+
+    request.onupgradeneeded = (event) => {
+      upgradeDatabase(request.result, request.transaction, event.oldVersion);
+    };
+    request.onsuccess = () => {
+      const database = request.result;
+      database.onversionchange = () => {
+        database.close();
+        databasePromise = null;
+      };
+      resolve(database);
+    };
+    request.onblocked = () => {
+      databasePromise = null;
+      reject(new Error("Una altra pestanya bloqueja l’actualització de l’espai local"));
+    };
+    request.onerror = () => {
+      databasePromise = null;
+      reject(request.error ?? new Error("No s’ha pogut obrir l’espai local"));
+    };
+  });
+
+  return databasePromise;
+}
+
+export async function withTransaction<T>(
+  storeName: LocalStoreName,
+  mode: IDBTransactionMode,
+  operation: (store: IDBObjectStore) => Promise<T> | T,
+): Promise<T> {
+  const database = await openLocalDatabase();
+  const transaction = database.transaction(storeName, mode);
+  const completion = transactionCompletion(transaction);
+
+  try {
+    const result = await operation(transaction.objectStore(storeName));
+    await completion;
+    return result;
+  } catch (error) {
+    try {
+      transaction.abort();
+    } catch {
+      // La transacció ja pot haver finalitzat abans que l'operació llanci l'error.
+    }
+    await completion.catch(() => undefined);
+    throw error;
+  }
+}
+
+export function requestResult<T>(request: IDBRequest<T>): Promise<T> {
+  return new Promise((resolve, reject) => {
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+function transactionCompletion(transaction: IDBTransaction): Promise<void> {
+  return new Promise((resolve, reject) => {
+    transaction.oncomplete = () => resolve();
+    transaction.onabort = () =>
+      reject(transaction.error ?? new Error("La transacció local s’ha cancel·lat"));
+    transaction.onerror = () =>
+      reject(transaction.error ?? new Error("La transacció local ha fallat"));
+  });
+}
+
+function upgradeDatabase(
+  database: IDBDatabase,
+  transaction: IDBTransaction | null,
+  oldVersion: number,
+) {
+  if (!transaction) throw new Error("La migració no té cap transacció activa");
+
+  const metadata = database.objectStoreNames.contains(
+    LOCAL_DATABASE_SCHEMA.stores.metadata,
+  )
+    ? transaction.objectStore(LOCAL_DATABASE_SCHEMA.stores.metadata)
+    : database.createObjectStore(LOCAL_DATABASE_SCHEMA.stores.metadata, {
+        keyPath: "key",
+      });
+
+  const projects = database.objectStoreNames.contains(
+    LOCAL_DATABASE_SCHEMA.stores.projects,
+  )
+    ? transaction.objectStore(LOCAL_DATABASE_SCHEMA.stores.projects)
+    : database.createObjectStore(LOCAL_DATABASE_SCHEMA.stores.projects, {
+        keyPath: "id",
+      });
+
+  if (!projects.indexNames.contains("updatedAt")) {
+    projects.createIndex("updatedAt", "updatedAt");
+  }
+
+  metadata.put({
+    key: "schema",
+    value: {
+      databaseVersion: LOCAL_DATABASE_SCHEMA.version,
+      dataVersion: LOCAL_DATABASE_SCHEMA.dataVersion,
+    },
+    updatedAt: new Date().toISOString(),
+  });
+
+  if (
+    oldVersion < 2 &&
+    database.objectStoreNames.contains(
+      LOCAL_DATABASE_SCHEMA.stores.legacyWorkspace,
+    )
+  ) {
+    const legacyRequest = transaction
+      .objectStore(LOCAL_DATABASE_SCHEMA.stores.legacyWorkspace)
+      .get("project");
+    legacyRequest.onsuccess = () => {
+      if (!legacyRequest.result) return;
+      try {
+        projects.put(normalizeProjectRecord(legacyRequest.result));
+      } catch {
+        // Es conserva el magatzem antic perquè una dada invàlida es pugui recuperar manualment.
+      }
+    };
+  }
+}

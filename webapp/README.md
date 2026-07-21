@@ -32,3 +32,17 @@ Validació de producció:
 npm run lint
 npm run build
 ```
+
+## Persistència versionada
+
+La funció 002 separa la persistència de la interfície. IndexedDB utilitza un
+esquema explícit v2 amb magatzems `projects` i `metadata`, transaccions comunes
+i repositoris tipats. En obrir una base v1, el projecte de `workspace` es migra
+sense esborrar el magatzem antic, de manera que una migració incompleta continua
+sent recuperable.
+
+Proves específiques:
+
+```bash
+npm run test:unit
+```
