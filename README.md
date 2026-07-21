@@ -53,3 +53,7 @@ Documentat a [`docs/marc_validacio.md`](docs/marc_validacio.md).
 ## Webapp local-first
 
 La primera interfície navegable és a [`webapp/`](webapp/). Mostra el mapa complet del producte i desa l’estat del projecte exclusivament al navegador. Les dades del manuscrit i de les fonts no formen part del codi.
+
+## Pla d'implementació numerat
+
+El full de ruta canònic de la webapp és a [`docs/pla_implementacio_webapp.md`](docs/pla_implementacio_webapp.md). Cada funció té un número permanent: per iniciar-ne una implementació es pot demanar simplement `002`, `Implementa 209` o una forma equivalent.
