@@ -179,7 +179,7 @@ S'afegeix una fila després de cada funció acabada. No s'esborren entrades.
 | 2026-07-21 | 002/004/005/008 | `main` | PARCIAL | Base IndexedDB, JSON bàsic, shell PWA i interfície responsive inicials. |
 | 2026-07-21 | 501/503/505 | `main` + Sites | PARCIAL | Codi fusionat a main i desplegament privat existent; encara no automatitzat. |
 | 2026-07-21 | 002 | [PR #14](https://github.com/segueix/validaccio/pull/14) | FET | Esquema IndexedDB v2, transaccions, repositoris tipats i migració v1 fusionats a main. |
-| 2026-07-21 | 003 | `feat/003-gestio-projectes` | EN CURS | Biblioteca local per crear, obrir, reanomenar, duplicar, arxivar, restaurar i eliminar projectes; pendent de revisió i merge. |
+| 2026-07-21 | 003 | [PR #15](https://github.com/segueix/validaccio/pull/15) | EN CURS | Biblioteca local per crear, obrir, reanomenar, duplicar, arxivar, restaurar i eliminar projectes; pendent de revisió i merge. |
 
 ## 7. Definició global de «fet»
 
