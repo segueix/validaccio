@@ -174,3 +174,20 @@ El flux no és estrictament lineal. Si durant qualsevol fase es detecta una cond
 ### Principi general
 
 L'agent suggereix, recorda i adverteix. No imposa ni executa sense confirmació. El to és analític i subordinat: l'investigador condueix, l'agent il·lumina el camí.
+
+## Protocol d'implementació numerada de la webapp
+
+El catàleg canònic és `docs/pla_implementacio_webapp.md`.
+
+Quan la petició de l'usuari sigui només un número, o una expressió com `implementa N` o `fes la funció N`:
+
+1. Normalitza el número i localitza exactament l'ID al catàleg. No dedueixis una altra funció.
+2. Revisa les dependències i el codi actual. Si una dependència no està satisfeta, informa del bloqueig i indica l'ID previ; no ampliïs l'abast silenciosament.
+3. Crea una branca curta `feat/NNN-nom-breu` des de `main`.
+4. Implementa només l'abast i el criteri d'acceptació de l'ID.
+5. Mantén els principis local-first, sense manuscrits al repositori i sense API obligatòria.
+6. Executa lint, build i les proves afectades. No marquis `FET` si fallen.
+7. Actualitza l'estat i el registre del catàleg dins la mateixa PR.
+8. Obre la PR contra `main`; no despleguis el lloc publicat sense una ordre explícita de desplegament.
+
+Els IDs són permanents: no es renumeren ni es reutilitzen. Una funció descartada es marca `RETIRADA`.
