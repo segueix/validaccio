@@ -13,7 +13,6 @@ import {
   createProjectRecord,
   duplicateProjectRecord,
   metadataRepository,
-  normalizeProjectRecord,
   projectRepository,
   PROJECT_DATA_VERSION,
   type ProjectRecord,
