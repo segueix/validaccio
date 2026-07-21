@@ -180,7 +180,7 @@ S'afegeix una fila després de cada funció acabada. No s'esborren entrades.
 | 2026-07-21 | 501/503/505 | `main` + Sites | PARCIAL | Codi fusionat a main i desplegament privat existent; encara no automatitzat. |
 | 2026-07-21 | 002 | [PR #14](https://github.com/segueix/validaccio/pull/14) | FET | Esquema IndexedDB v2, transaccions, repositoris tipats i migració v1 fusionats a main. |
 | 2026-07-21 | 003 | [PR #15](https://github.com/segueix/validaccio/pull/15) | FET | Biblioteca local de múltiples projectes fusionada a main. |
-| 2026-07-21 | 004 | `feat/004-copia-portatil` | EN CURS | Paquet v2 amb manifest, SHA-256, límit de mida, validació prèvia i compatibilitat v1; pendent de revisió i merge. |
+| 2026-07-21 | 004 | [PR #16](https://github.com/segueix/validaccio/pull/16) | EN CURS | Paquet v2 amb manifest, SHA-256, límit de mida, validació prèvia i compatibilitat v1; pendent de revisió i merge. |
 
 ## 7. Definició global de «fet»
 
