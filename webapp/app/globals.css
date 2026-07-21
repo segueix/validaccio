@@ -183,3 +183,84 @@ button { color: inherit; }
   .chapter-list button { grid-template-columns: 36px 1fr auto; }
   .chapter-list small { display: none; }
 }
+
+
+/* Gestió local de projectes */
+.project-manager-backdrop {
+  position: fixed; inset: 0; z-index: 30; overflow-y: auto;
+  padding: 34px; background: rgba(16,31,27,.62); backdrop-filter: blur(5px);
+}
+.project-manager {
+  width: min(1040px, 100%); min-height: calc(100vh - 68px); margin: 0 auto;
+  padding: 38px; border-radius: 18px; background: var(--paper);
+  box-shadow: 0 35px 100px rgba(0,0,0,.24);
+}
+.project-manager-header {
+  display: flex; align-items: start; justify-content: space-between; gap: 30px;
+  padding-bottom: 28px; border-bottom: 1px solid var(--line);
+}
+.project-manager-header h2 {
+  margin: 9px 0 7px; font: 600 34px Georgia, serif; letter-spacing: -.025em;
+}
+.project-manager-header p, .project-empty {
+  margin: 0; color: var(--muted); font-size: 12px; line-height: 1.55;
+}
+.manager-close {
+  width: 38px; height: 38px; border: 1px solid var(--line); border-radius: 50%;
+  background: white; cursor: pointer; font-size: 22px; line-height: 1;
+}
+.new-project-form { max-width: 650px; padding: 28px 0; }
+.new-project-form label {
+  display: block; margin-bottom: 8px; font-size: 11px; font-weight: 800;
+}
+.new-project-form > div { display: flex; gap: 9px; }
+.new-project-form input {
+  min-width: 0; flex: 1; padding: 12px 13px; border: 1px solid var(--line);
+  border-radius: 8px; background: white; outline: none;
+}
+.new-project-form input:focus {
+  border-color: var(--forest-2); box-shadow: 0 0 0 3px rgba(36,91,79,.12);
+}
+.primary-button:disabled, .text-button:disabled {
+  cursor: not-allowed; opacity: .42;
+}
+.project-section { padding-top: 24px; }
+.project-section + .project-section { margin-top: 26px; border-top: 1px solid var(--line); }
+.project-section-title {
+  display: flex; align-items: center; gap: 9px; margin-bottom: 13px;
+}
+.project-section-title h3 { margin: 0; font: 700 18px Georgia, serif; }
+.project-section-title span {
+  min-width: 22px; padding: 3px 6px; border-radius: 9px;
+  background: var(--sand); color: var(--muted); text-align: center; font-size: 10px;
+}
+.project-grid { display: grid; gap: 10px; }
+.project-card {
+  display: grid; grid-template-columns: minmax(230px, 1fr) auto;
+  align-items: center; gap: 12px 22px; padding: 17px 19px;
+  border: 1px solid var(--line); border-radius: 12px; background: white;
+}
+.project-card.current { border-color: #9cbcaf; box-shadow: inset 3px 0 var(--forest-2); }
+.project-card-copy { min-width: 0; display: flex; align-items: center; gap: 13px; }
+.project-card-copy > div { min-width: 0; }
+.project-card-copy strong, .project-card-copy small { display: block; }
+.project-card-copy strong {
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font: 700 15px Georgia, serif;
+}
+.project-card-copy small { margin-top: 5px; color: var(--muted); font-size: 10px; }
+.project-card-actions {
+  grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 16px;
+  padding-left: 48px;
+}
+.danger-text { color: #9b4238; }
+
+@media (max-width: 720px) {
+  .project-manager-backdrop { padding: 0; }
+  .project-manager { min-height: 100vh; padding: 26px 18px 90px; border-radius: 0; }
+  .project-manager-header h2 { font-size: 28px; }
+  .new-project-form > div { display: grid; }
+  .project-card { grid-template-columns: 1fr; }
+  .project-card .status-chip { justify-self: start; }
+  .project-card-actions { padding-left: 0; gap: 13px; }
+}
