@@ -60,8 +60,8 @@ Prioritats: **P0** imprescindible per al primer ús real; **P1** nucli metodolò
 | ID | Funció | Prioritat | Depèn de | Estat | Criteri d'acceptació |
 |---:|---|:---:|---|---|---|
 | **001** | Interfície base i navegació | P0 | — | **FET** | Dashboard responsive amb accés visible a fonts, hipòtesis, evidències, ACH, sensibilitat, capítols, validació i exportació. |
-| **002** | Repositori local versionat | P0 | 001 | **EN CURS** | IndexedDB amb esquema explícit, transaccions, repositoris tipats i versió de dades; la base actual només desa metadades bàsiques. |
-| **003** | Gestió de múltiples projectes | P0 | 002 | **PENDENT** | Crear, obrir, reanomenar, duplicar, arxivar i eliminar projectes amb confirmació i pantalla de selecció. |
+| **002** | Repositori local versionat | P0 | 001 | **FET** | IndexedDB amb esquema explícit, transaccions, repositoris tipats i versió de dades; la base actual només desa metadades bàsiques. |
+| **003** | Gestió de múltiples projectes | P0 | 002 | **EN CURS** | Crear, obrir, reanomenar, duplicar, arxivar i eliminar projectes amb confirmació i pantalla de selecció. |
 | **004** | Còpia portàtil d'un projecte | P0 | 002 | **PARCIAL** | Exportar i importar un paquet validat amb manifest, versió, dades i comprovació d'integritat; ara només hi ha JSON bàsic. |
 | **005** | PWA instal·lable i offline | P1 | 001 | **PARCIAL** | Instal·lació al Chromebook, arrencada sense xarxa, recursos versionats i actualització segura sense perdre dades. |
 | **006** | Salut de l'emmagatzematge | P0 | 002, 004 | **PENDENT** | Mostrar ús/quota, persistència concedida, última còpia, avisos de risc i acció de recuperació. |
@@ -178,7 +178,8 @@ S'afegeix una fila després de cada funció acabada. No s'esborren entrades.
 | 2026-07-21 | 001 | `main` | FET | Primera interfície navegable i responsive. |
 | 2026-07-21 | 002/004/005/008 | `main` | PARCIAL | Base IndexedDB, JSON bàsic, shell PWA i interfície responsive inicials. |
 | 2026-07-21 | 501/503/505 | `main` + Sites | PARCIAL | Codi fusionat a main i desplegament privat existent; encara no automatitzat. |
-| 2026-07-21 | 002 | [PR #14](https://github.com/segueix/validaccio/pull/14) | EN CURS | Esquema IndexedDB v2, transaccions, repositoris tipats, migració v1 i proves unitàries; pendent de revisió i merge. |
+| 2026-07-21 | 002 | [PR #14](https://github.com/segueix/validaccio/pull/14) | FET | Esquema IndexedDB v2, transaccions, repositoris tipats i migració v1 fusionats a main. |
+| 2026-07-21 | 003 | `feat/003-gestio-projectes` | EN CURS | Biblioteca local per crear, obrir, reanomenar, duplicar, arxivar, restaurar i eliminar projectes; pendent de revisió i merge. |
 
 ## 7. Definició global de «fet»
 
