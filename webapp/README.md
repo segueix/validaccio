@@ -54,3 +54,11 @@ Permet crear, obrir, reanomenar, duplicar i arxivar projectes. Els projectes
 arxivats es poden restaurar o eliminar amb confirmació. L'identificador del
 projecte actiu es conserva a `metadata` i l'esquema local v3 migra els registres
 anteriors sense enviar cap dada fora del navegador.
+
+## Còpies portàtils verificades
+
+La funció 004 exporta un paquet JSON v2 amb manifest, versió de dades i checksum
+SHA-256. Abans de restaurar-lo, la webapp valida el format, la versió, la
+coherència del manifest i la integritat del contingut. Les còpies v1 continuen
+sent importables i s'actualitzen al model actual. Si el projecte ja existeix,
+l'usuari decideix si el substitueix o l'importa com una còpia independent.
