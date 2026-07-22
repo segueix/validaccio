@@ -191,3 +191,12 @@ Quan la petició de l'usuari sigui només un número, o una expressió com `impl
 8. Obre la PR contra `main`; no despleguis el lloc publicat sense una ordre explícita de desplegament.
 
 Els IDs són permanents: no es renumeren ni es reutilitzen. Una funció descartada es marca `RETIRADA`.
+
+## Reconciliació obligatòria del planning
+
+Abans d'implementar un número nou, revisa `docs/pla_implementacio_webapp.md` i
+les PR fusionades recentment. Qualsevol funció fusionada i plenament verificada
+ha de passar a `FET`; si encara manca una part del criteri d'acceptació, ha de
+quedar `PARCIAL` amb la mancança escrita. La «Foto d'estat» i el registre
+d'implementacions s'actualitzen dins de la mateixa PR. No es pot deixar una
+funció com a `FET` només perquè el codi s'hagi fusionat.
