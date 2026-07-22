@@ -85,3 +85,19 @@ crus a `metadata` i només després escriu els migrats; si algun registre falla,
 es conserva sense tocar i la còpia prèvia queda disponible. Quan la migració
 detecta problemes, la interfície mostra un bàner amb l'acció **Recupera la còpia
 prèvia**, que restaura l'estat anterior sense enviar cap dada fora del navegador.
+
+## Proves automàtiques del nucli
+
+La funció 009 estableix la xarxa de seguretat de proves executables localment:
+
+```bash
+npm run test:unit
+```
+
+A més de les proves unitàries de lògica pura (esquema, normalització, paquet
+portàtil, salut de l'emmagatzematge i migracions), s'hi afegeixen proves
+**d'integració** sobre IndexedDB amb `fake-indexeddb`. Cobreixen la persistència
+real (desar, llegir, ordenar, comptar, esborrar), la migració d'esquema en obrir
+una base v1, el flux crític d'exportació→importació→persistència, el rollback
+d'una transacció que falla i el runner de migració amb còpia prèvia i
+recuperació. No requereixen navegador ni xarxa.
