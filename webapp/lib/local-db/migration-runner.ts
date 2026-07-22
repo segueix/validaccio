@@ -41,8 +41,14 @@ async function appendBackup(backup: MigrationBackup): Promise<void> {
   );
 }
 
-async function writeProjects(records: RawRecord[]): Promise<void> {
+async function writeProjects(
+  records: RawRecord[],
+  options: { replaceAll?: boolean } = {},
+): Promise<void> {
   await withTransaction("projects", "readwrite", async (store) => {
+    if (options.replaceAll) {
+      await requestResult(store.clear());
+    }
     for (const record of records) {
       await requestResult(store.put(record));
     }
@@ -87,6 +93,6 @@ export async function recoverProjectsFromBackup(
     : backups[backups.length - 1];
   if (!backup) return 0;
 
-  await writeProjects(backup.projects);
+  await writeProjects(backup.projects, { replaceAll: true });
   return backup.projects.length;
 }

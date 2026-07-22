@@ -1336,9 +1336,9 @@ function PrivacyFirewallView({
           <span className="eyebrow">Fonaments local-first</span>
           <h1>Tallafoc de privacitat</h1>
           <p>
-            Cap manuscrit, font ni anotació surt d’aquest dispositiu. El tallafoc
-            bloqueja tota petició externa que no hagis autoritzat i deixa
-            constància de qualsevol intent.
+            Cap manuscrit, font ni anotació s’envia a serveis externs. La
+            política de seguretat del navegador i el tallafoc bloquegen les
+            connexions de la webapp que no hagis autoritzat.
           </p>
         </div>
         <span className={offline ? "status-chip live" : "status-chip"}>
@@ -1355,9 +1355,9 @@ function PrivacyFirewallView({
             </span>
           </div>
           <p className="storage-note">
-            Amb el mode sense xarxa, el tallafoc bloqueja qualsevol petició
-            externa encara que hi hagi consentiment. Ideal per treballar amb
-            fonts sensibles.
+            Amb el mode sense xarxa, el guard de l’aplicació rebutja també els
+            hosts que s’haguessin autoritzat. La política del navegador continua
+            limitant la resta de canals al mateix origen.
           </p>
           <button
             className="primary-button privacy-toggle"
@@ -1376,9 +1376,9 @@ function PrivacyFirewallView({
             <span className="status-chip">Per defecte: cap</span>
           </div>
           <p className="storage-note">
-            El flux principal funciona sense cap API. Cap host extern no està
-            autoritzat: qualsevol connexió nova requeriria el teu consentiment
-            explícit abans d’enviar res.
+            El flux principal funciona sense cap API i cap host extern està
+            autoritzat. Una integració futura haurà de declarar la destinació,
+            explicar quines dades envia i obtenir el teu consentiment.
           </p>
         </article>
       </section>
@@ -1429,8 +1429,8 @@ function PrivacyFirewallView({
         </div>
         {log.length === 0 ? (
           <p className="storage-note">
-            No s’ha detectat cap petició cap a l’exterior. Els fitxers no surten
-            del dispositiu.
+            El guard de fetch no ha detectat cap intent extern. La política CSP
+            del navegador manté bloquejats els altres canals de la webapp.
           </p>
         ) : (
           <ul className="risk-list">

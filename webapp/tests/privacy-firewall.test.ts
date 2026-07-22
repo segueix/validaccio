@@ -6,6 +6,7 @@ import {
   createPrivacyFirewall,
   evaluateRequest,
   FirewallBlockedError,
+  LOCAL_FIRST_CSP,
   NETWORK_INVENTORY,
 } from "../lib/privacy-firewall.ts";
 
@@ -128,4 +129,23 @@ test("el consentiment i el mode offline es poden canviar en temps d'execució", 
 
   firewall.revokeHost("api.example");
   assert.deepEqual(firewall.getConsentedHosts(), []);
+});
+
+
+test("la CSP tanca els canals externs que no passen per fetch", () => {
+  for (const directive of [
+    "connect-src 'self'",
+    "form-action 'self'",
+    "img-src 'self' blob: data:",
+    "media-src 'self' blob:",
+    "object-src 'none'",
+    "worker-src 'self' blob:",
+  ]) {
+    assert.ok(
+      LOCAL_FIRST_CSP.includes(directive),
+      `falta la directiva CSP: ${directive}`,
+    );
+  }
+  assert.equal(LOCAL_FIRST_CSP.includes("https:"), false);
+  assert.equal(LOCAL_FIRST_CSP.includes("*"), false);
 });
