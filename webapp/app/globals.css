@@ -392,3 +392,14 @@ button { color: inherit; }
 @media (max-width: 720px) {
   .citation-grid { grid-template-columns: 1fr; }
 }
+
+
+/* Funció 105 — Text extret */
+.text-modal { width: min(760px, 100%); }
+.text-paragraphs {
+  list-style: none; padding: 0; margin: 16px 0 0;
+  max-height: 55vh; overflow-y: auto; display: grid; gap: 12px;
+}
+.text-paragraphs li { display: grid; grid-template-columns: 42px 1fr; gap: 12px; align-items: start; }
+.paragraph-loc { padding-top: 2px; font: 700 11px Georgia, serif; color: var(--forest-2); }
+.text-paragraphs p { margin: 0; font-size: 13px; line-height: 1.6; white-space: pre-wrap; }
