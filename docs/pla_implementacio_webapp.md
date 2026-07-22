@@ -199,8 +199,8 @@ S'afegeix una fila després de cada funció acabada. No s'esborren entrades.
 | 2026-07-22 | 007 | [PR #17](https://github.com/segueix/validaccio/pull/17) | FET | Pipeline de migració pur i provat (`migrations.ts`), còpia prèvia a `metadata` abans d'escriure i recuperació des de la còpia; s'executa en obrir amb bàner de recuperació. Fusionat a main. |
 | 2026-07-22 | 009 | [PR #18](https://github.com/segueix/validaccio/pull/18) | FET | Proves d'integració amb `fake-indexeddb`: persistència, migració d'esquema en obrir, flux crític d'importació, rollback de transacció i runner de migració amb còpia prèvia/recuperació. 30 proves totals; lint i build verificats. |
 | 2026-07-22 | 010 | [PR #19](https://github.com/segueix/validaccio/pull/19) | EN CURS | Tallafoc que embolcalla `fetch`: inventari de peticions (només mateix origen), mode sense xarxa persistent, consentiment previ per a hosts externs i registre d'intents. Prova que un enviament extern de fitxer queda bloquejat. 8 proves; lint i build verificats. |
-| 2026-07-22 | 010 | `fix/auditoria-privacitat-ci` | EN CURS | CSP local-first afegida i textos precisats; pendent de proves, PR i merge. |
-| 2026-07-22 | 502 | `fix/auditoria-privacitat-ci` | EN CURS | Workflow de lint, proves i build creat; falta fusionar-lo i configurar la protecció de `main`. |
+| 2026-07-22 | 010 | [PR #20](https://github.com/segueix/validaccio/pull/20) | EN CURS | CSP local-first, recuperació exacta i textos precisats; 39 proves, lint, build i comprovació visual superats. Pendent de merge. |
+| 2026-07-22 | 502 | [PR #20](https://github.com/segueix/validaccio/pull/20) | EN CURS | Workflow de lint, proves i build creat; falta fusionar-lo i configurar la protecció obligatòria de `main`. |
 
 ## 7. Definició global de «fet»
 
@@ -213,4 +213,3 @@ Una funció només passa a `FET` quan:
 - inclou estats buit, carregant, error i recuperació quan pertoqui;
 - actualitza aquest document i la documentació afectada;
 - ha estat revisada i fusionada a `main`.
-
