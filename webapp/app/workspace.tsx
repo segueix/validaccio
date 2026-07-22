@@ -17,6 +17,18 @@ import {
   PROJECT_DATA_VERSION,
   type ProjectRecord,
 } from "../lib/local-db";
+import {
+  evaluateStorageHealth,
+  formatBytes,
+  formatPercent,
+  formatRelativeAge,
+  readStorageSnapshot,
+  requestPersistentStorage,
+  STORAGE_HEALTH_METADATA_KEY,
+  type StorageHealthLevel,
+  type StorageHealthReport,
+  type StorageRiskAction,
+} from "../lib/storage-health";
 
 type ViewId =
   | "tauler"
@@ -27,7 +39,8 @@ type ViewId =
   | "sensibilitat"
   | "capitols"
   | "validacio"
-  | "exporta";
+  | "exporta"
+  | "salut";
 
 type Project = ProjectRecord;
 
@@ -57,6 +70,7 @@ const views: Array<{ id: ViewId; label: string; short: string }> = [
   { id: "capitols", label: "Capítols", short: "C" },
   { id: "validacio", label: "Validació", short: "V" },
   { id: "exporta", label: "Exporta", short: "X" },
+  { id: "salut", label: "Salut", short: "◎" },
 ];
 
 const phases = [
@@ -69,7 +83,7 @@ const phases = [
   "Revisió",
 ];
 
-const moduleCopy: Record<Exclude<ViewId, "tauler">, { eyebrow: string; title: string; body: string; status: string }> = {
+const moduleCopy: Record<Exclude<ViewId, "tauler" | "salut">, { eyebrow: string; title: string; body: string; status: string }> = {
   fonts: {
     eyebrow: "Biblioteca local",
     title: "Fonts i fragments",
@@ -128,6 +142,16 @@ function formatNumber(value: number) {
   return new Intl.NumberFormat("ca-ES").format(value);
 }
 
+async function computeStorageReport(): Promise<StorageHealthReport> {
+  const [snapshot, backupMeta] = await Promise.all([
+    readStorageSnapshot(),
+    metadataRepository.get(STORAGE_HEALTH_METADATA_KEY),
+  ]);
+  const lastBackupAt =
+    typeof backupMeta?.value === "string" ? backupMeta.value : null;
+  return evaluateStorageHealth({ snapshot, lastBackupAt });
+}
+
 export default function Workspace() {
   const [view, setView] = useState<ViewId>("tauler");
   const [project, setProject] = useState<Project>(defaultProject);
@@ -138,7 +162,22 @@ export default function Workspace() {
   const [showProjects, setShowProjects] = useState(false);
   const [renameTarget, setRenameTarget] = useState<Project | null>(null);
   const [draftTitle, setDraftTitle] = useState(defaultProject.title);
+  const [storageReport, setStorageReport] = useState<StorageHealthReport | null>(
+    null,
+  );
+  const [storageState, setStorageState] = useState<
+    "loading" | "ready" | "error"
+  >("loading");
   const fileInput = useRef<HTMLInputElement>(null);
+
+  async function refreshStorageHealth() {
+    try {
+      setStorageReport(await computeStorageReport());
+      setStorageState("ready");
+    } catch {
+      setStorageState("error");
+    }
+  }
 
   useEffect(() => {
     async function prepareWorkspace() {
@@ -187,6 +226,15 @@ export default function Workspace() {
 
   useEffect(() => {
     if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(() => undefined);
+  }, []);
+
+  useEffect(() => {
+    async function loadStorageHealth() {
+      const report = await computeStorageReport();
+      setStorageReport(report);
+      setStorageState("ready");
+    }
+    loadStorageHealth().catch(() => setStorageState("error"));
   }, []);
 
   async function openProject(nextProject: Project) {
@@ -285,17 +333,23 @@ export default function Workspace() {
   }
 
   async function protectStorage() {
-    if (!navigator.storage?.persist) {
+    const granted = await requestPersistentStorage();
+    if (granted === null) {
       setNotice("El navegador no ofereix protecció addicional");
-      return;
+    } else {
+      setNotice(
+        granted
+          ? "Espai local protegit pel navegador"
+          : "Còpia periòdica recomanada",
+      );
     }
-    const granted = await navigator.storage.persist();
-    setNotice(granted ? "Espai local protegit pel navegador" : "Còpia periòdica recomanada");
+    await refreshStorageHealth();
   }
 
   async function exportProject() {
     try {
-      const projectPackage = await createProjectPackage(project);
+      const exportedAt = new Date().toISOString();
+      const projectPackage = await createProjectPackage(project, exportedAt);
       const blob = new Blob([serializeProjectPackage(projectPackage)], {
         type: "application/json",
       });
@@ -306,6 +360,8 @@ export default function Workspace() {
       link.click();
       link.remove();
       window.setTimeout(() => URL.revokeObjectURL(link.href), 0);
+      await metadataRepository.set(STORAGE_HEALTH_METADATA_KEY, exportedAt);
+      await refreshStorageHealth();
       setNotice("Còpia verificada exportada");
     } catch {
       setNotice("No s’ha pogut preparar la còpia local");
@@ -416,6 +472,15 @@ export default function Workspace() {
 
         {view === "tauler" ? (
           <Dashboard project={project} setView={setView} />
+        ) : view === "salut" ? (
+          <StorageHealth
+            report={storageReport}
+            state={storageState}
+            onBackup={exportProject}
+            onPersist={protectStorage}
+            onManageProjects={() => setShowProjects(true)}
+            onRefresh={refreshStorageHealth}
+          />
         ) : (
           <ModuleView
             view={view}
@@ -551,7 +616,7 @@ function ModuleView({
   onExport,
   onImport,
 }: {
-  view: Exclude<ViewId, "tauler">;
+  view: Exclude<ViewId, "tauler" | "salut">;
   project: Project;
   onExport: () => void;
   onImport: () => void;
@@ -601,6 +666,226 @@ function ModuleView({
           </p>
           <button className="primary-button">Prepara la primera acció</button>
         </section>
+      )}
+    </div>
+  );
+}
+
+const storageLevelCopy: Record<
+  StorageHealthLevel,
+  { label: string; chip: string }
+> = {
+  ok: { label: "Estable", chip: "status-chip live" },
+  info: { label: "A vigilar", chip: "status-chip" },
+  warning: { label: "Atenció", chip: "status-chip warn" },
+  critical: { label: "Risc alt", chip: "status-chip danger" },
+};
+
+const riskActionLabel: Record<StorageRiskAction, string> = {
+  persist: "Protegeix l’espai",
+  backup: "Exporta una còpia",
+  "free-space": "Gestiona projectes",
+};
+
+function formatBackupDate(iso: string) {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "Cap còpia encara";
+  return new Intl.DateTimeFormat("ca-ES", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(date);
+}
+
+function StorageHealth({
+  report,
+  state,
+  onBackup,
+  onPersist,
+  onManageProjects,
+  onRefresh,
+}: {
+  report: StorageHealthReport | null;
+  state: "loading" | "ready" | "error";
+  onBackup: () => void;
+  onPersist: () => void;
+  onManageProjects: () => void;
+  onRefresh: () => void;
+}) {
+  function runAction(action: StorageRiskAction) {
+    if (action === "persist") onPersist();
+    else if (action === "backup") onBackup();
+    else onManageProjects();
+  }
+
+  const level = report?.level ?? "ok";
+  const levelCopy = storageLevelCopy[level];
+
+  return (
+    <div className="page-content module-page">
+      <section className="module-hero">
+        <div>
+          <span className="eyebrow">Fonaments local-first</span>
+          <h1>Salut de l’emmagatzematge</h1>
+          <p>
+            Comprova quant espai fa servir aquest dispositiu, si el navegador
+            protegeix les dades i quan vas fer l’última còpia. Res no surt del
+            navegador.
+          </p>
+        </div>
+        <span className={levelCopy.chip}>{levelCopy.label}</span>
+      </section>
+
+      {state === "loading" ? (
+        <section className="empty-state">
+          <div className="empty-orbit">
+            <span>◎</span>
+          </div>
+          <h2>Comprovant l’espai local…</h2>
+          <p>Llegim l’ús, la quota i la protecció que ofereix el navegador.</p>
+        </section>
+      ) : state === "error" || !report ? (
+        <section className="empty-state">
+          <div className="empty-orbit">
+            <span>!</span>
+          </div>
+          <h2>No s’ha pogut llegir l’estat de l’espai</h2>
+          <p>Torna-ho a provar; les dades locals no s’han tocat.</p>
+          <button className="primary-button" onClick={onRefresh}>
+            Torna-ho a provar
+          </button>
+        </section>
+      ) : (
+        <>
+          <section className="dashboard-grid storage-grid">
+            <article className="stat-panel">
+              <div className="panel-topline">
+                <span className="eyebrow">Ús de l’espai</span>
+                <span className="status-chip">
+                  {report.supported
+                    ? formatPercent(report.usageRatio)
+                    : "No disponible"}
+                </span>
+              </div>
+              {report.supported ? (
+                <>
+                  <div className="trace-score">
+                    <strong>{formatBytes(report.usage)}</strong>
+                    <span>
+                      de {formatBytes(report.quota)} · {formatBytes(report.available)}{" "}
+                      lliures
+                    </span>
+                  </div>
+                  <div className="bar">
+                    <span
+                      style={{
+                        width: `${Math.min(100, Math.round((report.usageRatio ?? 0) * 100))}%`,
+                      }}
+                    />
+                  </div>
+                </>
+              ) : (
+                <p className="storage-note">
+                  Aquest navegador no informa de l’ús ni de la quota. Fes còpies
+                  periòdiques com a protecció.
+                </p>
+              )}
+            </article>
+
+            <article className="stat-panel">
+              <div className="panel-topline">
+                <span className="eyebrow">Persistència</span>
+                <span
+                  className={
+                    report.persisted ? "status-chip live" : "status-chip"
+                  }
+                >
+                  {report.persisted === true
+                    ? "Concedida"
+                    : report.persisted === false
+                      ? "No concedida"
+                      : "Desconeguda"}
+                </span>
+              </div>
+              <p className="storage-note">
+                {report.persisted === true
+                  ? "El navegador conserva les dades i no les esborrarà per alliberar espai."
+                  : "Sense persistència, el navegador pot esborrar les dades sota pressió de disc."}
+              </p>
+              {report.persisted !== true && (
+                <button className="text-button" onClick={onPersist}>
+                  Protegeix l’espai →
+                </button>
+              )}
+            </article>
+
+            <article className="stat-panel">
+              <div className="panel-topline">
+                <span className="eyebrow">Última còpia</span>
+                <span className="status-chip">
+                  {formatRelativeAge(report.backupAgeMs)}
+                </span>
+              </div>
+              <div className="trace-score">
+                <strong>
+                  {report.lastBackupAt
+                    ? formatBackupDate(report.lastBackupAt)
+                    : "Cap còpia encara"}
+                </strong>
+                <span>
+                  {report.lastBackupAt
+                    ? "còpia portàtil verificada"
+                    : "exporta una còpia per poder recuperar les dades"}
+                </span>
+              </div>
+              <button className="text-button" onClick={onBackup}>
+                Exporta una còpia ara →
+              </button>
+            </article>
+          </section>
+
+          <section className="stat-panel storage-risks">
+            <div className="section-heading">
+              <div>
+                <span className="eyebrow">Avisos de risc</span>
+                <h2>
+                  {report.risks.length === 0
+                    ? "Cap risc detectat"
+                    : `${report.risks.length} ${report.risks.length === 1 ? "avís" : "avisos"}`}
+                </h2>
+              </div>
+              <button className="quiet-button" onClick={onRefresh}>
+                Actualitza
+              </button>
+            </div>
+            {report.risks.length === 0 ? (
+              <p className="storage-note">
+                L’espai és estable, està protegit i tens una còpia recent.
+              </p>
+            ) : (
+              <ul className="risk-list">
+                {report.risks.map((risk) => {
+                  const action = risk.action;
+                  return (
+                    <li key={risk.id} className={`risk risk-${risk.level}`}>
+                      <div>
+                        <strong>{risk.title}</strong>
+                        <small>{risk.detail}</small>
+                      </div>
+                      {action && (
+                        <button
+                          className="quiet-button"
+                          onClick={() => runAction(action)}
+                        >
+                          {riskActionLabel[action]}
+                        </button>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </section>
+        </>
       )}
     </div>
   );

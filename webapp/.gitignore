@@ -1,0 +1,13 @@
+# Dependencies
+/node_modules
+
+# Build output
+/dist
+/.vinext
+/.next
+/out
+
+# Local runtime and caches
+/.sites-runtime
+/.wrangler
+*.tsbuildinfo

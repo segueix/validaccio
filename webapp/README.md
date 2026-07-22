@@ -11,6 +11,7 @@ en una eina de treball per a obres històriques traçables.
   validació i exportació;
 - projecte desat localment al navegador amb IndexedDB;
 - canvi de nom, protecció de l'emmagatzematge i còpia/restauració JSON;
+- panell de salut de l'emmagatzematge amb ús, quota, persistència i avisos;
 - disseny responsiu per a Chromebook, tauleta i mòbil;
 - manifest i shell bàsic per a ús com a PWA.
 
@@ -62,3 +63,14 @@ SHA-256. Abans de restaurar-lo, la webapp valida el format, la versió, la
 coherència del manifest i la integritat del contingut. Les còpies v1 continuen
 sent importables i s'actualitzen al model actual. Si el projecte ja existeix,
 l'usuari decideix si el substitueix o l'importa com una còpia independent.
+
+## Salut de l'emmagatzematge
+
+La funció 006 afegeix la vista «Salut», que llegeix `navigator.storage` per
+mostrar l'ús i la quota locals, si el navegador ha concedit la persistència i
+quan es va fer l'última còpia portàtil (registrada en exportar). La lògica
+d'avaluació viu a `lib/storage-health.ts`, és pura i comprovable, i converteix
+aquestes dades en avisos de risc graduats —informació, atenció o risc alt— amb
+accions de recuperació directes: protegir l'espai, exportar una còpia o
+gestionar projectes. Cap dada surt del navegador; si l'API d'estimació no
+existeix, l'estat ho indica sense inventar xifres.

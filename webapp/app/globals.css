@@ -264,3 +264,33 @@ button { color: inherit; }
   .project-card .status-chip { justify-self: start; }
   .project-card-actions { padding-left: 0; gap: 13px; }
 }
+
+
+/* Funció 006 — Salut de l'emmagatzematge */
+.status-chip.warn { color: #8a6d1f; background: #f6efd8; border-color: #e6d7a8; }
+.status-chip.danger { color: #9b4238; background: #f6e2df; border-color: #e6c3bd; }
+.storage-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.storage-grid .trace-score { margin-top: 24px; }
+.storage-grid .trace-score strong { font-size: 26px; }
+.storage-note { margin: 20px 0 0; color: var(--muted); font-size: 11px; line-height: 1.6; }
+.storage-note + .text-button { margin-top: 14px; }
+.storage-risks { margin-top: 18px; padding: 25px 27px; }
+.risk-list { list-style: none; padding: 0; margin: 20px 0 0; display: grid; gap: 10px; }
+.risk {
+  display: flex; align-items: center; justify-content: space-between; gap: 18px;
+  padding: 15px 17px; border: 1px solid var(--line); border-left-width: 3px;
+  border-radius: 11px; background: white;
+}
+.risk strong { display: block; font: 700 13px Georgia, serif; }
+.risk small { display: block; margin-top: 5px; color: var(--muted); font-size: 11px; line-height: 1.5; }
+.risk .quiet-button { white-space: nowrap; }
+.risk-info { border-left-color: #9fb8ae; }
+.risk-warning { border-left-color: #d8b24a; }
+.risk-critical { border-left-color: #c1594c; }
+
+@media (max-width: 980px) {
+  .storage-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 720px) {
+  .risk { flex-direction: column; align-items: stretch; }
+}
