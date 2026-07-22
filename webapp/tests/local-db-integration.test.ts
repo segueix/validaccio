@@ -164,6 +164,17 @@ test("ensureProjectsMigrated desa una còpia prèvia i permet recuperar-la", asy
   assert.equal(migrated?.dataVersion, PROJECT_DATA_VERSION);
   assert.equal(migrated?.title, "Antic");
 
+  // Simula un projecte creat després de la còpia: un rollback exacte l'ha
+  // d'eliminar perquè no formava part de l'estat recuperat.
+  await projectRepository.save(
+    createProjectRecord("Posterior", "project-after-backup"),
+  );
+
   const restored = await recoverProjectsFromBackup();
   assert.equal(restored, 1);
+  assert.equal(
+    await projectRepository.get("project-after-backup"),
+    null,
+    "la recuperació ha de substituir tot l'estat, no només sobreescriure'l",
+  );
 });
