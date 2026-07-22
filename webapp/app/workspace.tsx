@@ -17,6 +17,7 @@ import {
   projectRepository,
   PROJECT_DATA_VERSION,
   recoverProjectsFromBackup,
+  sourceBlobRepository,
   sourceRepository,
   type ProjectRecord,
 } from "../lib/local-db";
@@ -28,6 +29,10 @@ import {
   type SourceRecord,
   validateSourceFile,
 } from "../lib/source-library";
+import {
+  createSourceBlobRecord,
+  sourceBlobToObjectUrl,
+} from "../lib/source-blobs";
 import {
   evaluateStorageHealth,
   formatBytes,
@@ -188,15 +193,22 @@ export default function Workspace() {
   const [firewallLog, setFirewallLog] = useState<FirewallLogEntry[]>([]);
   const [sources, setSources] = useState<SourceRecord[]>([]);
   const [sourceErrors, setSourceErrors] = useState<string[]>([]);
+  const [storedSize, setStoredSize] = useState(0);
   const fileInput = useRef<HTMLInputElement>(null);
   const sourceInput = useRef<HTMLInputElement>(null);
   const firewallRef = useRef<PrivacyFirewall | null>(null);
 
   async function loadSources(projectId: string) {
     try {
-      setSources(await sourceRepository.getAllForProject(projectId));
+      const [list, size] = await Promise.all([
+        sourceRepository.getAllForProject(projectId),
+        sourceBlobRepository.totalSizeForProject(projectId),
+      ]);
+      setSources(list);
+      setStoredSize(size);
     } catch {
       setSources([]);
+      setStoredSize(0);
     }
   }
 
@@ -217,6 +229,7 @@ export default function Workspace() {
         continue;
       }
       try {
+        const data = await file.arrayBuffer();
         const record = await sourceRepository.add(
           createSourceRecord(
             {
@@ -228,6 +241,19 @@ export default function Workspace() {
             project.id,
           ),
         );
+        try {
+          await sourceBlobRepository.put(
+            createSourceBlobRecord({
+              sourceId: record.id,
+              projectId: project.id,
+              mime: file.type,
+              data,
+            }),
+          );
+        } catch (blobError) {
+          await sourceRepository.delete(record.id).catch(() => undefined);
+          throw blobError;
+        }
         added.push(record);
       } catch {
         errors.push(`No s’ha pogut desar «${file.name}».`);
@@ -236,6 +262,11 @@ export default function Workspace() {
 
     if (added.length > 0) {
       setSources((current) => [...added, ...current]);
+      setStoredSize(
+        await sourceBlobRepository
+          .totalSizeForProject(project.id)
+          .catch(() => storedSize),
+      );
     }
     setSourceErrors(errors);
     setNotice(
@@ -246,8 +277,39 @@ export default function Workspace() {
   }
 
   async function deleteSource(id: string) {
+    const target = sources.find((item) => item.id === id);
+    const confirmed = window.confirm(
+      `Vols eliminar «${target?.name ?? "la font"}» i el seu contingut d’aquest dispositiu?`,
+    );
+    if (!confirmed) return;
     await sourceRepository.delete(id);
+    await sourceBlobRepository.delete(id).catch(() => undefined);
     setSources((current) => current.filter((item) => item.id !== id));
+    setStoredSize(
+      await sourceBlobRepository
+        .totalSizeForProject(project.id)
+        .catch(() => storedSize),
+    );
+  }
+
+  async function downloadSource(target: SourceRecord) {
+    try {
+      const record = await sourceBlobRepository.get(target.id);
+      if (!record) {
+        setNotice("El contingut d’aquesta font no és al dispositiu");
+        return;
+      }
+      const url = sourceBlobToObjectUrl(record);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = target.name;
+      document.body.append(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 0);
+    } catch {
+      setNotice("No s’ha pogut obrir el contingut de la font");
+    }
   }
 
   async function refreshStorageHealth() {
@@ -306,9 +368,15 @@ export default function Workspace() {
       setDraftTitle(activeProject.title);
       await metadataRepository.set("activeProjectId", activeProject.id);
       try {
-        setSources(await sourceRepository.getAllForProject(activeProject.id));
+        const [list, size] = await Promise.all([
+          sourceRepository.getAllForProject(activeProject.id),
+          sourceBlobRepository.totalSizeForProject(activeProject.id),
+        ]);
+        setSources(list);
+        setStoredSize(size);
       } catch {
         setSources([]);
+        setStoredSize(0);
       }
     }
 
@@ -687,9 +755,11 @@ export default function Workspace() {
           <SourcesLibrary
             sources={sources}
             errors={sourceErrors}
+            storedSize={storedSize}
             onPick={() => sourceInput.current?.click()}
             onImport={importSources}
             onDelete={deleteSource}
+            onDownload={downloadSource}
             onDismissErrors={() => setSourceErrors([])}
           />
         ) : (
@@ -1263,16 +1333,20 @@ function formatSourceDate(iso: string) {
 function SourcesLibrary({
   sources,
   errors,
+  storedSize,
   onPick,
   onImport,
   onDelete,
+  onDownload,
   onDismissErrors,
 }: {
   sources: SourceRecord[];
   errors: string[];
+  storedSize: number;
   onPick: () => void;
   onImport: (files: FileList | File[]) => void;
   onDelete: (id: string) => void;
+  onDownload: (source: SourceRecord) => void;
   onDismissErrors: () => void;
 }) {
   const [dragging, setDragging] = useState(false);
@@ -1351,6 +1425,11 @@ function SourcesLibrary({
                 : `${sources.length} ${sources.length === 1 ? "font registrada" : "fonts registrades"}`}
             </h2>
           </div>
+          {storedSize > 0 && (
+            <span className="status-chip live">
+              {formatSourceSize(storedSize)} al dispositiu
+            </span>
+          )}
         </div>
         {sources.length === 0 ? (
           <p className="storage-note">
@@ -1368,12 +1447,17 @@ function SourcesLibrary({
                     {formatSourceSize(source.size)} · {formatSourceDate(source.importedAt)}
                   </small>
                 </div>
-                <button
-                  className="quiet-button danger-text"
-                  onClick={() => onDelete(source.id)}
-                >
-                  Elimina
-                </button>
+                <div className="source-actions">
+                  <button className="quiet-button" onClick={() => onDownload(source)}>
+                    Baixa
+                  </button>
+                  <button
+                    className="quiet-button danger-text"
+                    onClick={() => onDelete(source.id)}
+                  >
+                    Elimina
+                  </button>
+                </div>
               </li>
             ))}
           </ul>

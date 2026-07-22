@@ -7,6 +7,7 @@ export {
 export {
   metadataRepository,
   projectRepository,
+  sourceBlobRepository,
   sourceRepository,
 } from "./repositories.ts";
 export {

@@ -363,8 +363,9 @@ button { color: inherit; }
 .source-meta { min-width: 0; }
 .source-meta strong { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 700 14px Georgia, serif; }
 .source-meta small { display: block; margin-top: 4px; color: var(--muted); font-size: 11px; }
+.source-actions { display: flex; gap: 8px; flex-shrink: 0; }
 
 @media (max-width: 720px) {
   .source-item { grid-template-columns: auto 1fr; }
-  .source-item .quiet-button { grid-column: 1 / -1; justify-self: start; }
+  .source-actions { grid-column: 1 / -1; }
 }

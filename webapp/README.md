@@ -126,3 +126,14 @@ a la versió 4 amb un magatzem `sources` indexat per projecte, i la vista «Font
 permet importar per arrossegar-i-deixar o amb el selector de fitxers, veure les
 fonts registrades del projecte i eliminar-les. Aquesta funció només desa les
 metadades de la font; el contingut (blobs) correspon a la funció 102.
+
+## Emmagatzematge local de fitxers
+
+La funció 102 desa el contingut de cada font. En importar-la, el fitxer es
+llegeix com a ArrayBuffer i es guarda a IndexedDB (esquema local v5, magatzem
+`blobs` indexat per projecte, `lib/source-blobs.ts`), enllaçat a la fitxa per
+`sourceId` i **mai incrustat al codi ni al bundle**, de manera que es conserva
+offline. Des de la vista «Fonts» es pot **baixar** una font (es reconstrueix un
+Blob des del contingut desat) i veure la mida total emmagatzemada del projecte.
+L'eliminació és **controlada**: demana confirmació i esborra en cascada la fitxa
+i el contingut. Si desar el contingut falla, no queda cap fitxa òrfena.
