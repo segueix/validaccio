@@ -23,7 +23,7 @@ Quan rep un número, l'agent ha de:
 4. Crear una branca curta `feat/NNN-nom-breu` des de la `main` actualitzada.
 5. Implementar només l'abast i els criteris d'acceptació d'aquell número.
 6. Executar les comprovacions proporcionals al canvi; com a mínim lint, build i proves afectades.
-7. Actualitzar en aquest document l'estat, la data i una nota breu del resultat.
+7. Actualitzar en aquest document l'estat, la data i una nota breu del resultat. Abans de començar una funció nova, reconciliar també qualsevol PR ja fusionada que encara consti `EN CURS`.
 8. Obrir una PR cap a `main`. `main` continua sent la versió canònica i estable.
 9. No desplegar la webapp publicada si l'usuari no diu explícitament `desplega`.
 
@@ -52,6 +52,17 @@ Format recomanat de commit i PR: `[NNN] Nom de la funció`.
 | `RETIRADA` | Es conserva el número, però ja no es construirà |
 
 Prioritats: **P0** imprescindible per al primer ús real; **P1** nucli metodològic; **P2** millora important; **P3** opcional o futura.
+
+### Foto d’estat — 2026-07-22
+
+| Situació | Funcions |
+|---|---|
+| **FET** | 001, 002, 003, 004, 006, 007 i 009 |
+| **EN CURS** | 010 (enduriment final de privacitat) i 502 (workflow CI; falta protecció de branca) |
+| **PARCIAL** | 005, 008, 501, 503 i 505 |
+| **SEGÜENT BLOC FUNCIONAL** | 101 → 102 → 103: importació, fitxers locals i fitxa bibliogràfica |
+
+Aquesta foto s’ha d’actualitzar dins de la mateixa PR que canviï qualsevol estat.
 
 ## 4. Catàleg funcional
 
@@ -145,7 +156,7 @@ Prioritats: **P0** imprescindible per al primer ús real; **P1** nucli metodolò
 | ID | Funció | Prioritat | Depèn de | Estat | Criteri d'acceptació |
 |---:|---|:---:|---|---|---|
 | **501** | Flux GitHub amb `main` canònica | P0 | — | **PARCIAL** | Branques curtes, PR revisable, historial clar i cap manuscrit privat al repo; falta automatitzar proteccions. |
-| **502** | CI de lint, build i proves | P0 | 009, 501 | **PENDENT** | Cada PR executa instal·lació reproduïble, lint, build i proves; el merge queda bloquejat si fallen. |
+| **502** | CI de lint, build i proves | P0 | 009, 501 | **EN CURS** | Cada PR executa instal·lació reproduïble, lint, build i proves; el merge queda bloquejat si fallen. |
 | **503** | Desplegament privat reproduïble | P1 | 502 | **PARCIAL** | La webapp privada existeix, però cal documentar i provar el desplegament des de la versió exacta de `main`. |
 | **504** | Versions i changelog | P2 | 501, 502 | **PENDENT** | Número de versió visible, notes de canvi, migracions associades i etiqueta Git per a cada publicació. |
 | **505** | Control d'accés de la web publicada | P1 | 503 | **PARCIAL** | Accés privat verificat, procediment d'afegir/retirar usuaris i prova que una sessió no autoritzada no entra. |
@@ -165,9 +176,12 @@ L'ordre no obliga, però minimitza reimplementacions:
 6. **Operació:** 502 → 503 → 504 → 505 → 506 → 507 → 508.
 7. **IA amb API:** 401–407 només quan el flux sense API ja sigui sòlid.
 
-### Primer bloc recomanat
+### Següent bloc recomanat
 
-Per començar el desenvolupament real, la següent funció natural és la **002**. Consolida la base de dades local abans d'importar fonts o manuscrits. Després, **003** i **004** converteixen la maqueta actual en una eina segura per treballar-hi.
+La base local ja cobreix projectes, còpies, salut, migracions i proves. Cal
+acabar l’enduriment de la **010** i activar la protecció de branca de la **502**.
+Després, el pas funcional natural és **101 → 102 → 103**: importar fonts,
+conservar-ne els fitxers localment i crear-ne la fitxa bibliogràfica.
 
 ## 6. Registre d'implementacions
 
@@ -185,6 +199,8 @@ S'afegeix una fila després de cada funció acabada. No s'esborren entrades.
 | 2026-07-22 | 007 | [PR #17](https://github.com/segueix/validaccio/pull/17) | FET | Pipeline de migració pur i provat (`migrations.ts`), còpia prèvia a `metadata` abans d'escriure i recuperació des de la còpia; s'executa en obrir amb bàner de recuperació. Fusionat a main. |
 | 2026-07-22 | 009 | [PR #18](https://github.com/segueix/validaccio/pull/18) | FET | Proves d'integració amb `fake-indexeddb`: persistència, migració d'esquema en obrir, flux crític d'importació, rollback de transacció i runner de migració amb còpia prèvia/recuperació. 30 proves totals; lint i build verificats. |
 | 2026-07-22 | 010 | [PR #19](https://github.com/segueix/validaccio/pull/19) | EN CURS | Tallafoc que embolcalla `fetch`: inventari de peticions (només mateix origen), mode sense xarxa persistent, consentiment previ per a hosts externs i registre d'intents. Prova que un enviament extern de fitxer queda bloquejat. 8 proves; lint i build verificats. |
+| 2026-07-22 | 010 | [PR #20](https://github.com/segueix/validaccio/pull/20) | EN CURS | CSP local-first, recuperació exacta i textos precisats; 39 proves, lint, build i comprovació visual superats. Pendent de merge. |
+| 2026-07-22 | 502 | [PR #20](https://github.com/segueix/validaccio/pull/20) | EN CURS | Workflow de lint, proves i build creat; falta fusionar-lo i configurar la protecció obligatòria de `main`. |
 
 ## 7. Definició global de «fet»
 
@@ -197,4 +213,3 @@ Una funció només passa a `FET` quan:
 - inclou estats buit, carregant, error i recuperació quan pertoqui;
 - actualitza aquest document i la documentació afectada;
 - ha estat revisada i fusionada a `main`.
-

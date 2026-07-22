@@ -114,3 +114,13 @@ peticions declarades (totes locals, sense dades de recerca), permet activar el
 mode sense xarxa (que es recorda a `metadata`) i registra qualsevol intent de
 sortida. Una prova comprova que un enviament extern d'un fitxer queda bloquejat i
 que el `fetch` base no s'arriba a invocar.
+
+## Enduriment auditat
+
+La recuperació de migracions substitueix exactament l'estat dels projectes de
+la còpia escollida. La privacitat combina el guard de `fetch` amb una política
+CSP que limita connexions, formularis, imatges, mitjans, workers i objectes al
+mateix origen. El workflow `.github/workflows/webapp-ci.yml` executa lint,
+proves i build a cada PR que modifica la webapp; perquè el merge quedi realment
+bloquejat quan falla, cal activar el check com a obligatori a la protecció de
+`main`.

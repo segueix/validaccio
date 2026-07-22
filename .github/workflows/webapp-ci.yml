@@ -1,0 +1,53 @@
+name: Webapp CI
+
+on:
+  pull_request:
+    paths:
+      - "webapp/**"
+      - ".github/workflows/webapp-ci.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "webapp/**"
+      - ".github/workflows/webapp-ci.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: webapp-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Lint, proves i build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: webapp
+
+    steps:
+      - name: Baixa el codi
+        uses: actions/checkout@v4
+
+      - name: Prepara Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.13.1
+          cache: npm
+          cache-dependency-path: webapp/package-lock.json
+
+      - name: Instal·la dependències reproduïbles
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Proves del nucli
+        run: npm run test:unit
+
+      - name: Build de producció
+        run: npm run build
