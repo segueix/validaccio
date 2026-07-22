@@ -76,7 +76,7 @@ Prioritats: **P0** imprescindible per al primer ús real; **P1** nucli metodolò
 |---:|---|:---:|---|---|---|
 | **101** | Importació local de fonts | P0 | 002, 003 | **EN CURS** | Importar PDF, DOCX, TXT, Markdown i imatges amb validació de tipus, mida i errors comprensibles. |
 | **102** | Emmagatzematge local de fitxers | P0 | 002, 101 | **EN CURS** | Desar blobs grans sense incrustar-los al codi, conservar-los offline i eliminar-los de manera controlada. |
-| **103** | Fitxa bibliogràfica i citekey | P0 | 101 | **PENDENT** | Autor, títol, data, edició, arxiu, URL, data de consulta, tipus, etiquetes i identificador estable únic. |
+| **103** | Fitxa bibliogràfica i citekey | P0 | 101 | **EN CURS** | Autor, títol, data, edició, arxiu, URL, data de consulta, tipus, etiquetes i identificador estable únic. |
 | **104** | Visor PDF amb ancoratge | P0 | 102, 103 | **PENDENT** | Llegir PDF, anar a pàgina, cercar, seleccionar fragment i crear una referència que reobre el context exacte. |
 | **105** | Extracció de text DOCX/TXT/MD | P0 | 101, 102 | **PENDENT** | Extreure text i estructura conservant origen, paràgrafs i localitzacions reproduïbles. |
 | **106** | OCR per documents escanejats | P2 | 102, 104 | **PENDENT** | OCR opcional per pàgina, llengua seleccionable, confiança visible i text sempre vinculat a la imatge original. |
@@ -187,6 +187,7 @@ S'afegeix una fila després de cada funció acabada. No s'esborren entrades.
 | 2026-07-22 | 010 | [PR #19](https://github.com/segueix/validaccio/pull/19) | FET | Tallafoc que embolcalla `fetch`: inventari de peticions (només mateix origen), mode sense xarxa persistent, consentiment previ per a hosts externs i registre d'intents. Prova que un enviament extern de fitxer queda bloquejat. 8 proves; fusionat a main. |
 | 2026-07-22 | 101 | `feat/101-importacio-fonts` | EN CURS | Importació de fonts (PDF, DOCX, TXT, Markdown, imatges) amb validació de tipus/mida i errors comprensibles; esquema v4 amb magatzem `sources` indexat per projecte i vista «Fonts» amb arrossegar-i-deixar. 11 proves noves (49 totals); lint i build verificats. |
 | 2026-07-22 | 102 | `feat/102-emmagatzematge-fitxers` | EN CURS | Contingut de cada font desat com a ArrayBuffer a IndexedDB (esquema v5, magatzem `blobs` indexat per projecte), mai incrustat al codi; recuperació (baixada), mida total per projecte i eliminació controlada amb confirmació i cascada. 6 proves noves (55 totals); lint i build verificats. Apilada sobre la 101. |
+| 2026-07-22 | 103 | `feat/103-fitxa-bibliografica` | EN CURS | Fitxa bibliogràfica per font (autor, títol, data, edició, arxiu, URL, data de consulta, tipus, etiquetes) amb citekey estable i únic generat i desambiguat (`lib/bibliography.ts`); editor a la vista «Fonts». 9 proves noves (64 totals); lint i build verificats. Apilada sobre la 102. |
 
 ## 7. Definició global de «fet»
 

@@ -137,3 +137,13 @@ offline. Des de la vista «Fonts» es pot **baixar** una font (es reconstrueix u
 Blob des del contingut desat) i veure la mida total emmagatzemada del projecte.
 L'eliminació és **controlada**: demana confirmació i esborra en cascada la fitxa
 i el contingut. Si desar el contingut falla, no queda cap fitxa òrfena.
+
+## Fitxa bibliogràfica i citekey
+
+La funció 103 afegeix a cada font una fitxa bibliogràfica editable des de la vista
+«Fonts»: autor, títol, data, edició, arxiu, URL, data de consulta, tipus i
+etiquetes. La lògica viu a `lib/bibliography.ts`, és pura i comprovable, i genera
+un **citekey estable i únic** a partir del cognom de l'autor i l'any (sense
+accents), desambiguant-lo amb un sufix quan ja existeix dins el projecte. El
+citekey no canvia un cop assignat, i la fitxa es desa dins la fitxa de la font
+(sense cap magatzem ni esquema nous).

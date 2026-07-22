@@ -3,6 +3,8 @@
 // funció només valida el tipus i la mida i crea la fitxa (metadades) de la font;
 // l'emmagatzematge del contingut (blobs) correspon a la funció 102.
 
+import { type Citation } from "./bibliography.ts";
+
 export const MAX_SOURCE_BYTES = 25 * 1024 * 1024; // 25 MB
 
 export type SourceKind = "pdf" | "docx" | "text" | "markdown" | "image";
@@ -63,6 +65,7 @@ export type SourceRecord = {
   mime: string;
   size: number;
   importedAt: string;
+  citation?: Citation;
 };
 
 export type SourceFileInput = {

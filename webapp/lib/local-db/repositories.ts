@@ -100,6 +100,11 @@ class SourceRepository {
     });
   }
 
+  // Desa (crea o actualitza) una fitxa de font; s'usa per editar-ne la citació.
+  save(record: SourceRecord): Promise<SourceRecord> {
+    return this.add(record);
+  }
+
   getAllForProject(projectId: string): Promise<SourceRecord[]> {
     return withTransaction("sources", "readonly", async (store) => {
       const records = (await requestResult(

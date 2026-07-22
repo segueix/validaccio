@@ -34,6 +34,15 @@ import {
   sourceBlobToObjectUrl,
 } from "../lib/source-blobs";
 import {
+  type Citation,
+  CITATION_TYPES,
+  type CitationType,
+  emptyCitation,
+  formatTags,
+  normalizeCitation,
+  parseTags,
+} from "../lib/bibliography";
+import {
   evaluateStorageHealth,
   formatBytes,
   formatPercent,
@@ -194,6 +203,10 @@ export default function Workspace() {
   const [sources, setSources] = useState<SourceRecord[]>([]);
   const [sourceErrors, setSourceErrors] = useState<string[]>([]);
   const [storedSize, setStoredSize] = useState(0);
+  const [citationTarget, setCitationTarget] = useState<SourceRecord | null>(
+    null,
+  );
+  const [citationDraft, setCitationDraft] = useState<Citation>(emptyCitation());
   const fileInput = useRef<HTMLInputElement>(null);
   const sourceInput = useRef<HTMLInputElement>(null);
   const firewallRef = useRef<PrivacyFirewall | null>(null);
@@ -310,6 +323,33 @@ export default function Workspace() {
     } catch {
       setNotice("No s’ha pogut obrir el contingut de la font");
     }
+  }
+
+  function openCitation(target: SourceRecord) {
+    setCitationTarget(target);
+    setCitationDraft(
+      target.citation ?? { ...emptyCitation(), title: target.name },
+    );
+  }
+
+  function updateCitationDraft(patch: Partial<Citation>) {
+    setCitationDraft((current) => ({ ...current, ...patch }));
+  }
+
+  async function saveCitation(event: FormEvent) {
+    event.preventDefault();
+    if (!citationTarget) return;
+    const takenKeys = sources
+      .filter((item) => item.id !== citationTarget.id)
+      .map((item) => item.citation?.citekey)
+      .filter((key): key is string => Boolean(key));
+    const citation = normalizeCitation(citationDraft, takenKeys);
+    const updated = await sourceRepository.save({ ...citationTarget, citation });
+    setSources((current) =>
+      current.map((item) => (item.id === updated.id ? updated : item)),
+    );
+    setCitationTarget(null);
+    setNotice(`Fitxa desada · ${citation.citekey}`);
   }
 
   async function refreshStorageHealth() {
@@ -760,6 +800,7 @@ export default function Workspace() {
             onImport={importSources}
             onDelete={deleteSource}
             onDownload={downloadSource}
+            onEditCitation={openCitation}
             onDismissErrors={() => setSourceErrors([])}
           />
         ) : (
@@ -815,6 +856,98 @@ export default function Workspace() {
             <div className="modal-actions">
               <button type="button" className="quiet-button" onClick={() => setRenameTarget(null)}>Cancel·la</button>
               <button className="primary-button" type="submit">Desa localment</button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {citationTarget && (
+        <div className="modal-backdrop" role="presentation" onMouseDown={() => setCitationTarget(null)}>
+          <form className="modal citation-modal" onSubmit={saveCitation} onMouseDown={(event) => event.stopPropagation()}>
+            <span className="eyebrow">Fitxa bibliogràfica</span>
+            <h2>{citationTarget.name}</h2>
+            <div className="citation-grid">
+              <label className="citation-field wide">
+                <span>Citekey · identificador estable</span>
+                <input
+                  value={citationDraft.citekey}
+                  onChange={(event) => updateCitationDraft({ citekey: event.target.value })}
+                  placeholder="Es genera automàticament si el deixes buit"
+                />
+              </label>
+              <label className="citation-field">
+                <span>Autor</span>
+                <input
+                  value={citationDraft.author}
+                  onChange={(event) => updateCitationDraft({ author: event.target.value })}
+                  placeholder="Cognom, Nom"
+                />
+              </label>
+              <label className="citation-field">
+                <span>Tipus</span>
+                <select
+                  value={citationDraft.type}
+                  onChange={(event) => updateCitationDraft({ type: event.target.value as CitationType })}
+                >
+                  {CITATION_TYPES.map((option) => (
+                    <option key={option.value} value={option.value}>{option.label}</option>
+                  ))}
+                </select>
+              </label>
+              <label className="citation-field wide">
+                <span>Títol</span>
+                <input
+                  value={citationDraft.title}
+                  onChange={(event) => updateCitationDraft({ title: event.target.value })}
+                />
+              </label>
+              <label className="citation-field">
+                <span>Data</span>
+                <input
+                  value={citationDraft.date}
+                  onChange={(event) => updateCitationDraft({ date: event.target.value })}
+                  placeholder="p. ex. 1930"
+                />
+              </label>
+              <label className="citation-field">
+                <span>Edició</span>
+                <input
+                  value={citationDraft.edition}
+                  onChange={(event) => updateCitationDraft({ edition: event.target.value })}
+                />
+              </label>
+              <label className="citation-field">
+                <span>Arxiu o col·lecció</span>
+                <input
+                  value={citationDraft.archive}
+                  onChange={(event) => updateCitationDraft({ archive: event.target.value })}
+                />
+              </label>
+              <label className="citation-field">
+                <span>Data de consulta</span>
+                <input
+                  value={citationDraft.accessedAt}
+                  onChange={(event) => updateCitationDraft({ accessedAt: event.target.value })}
+                />
+              </label>
+              <label className="citation-field wide">
+                <span>URL</span>
+                <input
+                  value={citationDraft.url}
+                  onChange={(event) => updateCitationDraft({ url: event.target.value })}
+                />
+              </label>
+              <label className="citation-field wide">
+                <span>Etiquetes · separades per comes</span>
+                <input
+                  value={formatTags(citationDraft.tags)}
+                  onChange={(event) => updateCitationDraft({ tags: parseTags(event.target.value) })}
+                />
+              </label>
+            </div>
+            <div className="modal-actions">
+              <button type="button" className="quiet-button" onClick={() => setCitationTarget(null)}>Cancel·la</button>
+              <button className="primary-button" type="submit">Desa la fitxa</button>
             </div>
           </form>
         </div>
@@ -1338,6 +1471,7 @@ function SourcesLibrary({
   onImport,
   onDelete,
   onDownload,
+  onEditCitation,
   onDismissErrors,
 }: {
   sources: SourceRecord[];
@@ -1347,6 +1481,7 @@ function SourcesLibrary({
   onImport: (files: FileList | File[]) => void;
   onDelete: (id: string) => void;
   onDownload: (source: SourceRecord) => void;
+  onEditCitation: (source: SourceRecord) => void;
   onDismissErrors: () => void;
 }) {
   const [dragging, setDragging] = useState(false);
@@ -1445,9 +1580,16 @@ function SourcesLibrary({
                   <strong>{source.name}</strong>
                   <small>
                     {formatSourceSize(source.size)} · {formatSourceDate(source.importedAt)}
+                    {source.citation?.citekey ? ` · ${source.citation.citekey}` : ""}
                   </small>
                 </div>
                 <div className="source-actions">
+                  <button
+                    className="quiet-button"
+                    onClick={() => onEditCitation(source)}
+                  >
+                    {source.citation ? "Fitxa" : "+ Fitxa"}
+                  </button>
                   <button className="quiet-button" onClick={() => onDownload(source)}>
                     Baixa
                   </button>
