@@ -62,10 +62,10 @@ Prioritats: **P0** imprescindible per al primer ús real; **P1** nucli metodolò
 | **001** | Interfície base i navegació | P0 | — | **FET** | Dashboard responsive amb accés visible a fonts, hipòtesis, evidències, ACH, sensibilitat, capítols, validació i exportació. |
 | **002** | Repositori local versionat | P0 | 001 | **FET** | IndexedDB amb esquema explícit, transaccions, repositoris tipats i versió de dades; la base actual només desa metadades bàsiques. |
 | **003** | Gestió de múltiples projectes | P0 | 002 | **FET** | Crear, obrir, reanomenar, duplicar, arxivar i eliminar projectes amb confirmació i pantalla de selecció. |
-| **004** | Còpia portàtil d'un projecte | P0 | 002 | **EN CURS** | Exportar i importar un paquet validat amb manifest, versió, dades i comprovació d'integritat; ara només hi ha JSON bàsic. |
+| **004** | Còpia portàtil d'un projecte | P0 | 002 | **FET** | Exportar i importar un paquet validat amb manifest, versió, dades i comprovació d'integritat SHA-256, límit de mida i compatibilitat amb còpies v1. |
 | **005** | PWA instal·lable i offline | P1 | 001 | **PARCIAL** | Instal·lació al Chromebook, arrencada sense xarxa, recursos versionats i actualització segura sense perdre dades. |
-| **006** | Salut de l'emmagatzematge | P0 | 002, 004 | **PENDENT** | Mostrar ús/quota, persistència concedida, última còpia, avisos de risc i acció de recuperació. |
-| **007** | Migracions i recuperació | P0 | 002, 004 | **PENDENT** | Cada canvi d'esquema té migració provada, còpia prèvia i recuperació si falla. |
+| **006** | Salut de l'emmagatzematge | P0 | 002, 004 | **EN CURS** | Mostrar ús/quota, persistència concedida, última còpia, avisos de risc i acció de recuperació. |
+| **007** | Migracions i recuperació | P0 | 002, 004 | **EN CURS** | Cada canvi d'esquema té migració provada, còpia prèvia i recuperació si falla. |
 | **008** | Accessibilitat i teclat | P1 | 001 | **PARCIAL** | WCAG AA pràctica: focus visible, etiquetes, contrast, navegació completa per teclat i lector de pantalla. |
 | **009** | Proves automàtiques del nucli | P0 | 002 | **PENDENT** | Proves unitàries i d'integració per persistència, importació, validació i flux crític, executables localment. |
 | **010** | Tallafoc de privacitat | P0 | 001 | **PENDENT** | Inventari de peticions de xarxa, mode sense xarxa, consentiment previ i prova que els fitxers no surten del dispositiu. |
@@ -180,7 +180,9 @@ S'afegeix una fila després de cada funció acabada. No s'esborren entrades.
 | 2026-07-21 | 501/503/505 | `main` + Sites | PARCIAL | Codi fusionat a main i desplegament privat existent; encara no automatitzat. |
 | 2026-07-21 | 002 | [PR #14](https://github.com/segueix/validaccio/pull/14) | FET | Esquema IndexedDB v2, transaccions, repositoris tipats i migració v1 fusionats a main. |
 | 2026-07-21 | 003 | [PR #15](https://github.com/segueix/validaccio/pull/15) | FET | Biblioteca local de múltiples projectes fusionada a main. |
-| 2026-07-21 | 004 | [PR #16](https://github.com/segueix/validaccio/pull/16) | EN CURS | Paquet v2 amb manifest, SHA-256, límit de mida, validació prèvia i compatibilitat v1; pendent de revisió i merge. |
+| 2026-07-22 | 004 | [PR #16](https://github.com/segueix/validaccio/pull/16) | FET | Paquet v2 amb manifest, SHA-256, límit de 5 MB, validació prèvia i compatibilitat v1; fusionat a main. |
+| 2026-07-22 | 006 | `claude/seguent-pas-033o4j` | EN CURS | Panell «Salut»: ús/quota via `storage.estimate`, persistència, última còpia registrada en exportar, avisos de risc graduats i accions de recuperació. Lògica pura amb 9 proves; lint i build verificats. |
+| 2026-07-22 | 007 | `claude/seguent-pas-033o4j` | EN CURS | Pipeline de migració pur i provat (`migrations.ts`), còpia prèvia a `metadata` abans d'escriure i recuperació des de la còpia; s'executa en obrir amb bàner de recuperació. 7 proves; lint i build verificats. |
 
 ## 7. Definició global de «fet»
 

@@ -13,3 +13,24 @@ export {
   type DatabaseMetadata,
   type ProjectRecord,
 } from "./types.ts";
+export {
+  createMigrationBackup,
+  LATEST_DATA_VERSION,
+  migrateProjectDataset,
+  migrateProjectRecord,
+  MigrationError,
+  PROJECT_MIGRATIONS,
+  recordDataVersion,
+  type DatasetMigration,
+  type MigratedRecord,
+  type MigrationBackup,
+  type MigrationStep,
+  type RawRecord,
+} from "./migrations.ts";
+export {
+  ensureProjectsMigrated,
+  listMigrationBackups,
+  MIGRATION_BACKUP_METADATA_KEY,
+  type MigrationRunResult,
+  recoverProjectsFromBackup,
+} from "./migration-runner.ts";
