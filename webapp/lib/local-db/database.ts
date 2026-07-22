@@ -2,18 +2,22 @@ import { normalizeProjectRecord, PROJECT_DATA_VERSION } from "./types.ts";
 
 export const LOCAL_DATABASE_SCHEMA = {
   name: "validaccio-local",
-  version: 3,
+  version: 5,
   dataVersion: PROJECT_DATA_VERSION,
   stores: {
     metadata: "metadata",
     projects: "projects",
+    sources: "sources",
+    blobs: "blobs",
     legacyWorkspace: "workspace",
   },
 } as const;
 
 export type LocalStoreName =
   | typeof LOCAL_DATABASE_SCHEMA.stores.metadata
-  | typeof LOCAL_DATABASE_SCHEMA.stores.projects;
+  | typeof LOCAL_DATABASE_SCHEMA.stores.projects
+  | typeof LOCAL_DATABASE_SCHEMA.stores.sources
+  | typeof LOCAL_DATABASE_SCHEMA.stores.blobs;
 
 let databasePromise: Promise<IDBDatabase> | null = null;
 
@@ -116,6 +120,30 @@ function upgradeDatabase(
 
   if (!projects.indexNames.contains("updatedAt")) {
     projects.createIndex("updatedAt", "updatedAt");
+  }
+
+  const sources = database.objectStoreNames.contains(
+    LOCAL_DATABASE_SCHEMA.stores.sources,
+  )
+    ? transaction.objectStore(LOCAL_DATABASE_SCHEMA.stores.sources)
+    : database.createObjectStore(LOCAL_DATABASE_SCHEMA.stores.sources, {
+        keyPath: "id",
+      });
+
+  if (!sources.indexNames.contains("projectId")) {
+    sources.createIndex("projectId", "projectId");
+  }
+
+  const blobs = database.objectStoreNames.contains(
+    LOCAL_DATABASE_SCHEMA.stores.blobs,
+  )
+    ? transaction.objectStore(LOCAL_DATABASE_SCHEMA.stores.blobs)
+    : database.createObjectStore(LOCAL_DATABASE_SCHEMA.stores.blobs, {
+        keyPath: "sourceId",
+      });
+
+  if (!blobs.indexNames.contains("projectId")) {
+    blobs.createIndex("projectId", "projectId");
   }
 
   metadata.put({

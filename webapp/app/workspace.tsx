@@ -17,8 +17,31 @@ import {
   projectRepository,
   PROJECT_DATA_VERSION,
   recoverProjectsFromBackup,
+  sourceBlobRepository,
+  sourceRepository,
   type ProjectRecord,
 } from "../lib/local-db";
+import {
+  createSourceRecord,
+  formatSourceSize,
+  SOURCE_ACCEPT_ATTR,
+  sourceKindLabel,
+  type SourceRecord,
+  validateSourceFile,
+} from "../lib/source-library";
+import {
+  createSourceBlobRecord,
+  sourceBlobToObjectUrl,
+} from "../lib/source-blobs";
+import {
+  type Citation,
+  CITATION_TYPES,
+  type CitationType,
+  emptyCitation,
+  formatTags,
+  normalizeCitation,
+  parseTags,
+} from "../lib/bibliography";
 import {
   evaluateStorageHealth,
   formatBytes,
@@ -94,13 +117,7 @@ const phases = [
   "Revisió",
 ];
 
-const moduleCopy: Record<Exclude<ViewId, "tauler" | "salut" | "privadesa">, { eyebrow: string; title: string; body: string; status: string }> = {
-  fonts: {
-    eyebrow: "Biblioteca local",
-    title: "Fonts i fragments",
-    body: "Importa documents, registra’n la procedència i conserva cada extracte amb pàgina i context.",
-    status: "Prototip",
-  },
+const moduleCopy: Record<Exclude<ViewId, "tauler" | "salut" | "privadesa" | "fonts">, { eyebrow: string; title: string; body: string; status: string }> = {
   hipotesis: {
     eyebrow: "Fase 1",
     title: "Hipòtesis competitives",
@@ -183,8 +200,157 @@ export default function Workspace() {
   const [migrationNotice, setMigrationNotice] = useState("");
   const [privacyOffline, setPrivacyOffline] = useState(false);
   const [firewallLog, setFirewallLog] = useState<FirewallLogEntry[]>([]);
+  const [sources, setSources] = useState<SourceRecord[]>([]);
+  const [sourceErrors, setSourceErrors] = useState<string[]>([]);
+  const [storedSize, setStoredSize] = useState(0);
+  const [citationTarget, setCitationTarget] = useState<SourceRecord | null>(
+    null,
+  );
+  const [citationDraft, setCitationDraft] = useState<Citation>(emptyCitation());
   const fileInput = useRef<HTMLInputElement>(null);
+  const sourceInput = useRef<HTMLInputElement>(null);
   const firewallRef = useRef<PrivacyFirewall | null>(null);
+
+  async function loadSources(projectId: string) {
+    try {
+      const [list, size] = await Promise.all([
+        sourceRepository.getAllForProject(projectId),
+        sourceBlobRepository.totalSizeForProject(projectId),
+      ]);
+      setSources(list);
+      setStoredSize(size);
+    } catch {
+      setSources([]);
+      setStoredSize(0);
+    }
+  }
+
+  async function importSources(files: FileList | File[]) {
+    const list = Array.from(files);
+    if (list.length === 0) return;
+
+    const errors: string[] = [];
+    const added: SourceRecord[] = [];
+    for (const file of list) {
+      const validation = validateSourceFile({
+        name: file.name,
+        type: file.type,
+        size: file.size,
+      });
+      if (!validation.ok) {
+        errors.push(validation.message);
+        continue;
+      }
+      try {
+        const data = await file.arrayBuffer();
+        const record = await sourceRepository.add(
+          createSourceRecord(
+            {
+              name: file.name,
+              type: file.type,
+              size: file.size,
+              kind: validation.kind,
+            },
+            project.id,
+          ),
+        );
+        try {
+          await sourceBlobRepository.put(
+            createSourceBlobRecord({
+              sourceId: record.id,
+              projectId: project.id,
+              mime: file.type,
+              data,
+            }),
+          );
+        } catch (blobError) {
+          await sourceRepository.delete(record.id).catch(() => undefined);
+          throw blobError;
+        }
+        added.push(record);
+      } catch {
+        errors.push(`No s’ha pogut desar «${file.name}».`);
+      }
+    }
+
+    if (added.length > 0) {
+      setSources((current) => [...added, ...current]);
+      setStoredSize(
+        await sourceBlobRepository
+          .totalSizeForProject(project.id)
+          .catch(() => storedSize),
+      );
+    }
+    setSourceErrors(errors);
+    setNotice(
+      added.length > 0
+        ? `${added.length} font(s) importada(es)${errors.length ? ` · ${errors.length} amb errors` : ""}`
+        : "Cap font importada",
+    );
+  }
+
+  async function deleteSource(id: string) {
+    const target = sources.find((item) => item.id === id);
+    const confirmed = window.confirm(
+      `Vols eliminar «${target?.name ?? "la font"}» i el seu contingut d’aquest dispositiu?`,
+    );
+    if (!confirmed) return;
+    await sourceRepository.delete(id);
+    await sourceBlobRepository.delete(id).catch(() => undefined);
+    setSources((current) => current.filter((item) => item.id !== id));
+    setStoredSize(
+      await sourceBlobRepository
+        .totalSizeForProject(project.id)
+        .catch(() => storedSize),
+    );
+  }
+
+  async function downloadSource(target: SourceRecord) {
+    try {
+      const record = await sourceBlobRepository.get(target.id);
+      if (!record) {
+        setNotice("El contingut d’aquesta font no és al dispositiu");
+        return;
+      }
+      const url = sourceBlobToObjectUrl(record);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = target.name;
+      document.body.append(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 0);
+    } catch {
+      setNotice("No s’ha pogut obrir el contingut de la font");
+    }
+  }
+
+  function openCitation(target: SourceRecord) {
+    setCitationTarget(target);
+    setCitationDraft(
+      target.citation ?? { ...emptyCitation(), title: target.name },
+    );
+  }
+
+  function updateCitationDraft(patch: Partial<Citation>) {
+    setCitationDraft((current) => ({ ...current, ...patch }));
+  }
+
+  async function saveCitation(event: FormEvent) {
+    event.preventDefault();
+    if (!citationTarget) return;
+    const takenKeys = sources
+      .filter((item) => item.id !== citationTarget.id)
+      .map((item) => item.citation?.citekey)
+      .filter((key): key is string => Boolean(key));
+    const citation = normalizeCitation(citationDraft, takenKeys);
+    const updated = await sourceRepository.save({ ...citationTarget, citation });
+    setSources((current) =>
+      current.map((item) => (item.id === updated.id ? updated : item)),
+    );
+    setCitationTarget(null);
+    setNotice(`Fitxa desada · ${citation.citekey}`);
+  }
 
   async function refreshStorageHealth() {
     try {
@@ -241,6 +407,17 @@ export default function Workspace() {
       setProject(activeProject);
       setDraftTitle(activeProject.title);
       await metadataRepository.set("activeProjectId", activeProject.id);
+      try {
+        const [list, size] = await Promise.all([
+          sourceRepository.getAllForProject(activeProject.id),
+          sourceBlobRepository.totalSizeForProject(activeProject.id),
+        ]);
+        setSources(list);
+        setStoredSize(size);
+      } catch {
+        setSources([]);
+        setStoredSize(0);
+      }
     }
 
     prepareWorkspace()
@@ -312,6 +489,7 @@ export default function Workspace() {
     setShowProjects(false);
     setSaved(true);
     await metadataRepository.set("activeProjectId", nextProject.id);
+    await loadSources(nextProject.id);
   }
 
   async function createProject(title: string) {
@@ -540,6 +718,9 @@ export default function Workspace() {
               <span className="nav-icon">{item.short}</span>
               <span>{item.label}</span>
               {item.id === "evidencies" && <span className="nav-count">0</span>}
+              {item.id === "fonts" && sources.length > 0 && (
+                <span className="nav-count">{sources.length}</span>
+              )}
             </button>
           ))}
         </nav>
@@ -610,6 +791,18 @@ export default function Workspace() {
               setFirewallLog([]);
             }}
           />
+        ) : view === "fonts" ? (
+          <SourcesLibrary
+            sources={sources}
+            errors={sourceErrors}
+            storedSize={storedSize}
+            onPick={() => sourceInput.current?.click()}
+            onImport={importSources}
+            onDelete={deleteSource}
+            onDownload={downloadSource}
+            onEditCitation={openCitation}
+            onDismissErrors={() => setSourceErrors([])}
+          />
         ) : (
           <ModuleView
             view={view}
@@ -621,6 +814,17 @@ export default function Workspace() {
       </section>
 
       <input ref={fileInput} type="file" accept="application/json,.json" hidden onChange={importProject} />
+      <input
+        ref={sourceInput}
+        type="file"
+        accept={SOURCE_ACCEPT_ATTR}
+        multiple
+        hidden
+        onChange={(event) => {
+          if (event.target.files) void importSources(event.target.files);
+          event.target.value = "";
+        }}
+      />
 
       {showProjects && (
         <ProjectManager
@@ -652,6 +856,98 @@ export default function Workspace() {
             <div className="modal-actions">
               <button type="button" className="quiet-button" onClick={() => setRenameTarget(null)}>Cancel·la</button>
               <button className="primary-button" type="submit">Desa localment</button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {citationTarget && (
+        <div className="modal-backdrop" role="presentation" onMouseDown={() => setCitationTarget(null)}>
+          <form className="modal citation-modal" onSubmit={saveCitation} onMouseDown={(event) => event.stopPropagation()}>
+            <span className="eyebrow">Fitxa bibliogràfica</span>
+            <h2>{citationTarget.name}</h2>
+            <div className="citation-grid">
+              <label className="citation-field wide">
+                <span>Citekey · identificador estable</span>
+                <input
+                  value={citationDraft.citekey}
+                  onChange={(event) => updateCitationDraft({ citekey: event.target.value })}
+                  placeholder="Es genera automàticament si el deixes buit"
+                />
+              </label>
+              <label className="citation-field">
+                <span>Autor</span>
+                <input
+                  value={citationDraft.author}
+                  onChange={(event) => updateCitationDraft({ author: event.target.value })}
+                  placeholder="Cognom, Nom"
+                />
+              </label>
+              <label className="citation-field">
+                <span>Tipus</span>
+                <select
+                  value={citationDraft.type}
+                  onChange={(event) => updateCitationDraft({ type: event.target.value as CitationType })}
+                >
+                  {CITATION_TYPES.map((option) => (
+                    <option key={option.value} value={option.value}>{option.label}</option>
+                  ))}
+                </select>
+              </label>
+              <label className="citation-field wide">
+                <span>Títol</span>
+                <input
+                  value={citationDraft.title}
+                  onChange={(event) => updateCitationDraft({ title: event.target.value })}
+                />
+              </label>
+              <label className="citation-field">
+                <span>Data</span>
+                <input
+                  value={citationDraft.date}
+                  onChange={(event) => updateCitationDraft({ date: event.target.value })}
+                  placeholder="p. ex. 1930"
+                />
+              </label>
+              <label className="citation-field">
+                <span>Edició</span>
+                <input
+                  value={citationDraft.edition}
+                  onChange={(event) => updateCitationDraft({ edition: event.target.value })}
+                />
+              </label>
+              <label className="citation-field">
+                <span>Arxiu o col·lecció</span>
+                <input
+                  value={citationDraft.archive}
+                  onChange={(event) => updateCitationDraft({ archive: event.target.value })}
+                />
+              </label>
+              <label className="citation-field">
+                <span>Data de consulta</span>
+                <input
+                  value={citationDraft.accessedAt}
+                  onChange={(event) => updateCitationDraft({ accessedAt: event.target.value })}
+                />
+              </label>
+              <label className="citation-field wide">
+                <span>URL</span>
+                <input
+                  value={citationDraft.url}
+                  onChange={(event) => updateCitationDraft({ url: event.target.value })}
+                />
+              </label>
+              <label className="citation-field wide">
+                <span>Etiquetes · separades per comes</span>
+                <input
+                  value={formatTags(citationDraft.tags)}
+                  onChange={(event) => updateCitationDraft({ tags: parseTags(event.target.value) })}
+                />
+              </label>
+            </div>
+            <div className="modal-actions">
+              <button type="button" className="quiet-button" onClick={() => setCitationTarget(null)}>Cancel·la</button>
+              <button className="primary-button" type="submit">Desa la fitxa</button>
             </div>
           </form>
         </div>
@@ -745,7 +1041,7 @@ function ModuleView({
   onExport,
   onImport,
 }: {
-  view: Exclude<ViewId, "tauler" | "salut" | "privadesa">;
+  view: Exclude<ViewId, "tauler" | "salut" | "privadesa" | "fonts">;
   project: Project;
   onExport: () => void;
   onImport: () => void;
@@ -1152,6 +1448,158 @@ function PrivacyFirewallView({
                 >
                   {entry.allowed ? "Permesa" : "Bloquejada"}
                 </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+    </div>
+  );
+}
+
+function formatSourceDate(iso: string) {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "";
+  return new Intl.DateTimeFormat("ca-ES", { dateStyle: "medium" }).format(date);
+}
+
+function SourcesLibrary({
+  sources,
+  errors,
+  storedSize,
+  onPick,
+  onImport,
+  onDelete,
+  onDownload,
+  onEditCitation,
+  onDismissErrors,
+}: {
+  sources: SourceRecord[];
+  errors: string[];
+  storedSize: number;
+  onPick: () => void;
+  onImport: (files: FileList | File[]) => void;
+  onDelete: (id: string) => void;
+  onDownload: (source: SourceRecord) => void;
+  onEditCitation: (source: SourceRecord) => void;
+  onDismissErrors: () => void;
+}) {
+  const [dragging, setDragging] = useState(false);
+
+  return (
+    <div className="page-content module-page">
+      <section className="module-hero">
+        <div>
+          <span className="eyebrow">Biblioteca local</span>
+          <h1>Fonts documentals</h1>
+          <p>
+            Importa PDF, DOCX, TXT, Markdown i imatges. Es valida el tipus i la
+            mida i es registren en aquest projecte; el contingut es desarà al
+            dispositiu a la funció següent.
+          </p>
+        </div>
+        <span className="status-chip live">
+          {sources.length} {sources.length === 1 ? "font" : "fonts"}
+        </span>
+      </section>
+
+      <section
+        className={dragging ? "dropzone dragging" : "dropzone"}
+        onDragOver={(event) => {
+          event.preventDefault();
+          setDragging(true);
+        }}
+        onDragLeave={() => setDragging(false)}
+        onDrop={(event) => {
+          event.preventDefault();
+          setDragging(false);
+          if (event.dataTransfer.files.length > 0) onImport(event.dataTransfer.files);
+        }}
+      >
+        <span className="dropzone-icon">↑</span>
+        <strong>Arrossega els fitxers aquí</strong>
+        <p>o selecciona’ls des del dispositiu. Màxim 25 MB per fitxer.</p>
+        <button className="primary-button" onClick={onPick}>
+          Selecciona fitxers
+        </button>
+        <small>PDF · DOCX · TXT · Markdown · imatges</small>
+      </section>
+
+      {errors.length > 0 && (
+        <section className="stat-panel source-errors">
+          <div className="section-heading">
+            <div>
+              <span className="eyebrow">No s’han pogut importar</span>
+              <h2>
+                {errors.length} {errors.length === 1 ? "fitxer" : "fitxers"}
+              </h2>
+            </div>
+            <button className="quiet-button" onClick={onDismissErrors}>
+              Descarta
+            </button>
+          </div>
+          <ul className="risk-list">
+            {errors.map((message, index) => (
+              <li key={index} className="risk risk-critical">
+                <div>
+                  <small>{message}</small>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      <section className="stat-panel source-list-panel">
+        <div className="section-heading">
+          <div>
+            <span className="eyebrow">Fonts d’aquest projecte</span>
+            <h2>
+              {sources.length === 0
+                ? "Cap font encara"
+                : `${sources.length} ${sources.length === 1 ? "font registrada" : "fonts registrades"}`}
+            </h2>
+          </div>
+          {storedSize > 0 && (
+            <span className="status-chip live">
+              {formatSourceSize(storedSize)} al dispositiu
+            </span>
+          )}
+        </div>
+        {sources.length === 0 ? (
+          <p className="storage-note">
+            Encara no has importat cap font. Comença arrossegant un document o una
+            imatge.
+          </p>
+        ) : (
+          <ul className="source-list">
+            {sources.map((source) => (
+              <li key={source.id} className="source-item">
+                <span className="source-kind">{sourceKindLabel(source.kind)}</span>
+                <div className="source-meta">
+                  <strong>{source.name}</strong>
+                  <small>
+                    {formatSourceSize(source.size)} · {formatSourceDate(source.importedAt)}
+                    {source.citation?.citekey ? ` · ${source.citation.citekey}` : ""}
+                  </small>
+                </div>
+                <div className="source-actions">
+                  <button
+                    className="quiet-button"
+                    onClick={() => onEditCitation(source)}
+                  >
+                    {source.citation ? "Fitxa" : "+ Fitxa"}
+                  </button>
+                  <button className="quiet-button" onClick={() => onDownload(source)}>
+                    Baixa
+                  </button>
+                  <button
+                    className="quiet-button danger-text"
+                    onClick={() => onDelete(source.id)}
+                  >
+                    Elimina
+                  </button>
+                </div>
               </li>
             ))}
           </ul>

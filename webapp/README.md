@@ -12,6 +12,7 @@ en una eina de treball per a obres històriques traçables.
 - projecte desat localment al navegador amb IndexedDB;
 - canvi de nom, protecció de l'emmagatzematge i còpia/restauració JSON;
 - panell de salut de l'emmagatzematge amb ús, quota, persistència i avisos;
+- importació local de fonts (PDF, DOCX, TXT, Markdown, imatges) amb validació;
 - disseny responsiu per a Chromebook, tauleta i mòbil;
 - manifest i shell bàsic per a ús com a PWA.
 
@@ -124,3 +125,35 @@ mateix origen. El workflow `.github/workflows/webapp-ci.yml` executa lint,
 proves i build a cada PR que modifica la webapp; perquè el merge quedi realment
 bloquejat quan falla, cal activar el check com a obligatori a la protecció de
 `main`.
+
+## Importació local de fonts
+
+La funció 101 obre la biblioteca documental. La lògica de validació viu a
+`lib/source-library.ts`: accepta PDF, DOCX, TXT, Markdown i imatges, classifica
+cada fitxer per MIME o extensió, comprova la mida (màxim 25 MB) i retorna errors
+comprensibles per tipus no admès, fitxer buit o massa gran. L'esquema local puja
+a la versió 4 amb un magatzem `sources` indexat per projecte, i la vista «Fonts»
+permet importar per arrossegar-i-deixar o amb el selector de fitxers, veure les
+fonts registrades del projecte i eliminar-les. Aquesta funció només desa les
+metadades de la font; el contingut (blobs) correspon a la funció 102.
+
+## Emmagatzematge local de fitxers
+
+La funció 102 desa el contingut de cada font. En importar-la, el fitxer es
+llegeix com a ArrayBuffer i es guarda a IndexedDB (esquema local v5, magatzem
+`blobs` indexat per projecte, `lib/source-blobs.ts`), enllaçat a la fitxa per
+`sourceId` i **mai incrustat al codi ni al bundle**, de manera que es conserva
+offline. Des de la vista «Fonts» es pot **baixar** una font (es reconstrueix un
+Blob des del contingut desat) i veure la mida total emmagatzemada del projecte.
+L'eliminació és **controlada**: demana confirmació i esborra en cascada la fitxa
+i el contingut. Si desar el contingut falla, no queda cap fitxa òrfena.
+
+## Fitxa bibliogràfica i citekey
+
+La funció 103 afegeix a cada font una fitxa bibliogràfica editable des de la vista
+«Fonts»: autor, títol, data, edició, arxiu, URL, data de consulta, tipus i
+etiquetes. La lògica viu a `lib/bibliography.ts`, és pura i comprovable, i genera
+un **citekey estable i únic** a partir del cognom de l'autor i l'any (sense
+accents), desambiguant-lo amb un sufix quan ja existeix dins el projecte. El
+citekey no canvia un cop assignat, i la fitxa es desa dins la fitxa de la font
+(sense cap magatzem ni esquema nous).

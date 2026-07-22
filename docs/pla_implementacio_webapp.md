@@ -57,10 +57,10 @@ Prioritats: **P0** imprescindible per al primer ús real; **P1** nucli metodolò
 
 | Situació | Funcions |
 |---|---|
-| **FET** | 001, 002, 003, 004, 006, 007, 009, 010 i 502 |
-| **EN CURS** | — |
+| **FET** | 001, 002, 003, 004, 006, 007, 009, 010, 101, 102 i 502 |
+| **EN CURS** | 103 |
 | **PARCIAL** | 005, 008, 501, 503 i 505 |
-| **SEGÜENT BLOC FUNCIONAL** | 101 → 102 → 103: importació, fitxers locals i fitxa bibliogràfica |
+| **SEGÜENT BLOC FUNCIONAL** | 105 → 107 → 104 → 110: extracció de text, notes citables, visor PDF i cerca |
 
 Aquesta foto s’ha d’actualitzar dins de la mateixa PR que canviï qualsevol estat.
 
@@ -85,9 +85,9 @@ Aquesta foto s’ha d’actualitzar dins de la mateixa PR que canviï qualsevol 
 
 | ID | Funció | Prioritat | Depèn de | Estat | Criteri d'acceptació |
 |---:|---|:---:|---|---|---|
-| **101** | Importació local de fonts | P0 | 002, 003 | **PENDENT** | Importar PDF, DOCX, TXT, Markdown i imatges amb validació de tipus, mida i errors comprensibles. |
-| **102** | Emmagatzematge local de fitxers | P0 | 002, 101 | **PENDENT** | Desar blobs grans sense incrustar-los al codi, conservar-los offline i eliminar-los de manera controlada. |
-| **103** | Fitxa bibliogràfica i citekey | P0 | 101 | **PENDENT** | Autor, títol, data, edició, arxiu, URL, data de consulta, tipus, etiquetes i identificador estable únic. |
+| **101** | Importació local de fonts | P0 | 002, 003 | **FET** | Importar PDF, DOCX, TXT, Markdown i imatges amb validació de tipus, mida i errors comprensibles. |
+| **102** | Emmagatzematge local de fitxers | P0 | 002, 101 | **FET** | Desar blobs grans sense incrustar-los al codi, conservar-los offline i eliminar-los de manera controlada. |
+| **103** | Fitxa bibliogràfica i citekey | P0 | 101 | **EN CURS** | Autor, títol, data, edició, arxiu, URL, data de consulta, tipus, etiquetes i identificador estable únic. |
 | **104** | Visor PDF amb ancoratge | P0 | 102, 103 | **PENDENT** | Llegir PDF, anar a pàgina, cercar, seleccionar fragment i crear una referència que reobre el context exacte. |
 | **105** | Extracció de text DOCX/TXT/MD | P0 | 101, 102 | **PENDENT** | Extreure text i estructura conservant origen, paràgrafs i localitzacions reproduïbles. |
 | **106** | OCR per documents escanejats | P2 | 102, 104 | **PENDENT** | OCR opcional per pàgina, llengua seleccionable, confiança visible i text sempre vinculat a la imatge original. |
@@ -200,6 +200,9 @@ S'afegeix una fila després de cada funció acabada. No s'esborren entrades.
 | 2026-07-22 | 010 | [PR #19](https://github.com/segueix/validaccio/pull/19) | EN CURS | Tallafoc que embolcalla `fetch`: inventari de peticions (només mateix origen), mode sense xarxa persistent, consentiment previ per a hosts externs i registre d'intents. Prova que un enviament extern de fitxer queda bloquejat. 8 proves; lint i build verificats. |
 | 2026-07-22 | 010 | [PR #20](https://github.com/segueix/validaccio/pull/20) | FET | CSP local-first, recuperació exacta i textos precisats; 39 proves, lint, build i comprovació visual superats. Fusionat a `main`. |
 | 2026-07-22 | 502 | [PR #20](https://github.com/segueix/validaccio/pull/20) | FET | Workflow de lint, proves i build fusionat; `main` exigeix el control «Lint, proves i build». |
+| 2026-07-22 | 101 | [PR #22](https://github.com/segueix/validaccio/pull/22) | FET | Importació de fonts (PDF, DOCX, TXT, Markdown, imatges) amb validació de tipus/mida i errors comprensibles; esquema v4 amb magatzem `sources` indexat per projecte i vista «Fonts» amb arrossegar-i-deixar. 11 proves noves; fusionada a main. |
+| 2026-07-22 | 102 | [PR #22](https://github.com/segueix/validaccio/pull/22) | FET | Contingut de cada font desat com a ArrayBuffer a IndexedDB (esquema v5, magatzem `blobs` indexat per projecte), mai incrustat al codi; recuperació (baixada), mida total per projecte i eliminació controlada amb confirmació i cascada. 6 proves noves; fusionada a main. |
+| 2026-07-22 | 103 | [PR #22](https://github.com/segueix/validaccio/pull/22) | EN CURS | Fitxa bibliogràfica per font (autor, títol, data, edició, arxiu, URL, data de consulta, tipus, etiquetes) amb citekey estable i únic generat i desambiguat (`lib/bibliography.ts`); editor a la vista «Fonts». 9 proves noves (64 totals); lint i build verificats. |
 
 ## 7. Definició global de «fet»
 
