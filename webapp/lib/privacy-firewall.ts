@@ -8,6 +8,26 @@
 
 export const PRIVACY_OFFLINE_METADATA_KEY = "privacyOffline";
 
+// Política de seguretat aplicada també pel navegador. Complementa el guard de
+// fetch i cobreix la resta de canals habituals (XHR, beacon, WebSocket,
+// formularis, imatges, mitjans, workers i objectes incrustats).
+export const LOCAL_FIRST_CSP = [
+  "default-src 'self'",
+  "base-uri 'self'",
+  "connect-src 'self'",
+  "font-src 'self' data:",
+  "form-action 'self'",
+  "frame-src 'none'",
+  "img-src 'self' blob: data:",
+  "manifest-src 'self'",
+  "media-src 'self' blob:",
+  "object-src 'none'",
+  "script-src 'self' 'unsafe-inline'",
+  "style-src 'self' 'unsafe-inline'",
+  "worker-src 'self' blob:",
+].join("; ");
+
+
 export type InventoryEntry = {
   id: string;
   label: string;
