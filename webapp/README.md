@@ -85,3 +85,16 @@ crus a `metadata` i només després escriu els migrats; si algun registre falla,
 es conserva sense tocar i la còpia prèvia queda disponible. Quan la migració
 detecta problemes, la interfície mostra un bàner amb l'acció **Recupera la còpia
 prèvia**, que restaura l'estat anterior sense enviar cap dada fora del navegador.
+
+## Tallafoc de privacitat
+
+La funció 010 fa complir el principi que cap fitxer surt del dispositiu. La
+política viu a `lib/privacy-firewall.ts`: classifica cada petició i només deixa
+passar el mateix origen i els recursos locals (`data:`/`blob:`); qualsevol
+destinació externa queda **bloquejada** tret que l'usuari hi hagi donat
+consentiment explícit i no s'estigui en **mode sense xarxa**. En arrencar, la
+vista «Privadesa» embolcalla `fetch` amb aquest tallafoc, mostra l'inventari de
+peticions declarades (totes locals, sense dades de recerca), permet activar el
+mode sense xarxa (que es recorda a `metadata`) i registra qualsevol intent de
+sortida. Una prova comprova que un enviament extern d'un fitxer queda bloquejat i
+que el `fetch` base no s'arriba a invocar.

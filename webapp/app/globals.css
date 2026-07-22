@@ -311,3 +311,25 @@ button { color: inherit; }
   .recovery-banner { flex-direction: column; align-items: stretch; margin: 18px 16px 0; }
   .recovery-actions { justify-content: flex-end; }
 }
+
+
+/* Funció 010 — Tallafoc de privacitat */
+.privacy-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.privacy-toggle { margin-top: 18px; }
+.privacy-inventory, .privacy-log { margin-top: 18px; padding: 25px 27px; }
+.inventory-list { list-style: none; padding: 0; margin: 20px 0 0; display: grid; gap: 10px; }
+.inventory-item {
+  display: flex; align-items: center; justify-content: space-between; gap: 18px;
+  padding: 15px 17px; border: 1px solid var(--line); border-radius: 11px; background: white;
+}
+.inventory-item strong { display: block; font: 700 13px Georgia, serif; }
+.inventory-item small { display: block; margin-top: 5px; color: var(--muted); font-size: 11px; line-height: 1.5; }
+.inventory-tags { display: flex; gap: 8px; flex-shrink: 0; }
+
+@media (max-width: 980px) {
+  .privacy-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 720px) {
+  .inventory-item { flex-direction: column; align-items: stretch; }
+  .inventory-tags { justify-content: flex-start; }
+}

@@ -68,7 +68,7 @@ Prioritats: **P0** imprescindible per al primer ús real; **P1** nucli metodolò
 | **007** | Migracions i recuperació | P0 | 002, 004 | **EN CURS** | Cada canvi d'esquema té migració provada, còpia prèvia i recuperació si falla. |
 | **008** | Accessibilitat i teclat | P1 | 001 | **PARCIAL** | WCAG AA pràctica: focus visible, etiquetes, contrast, navegació completa per teclat i lector de pantalla. |
 | **009** | Proves automàtiques del nucli | P0 | 002 | **PENDENT** | Proves unitàries i d'integració per persistència, importació, validació i flux crític, executables localment. |
-| **010** | Tallafoc de privacitat | P0 | 001 | **PENDENT** | Inventari de peticions de xarxa, mode sense xarxa, consentiment previ i prova que els fitxers no surten del dispositiu. |
+| **010** | Tallafoc de privacitat | P0 | 001 | **EN CURS** | Inventari de peticions de xarxa, mode sense xarxa, consentiment previ i prova que els fitxers no surten del dispositiu. |
 
 ### B. Fonts i biblioteca documental
 
@@ -183,6 +183,7 @@ S'afegeix una fila després de cada funció acabada. No s'esborren entrades.
 | 2026-07-22 | 004 | [PR #16](https://github.com/segueix/validaccio/pull/16) | FET | Paquet v2 amb manifest, SHA-256, límit de 5 MB, validació prèvia i compatibilitat v1; fusionat a main. |
 | 2026-07-22 | 006 | `claude/seguent-pas-033o4j` | EN CURS | Panell «Salut»: ús/quota via `storage.estimate`, persistència, última còpia registrada en exportar, avisos de risc graduats i accions de recuperació. Lògica pura amb 9 proves; lint i build verificats. |
 | 2026-07-22 | 007 | `claude/seguent-pas-033o4j` | EN CURS | Pipeline de migració pur i provat (`migrations.ts`), còpia prèvia a `metadata` abans d'escriure i recuperació des de la còpia; s'executa en obrir amb bàner de recuperació. 7 proves; lint i build verificats. |
+| 2026-07-22 | 010 | `feat/010-tallafoc-privacitat` | EN CURS | Tallafoc que embolcalla `fetch`: inventari de peticions (només mateix origen), mode sense xarxa persistent, consentiment previ per a hosts externs i registre d'intents. Prova que un enviament extern de fitxer queda bloquejat. 8 proves; lint i build verificats. |
 
 ## 7. Definició global de «fet»
 
