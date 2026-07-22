@@ -67,8 +67,8 @@ Prioritats: **P0** imprescindible per al primer ús real; **P1** nucli metodolò
 | **006** | Salut de l'emmagatzematge | P0 | 002, 004 | **FET** | Mostrar ús/quota, persistència concedida, última còpia, avisos de risc i acció de recuperació. |
 | **007** | Migracions i recuperació | P0 | 002, 004 | **FET** | Cada canvi d'esquema té migració provada, còpia prèvia i recuperació si falla. |
 | **008** | Accessibilitat i teclat | P1 | 001 | **PARCIAL** | WCAG AA pràctica: focus visible, etiquetes, contrast, navegació completa per teclat i lector de pantalla. |
-| **009** | Proves automàtiques del nucli | P0 | 002 | **EN CURS** | Proves unitàries i d'integració per persistència, importació, validació i flux crític, executables localment. |
-| **010** | Tallafoc de privacitat | P0 | 001 | **PENDENT** | Inventari de peticions de xarxa, mode sense xarxa, consentiment previ i prova que els fitxers no surten del dispositiu. |
+| **009** | Proves automàtiques del nucli | P0 | 002 | **FET** | Proves unitàries i d'integració per persistència, importació, validació i flux crític, executables localment. |
+| **010** | Tallafoc de privacitat | P0 | 001 | **EN CURS** | Inventari de peticions de xarxa, mode sense xarxa, consentiment previ i prova que els fitxers no surten del dispositiu. |
 
 ### B. Fonts i biblioteca documental
 
@@ -183,7 +183,8 @@ S'afegeix una fila després de cada funció acabada. No s'esborren entrades.
 | 2026-07-22 | 004 | [PR #16](https://github.com/segueix/validaccio/pull/16) | FET | Paquet v2 amb manifest, SHA-256, límit de 5 MB, validació prèvia i compatibilitat v1; fusionat a main. |
 | 2026-07-22 | 006 | [PR #17](https://github.com/segueix/validaccio/pull/17) | FET | Panell «Salut»: ús/quota via `storage.estimate`, persistència, última còpia registrada en exportar, avisos de risc graduats i accions de recuperació; fusionat a main. |
 | 2026-07-22 | 007 | [PR #17](https://github.com/segueix/validaccio/pull/17) | FET | Pipeline de migració pur i provat (`migrations.ts`), còpia prèvia a `metadata` abans d'escriure i recuperació des de la còpia; s'executa en obrir amb bàner de recuperació. Fusionat a main. |
-| 2026-07-22 | 009 | `feat/009-proves-nucli` | EN CURS | Proves d'integració amb `fake-indexeddb`: persistència, migració d'esquema en obrir, flux crític d'importació, rollback de transacció i runner de migració amb còpia prèvia/recuperació. 30 proves totals; lint i build verificats. |
+| 2026-07-22 | 009 | [PR #18](https://github.com/segueix/validaccio/pull/18) | FET | Proves d'integració amb `fake-indexeddb`: persistència, migració d'esquema en obrir, flux crític d'importació, rollback de transacció i runner de migració amb còpia prèvia/recuperació. 30 proves totals; lint i build verificats. |
+| 2026-07-22 | 010 | [PR #19](https://github.com/segueix/validaccio/pull/19) | EN CURS | Tallafoc que embolcalla `fetch`: inventari de peticions (només mateix origen), mode sense xarxa persistent, consentiment previ per a hosts externs i registre d'intents. Prova que un enviament extern de fitxer queda bloquejat. 8 proves; lint i build verificats. |
 
 ## 7. Definició global de «fet»
 

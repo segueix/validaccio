@@ -101,3 +101,16 @@ real (desar, llegir, ordenar, comptar, esborrar), la migració d'esquema en obri
 una base v1, el flux crític d'exportació→importació→persistència, el rollback
 d'una transacció que falla i el runner de migració amb còpia prèvia i
 recuperació. No requereixen navegador ni xarxa.
+
+## Tallafoc de privacitat
+
+La funció 010 fa complir el principi que cap fitxer surt del dispositiu. La
+política viu a `lib/privacy-firewall.ts`: classifica cada petició i només deixa
+passar el mateix origen i els recursos locals (`data:`/`blob:`); qualsevol
+destinació externa queda **bloquejada** tret que l'usuari hi hagi donat
+consentiment explícit i no s'estigui en **mode sense xarxa**. En arrencar, la
+vista «Privadesa» embolcalla `fetch` amb aquest tallafoc, mostra l'inventari de
+peticions declarades (totes locals, sense dades de recerca), permet activar el
+mode sense xarxa (que es recorda a `metadata`) i registra qualsevol intent de
+sortida. Una prova comprova que un enviament extern d'un fitxer queda bloquejat i
+que el `fetch` base no s'arriba a invocar.

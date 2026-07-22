@@ -31,6 +31,13 @@ import {
   type StorageHealthReport,
   type StorageRiskAction,
 } from "../lib/storage-health";
+import {
+  createPrivacyFirewall,
+  type FirewallLogEntry,
+  NETWORK_INVENTORY,
+  type PrivacyFirewall,
+  PRIVACY_OFFLINE_METADATA_KEY,
+} from "../lib/privacy-firewall";
 
 type ViewId =
   | "tauler"
@@ -42,7 +49,8 @@ type ViewId =
   | "capitols"
   | "validacio"
   | "exporta"
-  | "salut";
+  | "salut"
+  | "privadesa";
 
 type Project = ProjectRecord;
 
@@ -73,6 +81,7 @@ const views: Array<{ id: ViewId; label: string; short: string }> = [
   { id: "validacio", label: "Validació", short: "V" },
   { id: "exporta", label: "Exporta", short: "X" },
   { id: "salut", label: "Salut", short: "◎" },
+  { id: "privadesa", label: "Privadesa", short: "P" },
 ];
 
 const phases = [
@@ -85,7 +94,7 @@ const phases = [
   "Revisió",
 ];
 
-const moduleCopy: Record<Exclude<ViewId, "tauler" | "salut">, { eyebrow: string; title: string; body: string; status: string }> = {
+const moduleCopy: Record<Exclude<ViewId, "tauler" | "salut" | "privadesa">, { eyebrow: string; title: string; body: string; status: string }> = {
   fonts: {
     eyebrow: "Biblioteca local",
     title: "Fonts i fragments",
@@ -172,7 +181,10 @@ export default function Workspace() {
   >("loading");
   const [canRecover, setCanRecover] = useState(false);
   const [migrationNotice, setMigrationNotice] = useState("");
+  const [privacyOffline, setPrivacyOffline] = useState(false);
+  const [firewallLog, setFirewallLog] = useState<FirewallLogEntry[]>([]);
   const fileInput = useRef<HTMLInputElement>(null);
+  const firewallRef = useRef<PrivacyFirewall | null>(null);
 
   async function refreshStorageHealth() {
     try {
@@ -181,6 +193,16 @@ export default function Workspace() {
     } catch {
       setStorageState("error");
     }
+  }
+
+  async function toggleOffline() {
+    const firewall = firewallRef.current;
+    if (!firewall) return;
+    const next = !firewall.isOffline();
+    firewall.setOffline(next);
+    setPrivacyOffline(next);
+    setNotice(next ? "Mode sense xarxa activat" : "Mode sense xarxa desactivat");
+    await metadataRepository.set(PRIVACY_OFFLINE_METADATA_KEY, next);
   }
 
   useEffect(() => {
@@ -254,6 +276,33 @@ export default function Workspace() {
       setStorageState("ready");
     }
     loadStorageHealth().catch(() => setStorageState("error"));
+  }, []);
+
+  useEffect(() => {
+    const baseFetch = window.fetch.bind(window);
+    const firewall = createPrivacyFirewall({
+      appOrigin: window.location.origin,
+      baseFetch,
+      onEvent: (entry) =>
+        setFirewallLog((current) => [entry, ...current].slice(0, 50)),
+    });
+    firewallRef.current = firewall;
+    window.fetch = firewall.fetch;
+
+    metadataRepository
+      .get(PRIVACY_OFFLINE_METADATA_KEY)
+      .then((meta) => {
+        if (meta?.value === true) {
+          firewall.setOffline(true);
+          setPrivacyOffline(true);
+        }
+      })
+      .catch(() => undefined);
+
+    return () => {
+      window.fetch = baseFetch;
+      firewallRef.current = null;
+    };
   }, []);
 
   async function openProject(nextProject: Project) {
@@ -551,6 +600,16 @@ export default function Workspace() {
             onManageProjects={() => setShowProjects(true)}
             onRefresh={refreshStorageHealth}
           />
+        ) : view === "privadesa" ? (
+          <PrivacyFirewallView
+            offline={privacyOffline}
+            log={firewallLog}
+            onToggleOffline={toggleOffline}
+            onClearLog={() => {
+              firewallRef.current?.clearLog();
+              setFirewallLog([]);
+            }}
+          />
         ) : (
           <ModuleView
             view={view}
@@ -686,7 +745,7 @@ function ModuleView({
   onExport,
   onImport,
 }: {
-  view: Exclude<ViewId, "tauler" | "salut">;
+  view: Exclude<ViewId, "tauler" | "salut" | "privadesa">;
   project: Project;
   onExport: () => void;
   onImport: () => void;
@@ -957,6 +1016,147 @@ function StorageHealth({
           </section>
         </>
       )}
+    </div>
+  );
+}
+
+function PrivacyFirewallView({
+  offline,
+  log,
+  onToggleOffline,
+  onClearLog,
+}: {
+  offline: boolean;
+  log: FirewallLogEntry[];
+  onToggleOffline: () => void;
+  onClearLog: () => void;
+}) {
+  const blocked = log.filter((entry) => !entry.allowed).length;
+
+  return (
+    <div className="page-content module-page">
+      <section className="module-hero">
+        <div>
+          <span className="eyebrow">Fonaments local-first</span>
+          <h1>Tallafoc de privacitat</h1>
+          <p>
+            Cap manuscrit, font ni anotació surt d’aquest dispositiu. El tallafoc
+            bloqueja tota petició externa que no hagis autoritzat i deixa
+            constància de qualsevol intent.
+          </p>
+        </div>
+        <span className={offline ? "status-chip live" : "status-chip"}>
+          {offline ? "Sense xarxa" : "Vigilant"}
+        </span>
+      </section>
+
+      <section className="dashboard-grid privacy-grid">
+        <article className="stat-panel">
+          <div className="panel-topline">
+            <span className="eyebrow">Mode sense xarxa</span>
+            <span className={offline ? "status-chip live" : "status-chip"}>
+              {offline ? "Actiu" : "Inactiu"}
+            </span>
+          </div>
+          <p className="storage-note">
+            Amb el mode sense xarxa, el tallafoc bloqueja qualsevol petició
+            externa encara que hi hagi consentiment. Ideal per treballar amb
+            fonts sensibles.
+          </p>
+          <button
+            className="primary-button privacy-toggle"
+            aria-pressed={offline}
+            onClick={onToggleOffline}
+          >
+            {offline
+              ? "Desactiva el mode sense xarxa"
+              : "Activa el mode sense xarxa"}
+          </button>
+        </article>
+
+        <article className="stat-panel">
+          <div className="panel-topline">
+            <span className="eyebrow">Consentiment previ</span>
+            <span className="status-chip">Per defecte: cap</span>
+          </div>
+          <p className="storage-note">
+            El flux principal funciona sense cap API. Cap host extern no està
+            autoritzat: qualsevol connexió nova requeriria el teu consentiment
+            explícit abans d’enviar res.
+          </p>
+        </article>
+      </section>
+
+      <section className="stat-panel privacy-inventory">
+        <div className="section-heading">
+          <div>
+            <span className="eyebrow">Inventari de peticions de xarxa</span>
+            <h2>Només el mateix origen</h2>
+          </div>
+          <span className="status-chip live">Sense dades de recerca</span>
+        </div>
+        <ul className="inventory-list">
+          {NETWORK_INVENTORY.map((entry) => (
+            <li key={entry.id} className="inventory-item">
+              <div>
+                <strong>{entry.label}</strong>
+                <small>{entry.detail}</small>
+              </div>
+              <div className="inventory-tags">
+                <span className="status-chip live">
+                  {entry.destination === "local" ? "Local" : "Extern"}
+                </span>
+                <span className="status-chip">
+                  {entry.carriesUserData ? "Amb dades" : "Sense dades"}
+                </span>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section className="stat-panel privacy-log">
+        <div className="section-heading">
+          <div>
+            <span className="eyebrow">Registre de peticions externes</span>
+            <h2>
+              {log.length === 0
+                ? "Cap intent registrat"
+                : `${blocked} bloquejades de ${log.length}`}
+            </h2>
+          </div>
+          {log.length > 0 && (
+            <button className="quiet-button" onClick={onClearLog}>
+              Neteja el registre
+            </button>
+          )}
+        </div>
+        {log.length === 0 ? (
+          <p className="storage-note">
+            No s’ha detectat cap petició cap a l’exterior. Els fitxers no surten
+            del dispositiu.
+          </p>
+        ) : (
+          <ul className="risk-list">
+            {log.map((entry, index) => (
+              <li
+                key={`${entry.at}-${index}`}
+                className={`risk risk-${entry.allowed ? "info" : "critical"}`}
+              >
+                <div>
+                  <strong>{entry.host ?? entry.url}</strong>
+                  <small>{entry.reason}</small>
+                </div>
+                <span
+                  className={entry.allowed ? "status-chip" : "status-chip danger"}
+                >
+                  {entry.allowed ? "Permesa" : "Bloquejada"}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
     </div>
   );
 }
