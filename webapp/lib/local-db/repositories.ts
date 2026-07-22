@@ -4,6 +4,7 @@ import {
   normalizeProjectRecord,
   type ProjectRecord,
 } from "./types.ts";
+import { type SourceRecord } from "../source-library.ts";
 
 export class IndexedDbRepository<T extends { id: string }> {
   private readonly storeName: "projects";
@@ -90,5 +91,38 @@ class MetadataRepository {
   }
 }
 
+class SourceRepository {
+  add(record: SourceRecord): Promise<SourceRecord> {
+    return withTransaction("sources", "readwrite", async (store) => {
+      await requestResult(store.put(record));
+      return record;
+    });
+  }
+
+  getAllForProject(projectId: string): Promise<SourceRecord[]> {
+    return withTransaction("sources", "readonly", async (store) => {
+      const records = (await requestResult(
+        store.index("projectId").getAll(projectId),
+      )) as SourceRecord[];
+      return records.sort((left, right) =>
+        right.importedAt.localeCompare(left.importedAt),
+      );
+    });
+  }
+
+  delete(id: string): Promise<void> {
+    return withTransaction("sources", "readwrite", async (store) => {
+      await requestResult(store.delete(id));
+    });
+  }
+
+  countForProject(projectId: string): Promise<number> {
+    return withTransaction("sources", "readonly", (store) =>
+      requestResult(store.index("projectId").count(projectId)),
+    );
+  }
+}
+
 export const projectRepository = new ProjectRepository();
 export const metadataRepository = new MetadataRepository();
+export const sourceRepository = new SourceRepository();

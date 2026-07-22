@@ -4,7 +4,11 @@ export {
   requestResult,
   withTransaction,
 } from "./database.ts";
-export { metadataRepository, projectRepository } from "./repositories.ts";
+export {
+  metadataRepository,
+  projectRepository,
+  sourceRepository,
+} from "./repositories.ts";
 export {
   createProjectRecord,
   duplicateProjectRecord,

@@ -68,13 +68,13 @@ Prioritats: **P0** imprescindible per al primer ús real; **P1** nucli metodolò
 | **007** | Migracions i recuperació | P0 | 002, 004 | **FET** | Cada canvi d'esquema té migració provada, còpia prèvia i recuperació si falla. |
 | **008** | Accessibilitat i teclat | P1 | 001 | **PARCIAL** | WCAG AA pràctica: focus visible, etiquetes, contrast, navegació completa per teclat i lector de pantalla. |
 | **009** | Proves automàtiques del nucli | P0 | 002 | **FET** | Proves unitàries i d'integració per persistència, importació, validació i flux crític, executables localment. |
-| **010** | Tallafoc de privacitat | P0 | 001 | **EN CURS** | Inventari de peticions de xarxa, mode sense xarxa, consentiment previ i prova que els fitxers no surten del dispositiu. |
+| **010** | Tallafoc de privacitat | P0 | 001 | **FET** | Inventari de peticions de xarxa, mode sense xarxa, consentiment previ i prova que els fitxers no surten del dispositiu. |
 
 ### B. Fonts i biblioteca documental
 
 | ID | Funció | Prioritat | Depèn de | Estat | Criteri d'acceptació |
 |---:|---|:---:|---|---|---|
-| **101** | Importació local de fonts | P0 | 002, 003 | **PENDENT** | Importar PDF, DOCX, TXT, Markdown i imatges amb validació de tipus, mida i errors comprensibles. |
+| **101** | Importació local de fonts | P0 | 002, 003 | **EN CURS** | Importar PDF, DOCX, TXT, Markdown i imatges amb validació de tipus, mida i errors comprensibles. |
 | **102** | Emmagatzematge local de fitxers | P0 | 002, 101 | **PENDENT** | Desar blobs grans sense incrustar-los al codi, conservar-los offline i eliminar-los de manera controlada. |
 | **103** | Fitxa bibliogràfica i citekey | P0 | 101 | **PENDENT** | Autor, títol, data, edició, arxiu, URL, data de consulta, tipus, etiquetes i identificador estable únic. |
 | **104** | Visor PDF amb ancoratge | P0 | 102, 103 | **PENDENT** | Llegir PDF, anar a pàgina, cercar, seleccionar fragment i crear una referència que reobre el context exacte. |
@@ -184,7 +184,8 @@ S'afegeix una fila després de cada funció acabada. No s'esborren entrades.
 | 2026-07-22 | 006 | [PR #17](https://github.com/segueix/validaccio/pull/17) | FET | Panell «Salut»: ús/quota via `storage.estimate`, persistència, última còpia registrada en exportar, avisos de risc graduats i accions de recuperació; fusionat a main. |
 | 2026-07-22 | 007 | [PR #17](https://github.com/segueix/validaccio/pull/17) | FET | Pipeline de migració pur i provat (`migrations.ts`), còpia prèvia a `metadata` abans d'escriure i recuperació des de la còpia; s'executa en obrir amb bàner de recuperació. Fusionat a main. |
 | 2026-07-22 | 009 | [PR #18](https://github.com/segueix/validaccio/pull/18) | FET | Proves d'integració amb `fake-indexeddb`: persistència, migració d'esquema en obrir, flux crític d'importació, rollback de transacció i runner de migració amb còpia prèvia/recuperació. 30 proves totals; lint i build verificats. |
-| 2026-07-22 | 010 | [PR #19](https://github.com/segueix/validaccio/pull/19) | EN CURS | Tallafoc que embolcalla `fetch`: inventari de peticions (només mateix origen), mode sense xarxa persistent, consentiment previ per a hosts externs i registre d'intents. Prova que un enviament extern de fitxer queda bloquejat. 8 proves; lint i build verificats. |
+| 2026-07-22 | 010 | [PR #19](https://github.com/segueix/validaccio/pull/19) | FET | Tallafoc que embolcalla `fetch`: inventari de peticions (només mateix origen), mode sense xarxa persistent, consentiment previ per a hosts externs i registre d'intents. Prova que un enviament extern de fitxer queda bloquejat. 8 proves; fusionat a main. |
+| 2026-07-22 | 101 | `feat/101-importacio-fonts` | EN CURS | Importació de fonts (PDF, DOCX, TXT, Markdown, imatges) amb validació de tipus/mida i errors comprensibles; esquema v4 amb magatzem `sources` indexat per projecte i vista «Fonts» amb arrossegar-i-deixar. 11 proves noves (49 totals); lint i build verificats. |
 
 ## 7. Definició global de «fet»
 

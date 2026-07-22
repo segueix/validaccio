@@ -12,6 +12,7 @@ en una eina de treball per a obres històriques traçables.
 - projecte desat localment al navegador amb IndexedDB;
 - canvi de nom, protecció de l'emmagatzematge i còpia/restauració JSON;
 - panell de salut de l'emmagatzematge amb ús, quota, persistència i avisos;
+- importació local de fonts (PDF, DOCX, TXT, Markdown, imatges) amb validació;
 - disseny responsiu per a Chromebook, tauleta i mòbil;
 - manifest i shell bàsic per a ús com a PWA.
 
@@ -114,3 +115,14 @@ peticions declarades (totes locals, sense dades de recerca), permet activar el
 mode sense xarxa (que es recorda a `metadata`) i registra qualsevol intent de
 sortida. Una prova comprova que un enviament extern d'un fitxer queda bloquejat i
 que el `fetch` base no s'arriba a invocar.
+
+## Importació local de fonts
+
+La funció 101 obre la biblioteca documental. La lògica de validació viu a
+`lib/source-library.ts`: accepta PDF, DOCX, TXT, Markdown i imatges, classifica
+cada fitxer per MIME o extensió, comprova la mida (màxim 25 MB) i retorna errors
+comprensibles per tipus no admès, fitxer buit o massa gran. L'esquema local puja
+a la versió 4 amb un magatzem `sources` indexat per projecte, i la vista «Fonts»
+permet importar per arrossegar-i-deixar o amb el selector de fitxers, veure les
+fonts registrades del projecte i eliminar-les. Aquesta funció només desa les
+metadades de la font; el contingut (blobs) correspon a la funció 102.

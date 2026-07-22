@@ -17,8 +17,17 @@ import {
   projectRepository,
   PROJECT_DATA_VERSION,
   recoverProjectsFromBackup,
+  sourceRepository,
   type ProjectRecord,
 } from "../lib/local-db";
+import {
+  createSourceRecord,
+  formatSourceSize,
+  SOURCE_ACCEPT_ATTR,
+  sourceKindLabel,
+  type SourceRecord,
+  validateSourceFile,
+} from "../lib/source-library";
 import {
   evaluateStorageHealth,
   formatBytes,
@@ -94,13 +103,7 @@ const phases = [
   "Revisió",
 ];
 
-const moduleCopy: Record<Exclude<ViewId, "tauler" | "salut" | "privadesa">, { eyebrow: string; title: string; body: string; status: string }> = {
-  fonts: {
-    eyebrow: "Biblioteca local",
-    title: "Fonts i fragments",
-    body: "Importa documents, registra’n la procedència i conserva cada extracte amb pàgina i context.",
-    status: "Prototip",
-  },
+const moduleCopy: Record<Exclude<ViewId, "tauler" | "salut" | "privadesa" | "fonts">, { eyebrow: string; title: string; body: string; status: string }> = {
   hipotesis: {
     eyebrow: "Fase 1",
     title: "Hipòtesis competitives",
@@ -183,8 +186,69 @@ export default function Workspace() {
   const [migrationNotice, setMigrationNotice] = useState("");
   const [privacyOffline, setPrivacyOffline] = useState(false);
   const [firewallLog, setFirewallLog] = useState<FirewallLogEntry[]>([]);
+  const [sources, setSources] = useState<SourceRecord[]>([]);
+  const [sourceErrors, setSourceErrors] = useState<string[]>([]);
   const fileInput = useRef<HTMLInputElement>(null);
+  const sourceInput = useRef<HTMLInputElement>(null);
   const firewallRef = useRef<PrivacyFirewall | null>(null);
+
+  async function loadSources(projectId: string) {
+    try {
+      setSources(await sourceRepository.getAllForProject(projectId));
+    } catch {
+      setSources([]);
+    }
+  }
+
+  async function importSources(files: FileList | File[]) {
+    const list = Array.from(files);
+    if (list.length === 0) return;
+
+    const errors: string[] = [];
+    const added: SourceRecord[] = [];
+    for (const file of list) {
+      const validation = validateSourceFile({
+        name: file.name,
+        type: file.type,
+        size: file.size,
+      });
+      if (!validation.ok) {
+        errors.push(validation.message);
+        continue;
+      }
+      try {
+        const record = await sourceRepository.add(
+          createSourceRecord(
+            {
+              name: file.name,
+              type: file.type,
+              size: file.size,
+              kind: validation.kind,
+            },
+            project.id,
+          ),
+        );
+        added.push(record);
+      } catch {
+        errors.push(`No s’ha pogut desar «${file.name}».`);
+      }
+    }
+
+    if (added.length > 0) {
+      setSources((current) => [...added, ...current]);
+    }
+    setSourceErrors(errors);
+    setNotice(
+      added.length > 0
+        ? `${added.length} font(s) importada(es)${errors.length ? ` · ${errors.length} amb errors` : ""}`
+        : "Cap font importada",
+    );
+  }
+
+  async function deleteSource(id: string) {
+    await sourceRepository.delete(id);
+    setSources((current) => current.filter((item) => item.id !== id));
+  }
 
   async function refreshStorageHealth() {
     try {
@@ -241,6 +305,11 @@ export default function Workspace() {
       setProject(activeProject);
       setDraftTitle(activeProject.title);
       await metadataRepository.set("activeProjectId", activeProject.id);
+      try {
+        setSources(await sourceRepository.getAllForProject(activeProject.id));
+      } catch {
+        setSources([]);
+      }
     }
 
     prepareWorkspace()
@@ -312,6 +381,7 @@ export default function Workspace() {
     setShowProjects(false);
     setSaved(true);
     await metadataRepository.set("activeProjectId", nextProject.id);
+    await loadSources(nextProject.id);
   }
 
   async function createProject(title: string) {
@@ -540,6 +610,9 @@ export default function Workspace() {
               <span className="nav-icon">{item.short}</span>
               <span>{item.label}</span>
               {item.id === "evidencies" && <span className="nav-count">0</span>}
+              {item.id === "fonts" && sources.length > 0 && (
+                <span className="nav-count">{sources.length}</span>
+              )}
             </button>
           ))}
         </nav>
@@ -610,6 +683,15 @@ export default function Workspace() {
               setFirewallLog([]);
             }}
           />
+        ) : view === "fonts" ? (
+          <SourcesLibrary
+            sources={sources}
+            errors={sourceErrors}
+            onPick={() => sourceInput.current?.click()}
+            onImport={importSources}
+            onDelete={deleteSource}
+            onDismissErrors={() => setSourceErrors([])}
+          />
         ) : (
           <ModuleView
             view={view}
@@ -621,6 +703,17 @@ export default function Workspace() {
       </section>
 
       <input ref={fileInput} type="file" accept="application/json,.json" hidden onChange={importProject} />
+      <input
+        ref={sourceInput}
+        type="file"
+        accept={SOURCE_ACCEPT_ATTR}
+        multiple
+        hidden
+        onChange={(event) => {
+          if (event.target.files) void importSources(event.target.files);
+          event.target.value = "";
+        }}
+      />
 
       {showProjects && (
         <ProjectManager
@@ -745,7 +838,7 @@ function ModuleView({
   onExport,
   onImport,
 }: {
-  view: Exclude<ViewId, "tauler" | "salut" | "privadesa">;
+  view: Exclude<ViewId, "tauler" | "salut" | "privadesa" | "fonts">;
   project: Project;
   onExport: () => void;
   onImport: () => void;
@@ -1152,6 +1245,135 @@ function PrivacyFirewallView({
                 >
                   {entry.allowed ? "Permesa" : "Bloquejada"}
                 </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+    </div>
+  );
+}
+
+function formatSourceDate(iso: string) {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "";
+  return new Intl.DateTimeFormat("ca-ES", { dateStyle: "medium" }).format(date);
+}
+
+function SourcesLibrary({
+  sources,
+  errors,
+  onPick,
+  onImport,
+  onDelete,
+  onDismissErrors,
+}: {
+  sources: SourceRecord[];
+  errors: string[];
+  onPick: () => void;
+  onImport: (files: FileList | File[]) => void;
+  onDelete: (id: string) => void;
+  onDismissErrors: () => void;
+}) {
+  const [dragging, setDragging] = useState(false);
+
+  return (
+    <div className="page-content module-page">
+      <section className="module-hero">
+        <div>
+          <span className="eyebrow">Biblioteca local</span>
+          <h1>Fonts documentals</h1>
+          <p>
+            Importa PDF, DOCX, TXT, Markdown i imatges. Es valida el tipus i la
+            mida i es registren en aquest projecte; el contingut es desarà al
+            dispositiu a la funció següent.
+          </p>
+        </div>
+        <span className="status-chip live">
+          {sources.length} {sources.length === 1 ? "font" : "fonts"}
+        </span>
+      </section>
+
+      <section
+        className={dragging ? "dropzone dragging" : "dropzone"}
+        onDragOver={(event) => {
+          event.preventDefault();
+          setDragging(true);
+        }}
+        onDragLeave={() => setDragging(false)}
+        onDrop={(event) => {
+          event.preventDefault();
+          setDragging(false);
+          if (event.dataTransfer.files.length > 0) onImport(event.dataTransfer.files);
+        }}
+      >
+        <span className="dropzone-icon">↑</span>
+        <strong>Arrossega els fitxers aquí</strong>
+        <p>o selecciona’ls des del dispositiu. Màxim 25 MB per fitxer.</p>
+        <button className="primary-button" onClick={onPick}>
+          Selecciona fitxers
+        </button>
+        <small>PDF · DOCX · TXT · Markdown · imatges</small>
+      </section>
+
+      {errors.length > 0 && (
+        <section className="stat-panel source-errors">
+          <div className="section-heading">
+            <div>
+              <span className="eyebrow">No s’han pogut importar</span>
+              <h2>
+                {errors.length} {errors.length === 1 ? "fitxer" : "fitxers"}
+              </h2>
+            </div>
+            <button className="quiet-button" onClick={onDismissErrors}>
+              Descarta
+            </button>
+          </div>
+          <ul className="risk-list">
+            {errors.map((message, index) => (
+              <li key={index} className="risk risk-critical">
+                <div>
+                  <small>{message}</small>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      <section className="stat-panel source-list-panel">
+        <div className="section-heading">
+          <div>
+            <span className="eyebrow">Fonts d’aquest projecte</span>
+            <h2>
+              {sources.length === 0
+                ? "Cap font encara"
+                : `${sources.length} ${sources.length === 1 ? "font registrada" : "fonts registrades"}`}
+            </h2>
+          </div>
+        </div>
+        {sources.length === 0 ? (
+          <p className="storage-note">
+            Encara no has importat cap font. Comença arrossegant un document o una
+            imatge.
+          </p>
+        ) : (
+          <ul className="source-list">
+            {sources.map((source) => (
+              <li key={source.id} className="source-item">
+                <span className="source-kind">{sourceKindLabel(source.kind)}</span>
+                <div className="source-meta">
+                  <strong>{source.name}</strong>
+                  <small>
+                    {formatSourceSize(source.size)} · {formatSourceDate(source.importedAt)}
+                  </small>
+                </div>
+                <button
+                  className="quiet-button danger-text"
+                  onClick={() => onDelete(source.id)}
+                >
+                  Elimina
+                </button>
               </li>
             ))}
           </ul>
