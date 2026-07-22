@@ -12,9 +12,11 @@ import {
 import {
   createProjectRecord,
   duplicateProjectRecord,
+  ensureProjectsMigrated,
   metadataRepository,
   projectRepository,
   PROJECT_DATA_VERSION,
+  recoverProjectsFromBackup,
   type ProjectRecord,
 } from "../lib/local-db";
 import {
@@ -168,6 +170,8 @@ export default function Workspace() {
   const [storageState, setStorageState] = useState<
     "loading" | "ready" | "error"
   >("loading");
+  const [canRecover, setCanRecover] = useState(false);
+  const [migrationNotice, setMigrationNotice] = useState("");
   const fileInput = useRef<HTMLInputElement>(null);
 
   async function refreshStorageHealth() {
@@ -181,6 +185,21 @@ export default function Workspace() {
 
   useEffect(() => {
     async function prepareWorkspace() {
+      try {
+        const migration = await ensureProjectsMigrated();
+        if (migration.failures.length > 0) {
+          setCanRecover(true);
+          setMigrationNotice(
+            `No s’han pogut migrar ${migration.failures.length} projecte(s). S’ha desat una còpia prèvia recuperable.`,
+          );
+        }
+      } catch {
+        setCanRecover(true);
+        setMigrationNotice(
+          "La migració de dades ha fallat. S’ha conservat una còpia prèvia; pots recuperar-la.",
+        );
+      }
+
       let storedProjects = await projectRepository.getAll();
       if (storedProjects.length === 0) {
         storedProjects = [await persistProject(defaultProject)];
@@ -332,6 +351,40 @@ export default function Workspace() {
     setNotice("Projecte eliminat d’aquest dispositiu");
   }
 
+  async function recoverProjects() {
+    try {
+      const restored = await recoverProjectsFromBackup();
+      if (restored === 0) {
+        setNotice("No hi ha cap còpia prèvia per recuperar");
+      } else {
+        const reloaded = await projectRepository.getAll();
+        setProjects(reloaded);
+        const active =
+          reloaded.find(
+            (item) => item.id === project.id && !item.archivedAt,
+          ) ??
+          reloaded.find((item) => !item.archivedAt) ??
+          reloaded[0];
+        if (active) {
+          setProject(active);
+          setDraftTitle(active.title);
+          await metadataRepository.set("activeProjectId", active.id);
+        }
+        setNotice(`Còpia prèvia restaurada (${restored} projecte(s))`);
+      }
+    } catch {
+      setNotice("No s’ha pogut restaurar la còpia prèvia");
+    } finally {
+      setCanRecover(false);
+      setMigrationNotice("");
+    }
+  }
+
+  function dismissRecovery() {
+    setCanRecover(false);
+    setMigrationNotice("");
+  }
+
   async function protectStorage() {
     const granted = await requestPersistentStorage();
     if (granted === null) {
@@ -469,6 +522,23 @@ export default function Workspace() {
             <button className="primary-button" onClick={() => setView("fonts")}>+ Afegeix una font</button>
           </div>
         </header>
+
+        {canRecover && (
+          <div className="recovery-banner" role="status">
+            <div>
+              <strong>Còpia prèvia de migració disponible</strong>
+              <small>{migrationNotice}</small>
+            </div>
+            <div className="recovery-actions">
+              <button className="quiet-button" onClick={dismissRecovery}>
+                Descarta
+              </button>
+              <button className="primary-button" onClick={recoverProjects}>
+                Recupera la còpia prèvia
+              </button>
+            </div>
+          </div>
+        )}
 
         {view === "tauler" ? (
           <Dashboard project={project} setView={setView} />

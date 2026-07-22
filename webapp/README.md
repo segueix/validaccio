@@ -74,3 +74,14 @@ aquestes dades en avisos de risc graduats —informació, atenció o risc alt—
 accions de recuperació directes: protegir l'espai, exportar una còpia o
 gestionar projectes. Cap dada surt del navegador; si l'API d'estimació no
 existeix, l'estat ho indica sense inventar xifres.
+
+## Migracions i recuperació
+
+La funció 007 formalitza els canvis d'esquema de dades. La lògica de migració
+viu a `lib/local-db/migrations.ts` com un registre de passos purs i provats que
+porten un registre de projecte fins a la versió de dades actual. En obrir
+l'espai, `ensureProjectsMigrated` desa primer una **còpia prèvia** dels registres
+crus a `metadata` i només després escriu els migrats; si algun registre falla,
+es conserva sense tocar i la còpia prèvia queda disponible. Quan la migració
+detecta problemes, la interfície mostra un bàner amb l'acció **Recupera la còpia
+prèvia**, que restaura l'estat anterior sense enviar cap dada fora del navegador.
