@@ -43,6 +43,12 @@ import {
   parseTags,
 } from "../lib/bibliography";
 import {
+  type ExtractedText,
+  extractSourceText,
+  isExtractableKind,
+  TextExtractionError,
+} from "../lib/text-extraction";
+import {
   evaluateStorageHealth,
   formatBytes,
   formatPercent,
@@ -207,6 +213,12 @@ export default function Workspace() {
     null,
   );
   const [citationDraft, setCitationDraft] = useState<Citation>(emptyCitation());
+  const [textTarget, setTextTarget] = useState<SourceRecord | null>(null);
+  const [textResult, setTextResult] = useState<ExtractedText | null>(null);
+  const [textState, setTextState] = useState<"loading" | "ready" | "error">(
+    "loading",
+  );
+  const [textError, setTextError] = useState("");
   const fileInput = useRef<HTMLInputElement>(null);
   const sourceInput = useRef<HTMLInputElement>(null);
   const firewallRef = useRef<PrivacyFirewall | null>(null);
@@ -350,6 +362,34 @@ export default function Workspace() {
     );
     setCitationTarget(null);
     setNotice(`Fitxa desada · ${citation.citekey}`);
+  }
+
+  async function openText(target: SourceRecord) {
+    setTextTarget(target);
+    setTextResult(null);
+    setTextError("");
+    setTextState("loading");
+    try {
+      const record = await sourceBlobRepository.get(target.id);
+      if (!record) {
+        setTextError("El contingut d’aquesta font no és al dispositiu.");
+        setTextState("error");
+        return;
+      }
+      const result = await extractSourceText({
+        data: record.data,
+        kind: target.kind,
+      });
+      setTextResult(result);
+      setTextState("ready");
+    } catch (error) {
+      setTextError(
+        error instanceof TextExtractionError
+          ? error.message
+          : "No s’ha pogut extreure el text.",
+      );
+      setTextState("error");
+    }
   }
 
   async function refreshStorageHealth() {
@@ -801,6 +841,7 @@ export default function Workspace() {
             onDelete={deleteSource}
             onDownload={downloadSource}
             onEditCitation={openCitation}
+            onExtractText={openText}
             onDismissErrors={() => setSourceErrors([])}
           />
         ) : (
@@ -950,6 +991,41 @@ export default function Workspace() {
               <button className="primary-button" type="submit">Desa la fitxa</button>
             </div>
           </form>
+        </div>
+      )}
+
+      {textTarget && (
+        <div className="modal-backdrop" role="presentation" onMouseDown={() => setTextTarget(null)}>
+          <div className="modal citation-modal text-modal" onMouseDown={(event) => event.stopPropagation()}>
+            <span className="eyebrow">Text extret</span>
+            <h2>{textTarget.name}</h2>
+            {textState === "loading" ? (
+              <p className="storage-note">Extraient el text del contingut desat…</p>
+            ) : textState === "error" ? (
+              <p className="storage-note">{textError}</p>
+            ) : textResult ? (
+              <>
+                <p className="storage-note">
+                  {textResult.paragraphCount} paràgrafs · {textResult.wordCount} paraules · origen «{textTarget.name}»
+                </p>
+                {textResult.paragraphs.length === 0 ? (
+                  <p className="storage-note">El document no conté text extraïble.</p>
+                ) : (
+                  <ul className="text-paragraphs">
+                    {textResult.paragraphs.map((paragraph) => (
+                      <li key={paragraph.index}>
+                        <span className="paragraph-loc">¶{paragraph.index}</span>
+                        <p>{paragraph.text}</p>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </>
+            ) : null}
+            <div className="modal-actions">
+              <button type="button" className="primary-button" onClick={() => setTextTarget(null)}>Tanca</button>
+            </div>
+          </div>
         </div>
       )}
     </main>
@@ -1472,6 +1548,7 @@ function SourcesLibrary({
   onDelete,
   onDownload,
   onEditCitation,
+  onExtractText,
   onDismissErrors,
 }: {
   sources: SourceRecord[];
@@ -1482,6 +1559,7 @@ function SourcesLibrary({
   onDelete: (id: string) => void;
   onDownload: (source: SourceRecord) => void;
   onEditCitation: (source: SourceRecord) => void;
+  onExtractText: (source: SourceRecord) => void;
   onDismissErrors: () => void;
 }) {
   const [dragging, setDragging] = useState(false);
@@ -1584,6 +1662,14 @@ function SourcesLibrary({
                   </small>
                 </div>
                 <div className="source-actions">
+                  {isExtractableKind(source.kind) && (
+                    <button
+                      className="quiet-button"
+                      onClick={() => onExtractText(source)}
+                    >
+                      Text
+                    </button>
+                  )}
                   <button
                     className="quiet-button"
                     onClick={() => onEditCitation(source)}

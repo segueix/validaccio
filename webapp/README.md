@@ -157,3 +157,14 @@ un **citekey estable i únic** a partir del cognom de l'autor i l'any (sense
 accents), desambiguant-lo amb un sufix quan ja existeix dins el projecte. El
 citekey no canvia un cop assignat, i la fitxa es desa dins la fitxa de la font
 (sense cap magatzem ni esquema nous).
+
+## Extracció de text
+
+La funció 105 extreu el text de les fonts TXT, Markdown i DOCX (`lib/text-extraction.ts`,
+lògica pura i comprovable). TXT i Markdown es descodifiquen com a UTF-8 i es
+divideixen en paràgrafs per línies en blanc. El DOCX és un ZIP amb XML: es
+localitza `word/document.xml` amb un lector de ZIP mínim, s'infla amb l'API
+**nativa `DecompressionStream('deflate-raw')`** (sense cap dependència externa) i
+se n'extreu el text dels elements `<w:t>` i l'estructura de paràgrafs dels `<w:p>`.
+Cada paràgraf conserva un **índex reproduïble** (posició dins el document) per
+poder-lo tornar a localitzar, i la vista «Fonts» en mostra una previsualització.
