@@ -247,6 +247,22 @@ font → extracte (cita / paràfrasi / comentari) → evidència (EID). La lògi
 viu a `lib/evidence.ts` (model, validació, generació de codi, qualitat i pont),
 coberta per proves unitàries i d'integració.
 
-Els magatzems de les funcions 104, 107, 201 i 204 conviuen a l'esquema local
-**v8** (`references`, `notes`, `hypotheses` i `evidence`), creats de manera
-additiva i protegida.
+## Registre d'afirmacions (AID)
+
+La funció 205 registra cada afirmació factual de l'obra amb un codi **AID**
+seqüencial i estable (A1, A2…), el **text exacte**, el **capítol**, l'**estat** de
+revisió i el **grau d'assertivitat**. L'assertivitat fa servir l'escala ordinal de
+cinc nivells (molt baixa → molt alta) que el marc de validació adopta com a
+estàndard per evitar la falsa precisió numèrica, i s'ha de marcar de manera
+**homogènia** i coherent amb l'evidència.
+
+Cada afirmació es classifica per la **bifurcació de la certesa** del marc:
+**incondicional** (fet mecànic verificable, que cap atribució no pot rebaixar) o
+**condicional** (atribució a autor, tradició o context, que queda oberta si falta
+evidència documental diagnòstica). Quan una afirmació és condicional, l'editor
+recorda que no se n'ha de pujar l'assertivitat sense aquell suport. La lògica pura
+viu a `lib/affirmations.ts` i està coberta per proves unitàries i d'integració.
+
+Els magatzems de les funcions 104, 107, 201, 204 i 205 conviuen a l'esquema local
+**v9** (`references`, `notes`, `hypotheses`, `evidence` i `affirmations`), creats
+de manera additiva i protegida.

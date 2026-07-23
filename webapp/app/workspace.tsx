@@ -14,6 +14,7 @@ import {
 import {
   createProjectRecord,
   duplicateProjectRecord,
+  affirmationRepository,
   citableNoteRepository,
   ensureProjectsMigrated,
   evidenceRepository,
@@ -81,6 +82,21 @@ import {
   qualityInfo,
 } from "../lib/evidence";
 import {
+  type Affirmation,
+  type AffirmationReviewState,
+  type AffirmationType,
+  AFFIRMATION_REVIEW_STATES,
+  AFFIRMATION_TYPES,
+  affirmationStateLabel,
+  affirmationTypeInfo,
+  type Assertiveness,
+  assertivenessInfo,
+  ASSERTIVENESS_LEVELS,
+  createAffirmation,
+  nextAffirmationCode,
+  requiresDiagnosticEvidence,
+} from "../lib/affirmations";
+import {
   evaluateStorageHealth,
   formatBytes,
   formatPercent,
@@ -106,6 +122,7 @@ type ViewId =
   | "extractes"
   | "hipotesis"
   | "evidencies"
+  | "afirmacions"
   | "matriu"
   | "sensibilitat"
   | "capitols"
@@ -140,6 +157,17 @@ type EvidenceDraft = {
   quality: EvidenceQuality;
 };
 
+// Esborrany del formulari d'afirmació (funció 205): id null quan és nova.
+type AffirmationDraft = {
+  id: string | null;
+  code: string;
+  text: string;
+  type: AffirmationType;
+  chapter: string;
+  reviewState: AffirmationReviewState;
+  assertiveness: Assertiveness;
+};
+
 const initialTimestamp = new Date().toISOString();
 
 const defaultProject: Project = {
@@ -162,6 +190,7 @@ const views: Array<{ id: ViewId; label: string; short: string }> = [
   { id: "extractes", label: "Extractes", short: "Ex" },
   { id: "hipotesis", label: "Hipòtesis", short: "H" },
   { id: "evidencies", label: "Evidències", short: "E" },
+  { id: "afirmacions", label: "Afirmacions", short: "A" },
   { id: "matriu", label: "Matriu ACH", short: "M" },
   { id: "sensibilitat", label: "Sensibilitat", short: "S" },
   { id: "capitols", label: "Capítols", short: "C" },
@@ -181,7 +210,7 @@ const phases = [
   "Revisió",
 ];
 
-const moduleCopy: Record<Exclude<ViewId, "tauler" | "salut" | "privadesa" | "fonts" | "extractes" | "hipotesis" | "evidencies">, { eyebrow: string; title: string; body: string; status: string }> = {
+const moduleCopy: Record<Exclude<ViewId, "tauler" | "salut" | "privadesa" | "fonts" | "extractes" | "hipotesis" | "evidencies" | "afirmacions">, { eyebrow: string; title: string; body: string; status: string }> = {
   matriu: {
     eyebrow: "Fase 3",
     title: "Matriu ACH",
@@ -285,6 +314,9 @@ export default function Workspace() {
   );
   const [evidence, setEvidence] = useState<EvidenceRecord[]>([]);
   const [evidenceDraft, setEvidenceDraft] = useState<EvidenceDraft | null>(null);
+  const [affirmations, setAffirmations] = useState<Affirmation[]>([]);
+  const [affirmationDraft, setAffirmationDraft] =
+    useState<AffirmationDraft | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
   const sourceInput = useRef<HTMLInputElement>(null);
   const firewallRef = useRef<PrivacyFirewall | null>(null);
@@ -650,6 +682,14 @@ export default function Workspace() {
     }
   }
 
+  async function loadAffirmations(projectId: string) {
+    try {
+      setAffirmations(await affirmationRepository.getAllForProject(projectId));
+    } catch {
+      setAffirmations([]);
+    }
+  }
+
   async function seedHypotheses() {
     for (const hypothesis of defaultHypotheses(project.id)) {
       await hypothesisRepository.save(hypothesis);
@@ -798,6 +838,84 @@ export default function Workspace() {
     setEvidence((current) => current.filter((item) => item.id !== id));
   }
 
+  function startNewAffirmation() {
+    setAffirmationDraft({
+      id: null,
+      code: nextAffirmationCode(affirmations.map((item) => item.code)),
+      text: "",
+      type: "incondicional",
+      chapter: "",
+      reviewState: "esborrany",
+      assertiveness: "moderada",
+    });
+  }
+
+  function editAffirmation(record: Affirmation) {
+    setAffirmationDraft({
+      id: record.id,
+      code: record.code,
+      text: record.text,
+      type: record.type,
+      chapter: record.chapter,
+      reviewState: record.reviewState,
+      assertiveness: record.assertiveness,
+    });
+  }
+
+  function updateAffirmationDraft(patch: Partial<AffirmationDraft>) {
+    setAffirmationDraft((current) => (current ? { ...current, ...patch } : current));
+  }
+
+  async function saveAffirmation() {
+    if (!affirmationDraft) return;
+    const draft = affirmationDraft;
+    try {
+      const existing = draft.id
+        ? affirmations.find((item) => item.id === draft.id)
+        : null;
+      const now = new Date().toISOString();
+      const record = createAffirmation(
+        {
+          projectId: project.id,
+          text: draft.text,
+          type: draft.type,
+          chapter: draft.chapter,
+          reviewState: draft.reviewState,
+          assertiveness: draft.assertiveness,
+        },
+        { id: draft.id ?? undefined, code: draft.code, now: existing?.createdAt ?? now },
+      );
+      const saved = { ...record, updatedAt: now };
+      await affirmationRepository.save(saved);
+      setAffirmations((current) =>
+        [saved, ...current.filter((item) => item.id !== saved.id)].sort(
+          (left, right) =>
+            left.code.localeCompare(right.code, "en", { numeric: true }),
+        ),
+      );
+      setAffirmationDraft(null);
+    } catch (error) {
+      setNotice(
+        error instanceof TypeError
+          ? error.message
+          : "No s’ha pogut desar l’afirmació",
+      );
+    }
+  }
+
+  async function deleteAffirmation(id: string) {
+    const target = affirmations.find((item) => item.id === id);
+    if (
+      !window.confirm(
+        `Vols eliminar ${target?.code ?? "l’afirmació"} d’aquest projecte?`,
+      )
+    ) {
+      return;
+    }
+    await affirmationRepository.delete(id).catch(() => undefined);
+    setAffirmations((current) => current.filter((item) => item.id !== id));
+  }
+
   async function refreshStorageHealth() {
     try {
       setStorageReport(await computeStorageReport());
@@ -869,6 +987,7 @@ export default function Workspace() {
       }
       await loadNotes(activeProject.id);
       await loadEvidence(activeProject.id);
+      await loadAffirmations(activeProject.id);
     }
 
     prepareWorkspace()
@@ -944,6 +1063,7 @@ export default function Workspace() {
     await loadNotes(nextProject.id);
     await loadHypotheses(nextProject.id);
     await loadEvidence(nextProject.id);
+    await loadAffirmations(nextProject.id);
   }
 
   async function createProject(title: string) {
@@ -1174,6 +1294,9 @@ export default function Workspace() {
               {item.id === "evidencies" && evidence.length > 0 && (
                 <span className="nav-count">{evidence.length}</span>
               )}
+              {item.id === "afirmacions" && affirmations.length > 0 && (
+                <span className="nav-count">{affirmations.length}</span>
+              )}
               {item.id === "fonts" && sources.length > 0 && (
                 <span className="nav-count">{sources.length}</span>
               )}
@@ -1296,6 +1419,17 @@ export default function Workspace() {
             onDraftChange={updateEvidenceDraft}
             onSave={saveEvidence}
             onCancel={() => setEvidenceDraft(null)}
+          />
+        ) : view === "afirmacions" ? (
+          <AffirmationsRegistry
+            affirmations={affirmations}
+            draft={affirmationDraft}
+            onNew={startNewAffirmation}
+            onEdit={editAffirmation}
+            onDelete={deleteAffirmation}
+            onDraftChange={updateAffirmationDraft}
+            onSave={saveAffirmation}
+            onCancel={() => setAffirmationDraft(null)}
           />
         ) : (
           <ModuleView
@@ -1678,7 +1812,7 @@ function ModuleView({
   onExport,
   onImport,
 }: {
-  view: Exclude<ViewId, "tauler" | "salut" | "privadesa" | "fonts" | "extractes" | "hipotesis" | "evidencies">;
+  view: Exclude<ViewId, "tauler" | "salut" | "privadesa" | "fonts" | "extractes" | "hipotesis" | "evidencies" | "afirmacions">;
   project: Project;
   onExport: () => void;
   onImport: () => void;
@@ -2845,6 +2979,211 @@ function EvidenceRegistry({
                 </li>
               );
             })}
+          </ul>
+        </section>
+      )}
+    </div>
+  );
+}
+
+function AffirmationsRegistry({
+  affirmations,
+  draft,
+  onNew,
+  onEdit,
+  onDelete,
+  onDraftChange,
+  onSave,
+  onCancel,
+}: {
+  affirmations: Affirmation[];
+  draft: AffirmationDraft | null;
+  onNew: () => void;
+  onEdit: (record: Affirmation) => void;
+  onDelete: (id: string) => void;
+  onDraftChange: (patch: Partial<AffirmationDraft>) => void;
+  onSave: () => void;
+  onCancel: () => void;
+}) {
+  const canSave = Boolean(draft && draft.text.trim());
+
+  return (
+    <div className="page-content module-page">
+      <section className="module-hero">
+        <div>
+          <span className="eyebrow">Fase 3 · Validació ACH</span>
+          <h1>Registre d’afirmacions</h1>
+          <p>
+            Cada afirmació factual de l’obra rep un codi <strong>AID</strong> i es
+            classifica per la <strong>bifurcació de la certesa</strong>:
+            <strong> incondicional</strong> (fet mecànic verificable) o
+            <strong> condicional</strong> (atribució a autor, tradició o context).
+            El <strong>grau d’assertivitat</strong> —escala de cinc nivells— s’ha de
+            marcar de manera homogènia i coherent amb l’evidència.
+          </p>
+        </div>
+        <span className="status-chip live">
+          {affirmations.length}{" "}
+          {affirmations.length === 1 ? "afirmació" : "afirmacions"}
+        </span>
+      </section>
+
+      <section className="stat-panel extract-toolbar">
+        <button className="primary-button" onClick={onNew}>
+          + Nova afirmació
+        </button>
+      </section>
+
+      {draft && (
+        <section className="stat-panel extract-editor">
+          <div className="section-heading">
+            <div>
+              <span className="eyebrow">
+                {draft.id ? "Edita l’afirmació" : "Nova afirmació"}
+              </span>
+              <h2>{draft.code}</h2>
+            </div>
+          </div>
+
+          {requiresDiagnosticEvidence(draft.type) && (
+            <p className="redteam-note">
+              Afirmació condicional (atributiva): exigeix evidència documental
+              diagnòstica. Si no en té, reporta-la com a oberta o provisional i no
+              en pugis l’assertivitat.
+            </p>
+          )}
+
+          <label className="extract-field">
+            <span>Text exacte de l’afirmació</span>
+            <textarea
+              rows={3}
+              value={draft.text}
+              placeholder="La frase tal com apareixerà a l’obra."
+              onChange={(event) => onDraftChange({ text: event.target.value })}
+            />
+          </label>
+
+          <div className="extract-fields">
+            <label className="extract-field">
+              <span>Tipus (bifurcació de la certesa)</span>
+              <select
+                value={draft.type}
+                onChange={(event) =>
+                  onDraftChange({ type: event.target.value as AffirmationType })
+                }
+              >
+                {AFFIRMATION_TYPES.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="extract-field extract-field-page">
+              <span>Capítol</span>
+              <input
+                value={draft.chapter}
+                placeholder="p. ex. 1"
+                onChange={(event) => onDraftChange({ chapter: event.target.value })}
+              />
+            </label>
+          </div>
+
+          <p className="field-hint">{affirmationTypeInfo(draft.type).hint}</p>
+
+          <div className="extract-fields">
+            <label className="extract-field">
+              <span>Grau d’assertivitat</span>
+              <select
+                value={draft.assertiveness}
+                onChange={(event) =>
+                  onDraftChange({
+                    assertiveness: event.target.value as Assertiveness,
+                  })
+                }
+              >
+                {ASSERTIVENESS_LEVELS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="extract-field">
+              <span>Estat</span>
+              <select
+                value={draft.reviewState}
+                onChange={(event) =>
+                  onDraftChange({
+                    reviewState: event.target.value as AffirmationReviewState,
+                  })
+                }
+              >
+                {AFFIRMATION_REVIEW_STATES.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+
+          <div className="modal-actions">
+            <button className="quiet-button" onClick={onCancel}>
+              Cancel·la
+            </button>
+            <button className="primary-button" disabled={!canSave} onClick={onSave}>
+              Desa l’afirmació
+            </button>
+          </div>
+        </section>
+      )}
+
+      {affirmations.length === 0 ? (
+        <section className="empty-state">
+          <div className="empty-orbit">
+            <span>A</span>
+          </div>
+          <h2>Encara no hi ha afirmacions</h2>
+          <p>
+            Registra la primera afirmació factual amb el seu text exacte, tipus i
+            grau d’assertivitat. Després l’enllaçaràs amb les evidències.
+          </p>
+        </section>
+      ) : (
+        <section className="stat-panel">
+          <ul className="affirmation-list">
+            {affirmations.map((item) => (
+              <li key={item.id} className="affirmation-item">
+                <div className="affirmation-head">
+                  <span className="aff-code">{item.code}</span>
+                  <span className={`aff-assertiveness a-${item.assertiveness}`}>
+                    {assertivenessInfo(item.assertiveness).label}
+                  </span>
+                  <span className={`aff-type t-${item.type}`}>
+                    {affirmationTypeInfo(item.type).label}
+                  </span>
+                  {item.chapter && (
+                    <span className="aff-chapter">Cap. {item.chapter}</span>
+                  )}
+                </div>
+                <p className="aff-text">{item.text}</p>
+                <div className="evidence-meta">
+                  <small>{affirmationStateLabel(item.reviewState)}</small>
+                  <div className="extract-actions">
+                    <button className="quiet-button" onClick={() => onEdit(item)}>
+                      Edita
+                    </button>
+                    <button
+                      className="quiet-button danger-text"
+                      onClick={() => onDelete(item.id)}
+                    >
+                      Esborra
+                    </button>
+                  </div>
+                </div>
+              </li>
+            ))}
           </ul>
         </section>
       )}
