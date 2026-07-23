@@ -6,6 +6,7 @@ export {
 } from "./database.ts";
 export {
   affirmationRepository,
+  aidEidLinkRepository,
   citableNoteRepository,
   evidenceRepository,
   hypothesisRepository,
