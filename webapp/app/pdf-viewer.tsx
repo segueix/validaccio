@@ -72,11 +72,14 @@ export default function PdfViewer({
       try {
         const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
         pdfjs.GlobalWorkerOptions.workerSrc = workerSrc;
-        const doc = await pdfjs.getDocument({
+        // El teardown viu al «loadingTask», no al document: PDFDocumentProxy no
+        // té destroy(); qui atura el worker és loadingTask.destroy().
+        const loadingTask = pdfjs.getDocument({
           data: new Uint8Array(data.slice(0)),
-        }).promise;
+        });
+        const doc = await loadingTask.promise;
         if (cancelled) {
-          void doc.destroy();
+          void loadingTask.destroy();
           return;
         }
         docRef.current = doc;
@@ -91,7 +94,7 @@ export default function PdfViewer({
     void load();
     return () => {
       cancelled = true;
-      void docRef.current?.destroy();
+      void docRef.current?.loadingTask.destroy();
       docRef.current = null;
     };
   }, [data]);
