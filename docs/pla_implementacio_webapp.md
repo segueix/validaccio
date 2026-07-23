@@ -53,14 +53,14 @@ Format recomanat de commit i PR: `[NNN] Nom de la funció`.
 
 Prioritats: **P0** imprescindible per al primer ús real; **P1** nucli metodològic; **P2** millora important; **P3** opcional o futura.
 
-### Foto d’estat — 2026-07-22
+### Foto d’estat — 2026-07-23
 
 | Situació | Funcions |
 |---|---|
-| **FET** | 001, 002, 003, 004, 006, 007, 009, 010, 101, 102, 103 i 502 |
-| **EN CURS** | 105 |
+| **FET** | 001, 002, 003, 004, 006, 007, 009, 010, 101, 102, 103, 105 i 502 |
+| **EN CURS** | 104 |
 | **PARCIAL** | 005, 008, 501, 503 i 505 |
-| **SEGÜENT BLOC FUNCIONAL** | 107 → 104 → 110: notes citables, visor PDF i cerca |
+| **SEGÜENT BLOC FUNCIONAL** | 104 → 107 → 110: visor PDF, notes citables i cerca |
 
 Aquesta foto s’ha d’actualitzar dins de la mateixa PR que canviï qualsevol estat.
 
@@ -88,8 +88,8 @@ Aquesta foto s’ha d’actualitzar dins de la mateixa PR que canviï qualsevol 
 | **101** | Importació local de fonts | P0 | 002, 003 | **FET** | Importar PDF, DOCX, TXT, Markdown i imatges amb validació de tipus, mida i errors comprensibles. |
 | **102** | Emmagatzematge local de fitxers | P0 | 002, 101 | **FET** | Desar blobs grans sense incrustar-los al codi, conservar-los offline i eliminar-los de manera controlada. |
 | **103** | Fitxa bibliogràfica i citekey | P0 | 101 | **FET** | Autor, títol, data, edició, arxiu, URL, data de consulta, tipus, etiquetes i identificador estable únic. |
-| **104** | Visor PDF amb ancoratge | P0 | 102, 103 | **PENDENT** | Llegir PDF, anar a pàgina, cercar, seleccionar fragment i crear una referència que reobre el context exacte. |
-| **105** | Extracció de text DOCX/TXT/MD | P0 | 101, 102 | **EN CURS** | Extreure text i estructura conservant origen, paràgrafs i localitzacions reproduïbles. |
+| **104** | Visor PDF amb ancoratge | P0 | 102, 103 | **EN CURS** | Llegir PDF, anar a pàgina, cercar, seleccionar fragment i crear una referència que reobre el context exacte. |
+| **105** | Extracció de text DOCX/TXT/MD | P0 | 101, 102 | **FET** | Extreure text i estructura conservant origen, paràgrafs i localitzacions reproduïbles. |
 | **106** | OCR per documents escanejats | P2 | 102, 104 | **PENDENT** | OCR opcional per pàgina, llengua seleccionable, confiança visible i text sempre vinculat a la imatge original. |
 | **107** | Notes i extractes citables | P0 | 103, 104, 105 | **PENDENT** | Crear extractes amb cita, paràfrasi separada, comentari propi, pàgina/context i enllaç a la font. |
 | **108** | Qualitat i límits de la font | P1 | 103 | **PENDENT** | Registrar primària/secundària, proximitat, autoria, biaixos, limitacions i justificació sense convertir-ho en veritat automàtica. |
@@ -178,9 +178,10 @@ L'ordre no obliga, però minimitza reimplementacions:
 
 ### Següent bloc recomanat
 
-La base local, la privacitat i la protecció de `main` ja estan completades.
-El pas funcional natural és **101 → 102 → 103**: importar fonts,
-conservar-ne els fitxers localment i crear-ne la fitxa bibliogràfica.
+La base local, la privacitat, la protecció de `main` i el corpus documental
+(101 → 102 → 103 → 105) ja estan completats. El pas funcional en curs és
+**104 → 107**: visor PDF amb referències ancorades i notes citables, per
+tancar el bloc de fonts abans d’entrar al nucli metodològic ACH (201…).
 
 ## 6. Registre d'implementacions
 
@@ -197,13 +198,14 @@ S'afegeix una fila després de cada funció acabada. No s'esborren entrades.
 | 2026-07-22 | 006 | [PR #17](https://github.com/segueix/validaccio/pull/17) | FET | Panell «Salut»: ús/quota via `storage.estimate`, persistència, última còpia registrada en exportar, avisos de risc graduats i accions de recuperació; fusionat a main. |
 | 2026-07-22 | 007 | [PR #17](https://github.com/segueix/validaccio/pull/17) | FET | Pipeline de migració pur i provat (`migrations.ts`), còpia prèvia a `metadata` abans d'escriure i recuperació des de la còpia; s'executa en obrir amb bàner de recuperació. Fusionat a main. |
 | 2026-07-22 | 009 | [PR #18](https://github.com/segueix/validaccio/pull/18) | FET | Proves d'integració amb `fake-indexeddb`: persistència, migració d'esquema en obrir, flux crític d'importació, rollback de transacció i runner de migració amb còpia prèvia/recuperació. 30 proves totals; lint i build verificats. |
-| 2026-07-22 | 010 | [PR #19](https://github.com/segueix/validaccio/pull/19) | EN CURS | Tallafoc que embolcalla `fetch`: inventari de peticions (només mateix origen), mode sense xarxa persistent, consentiment previ per a hosts externs i registre d'intents. Prova que un enviament extern de fitxer queda bloquejat. 8 proves; lint i build verificats. |
+| 2026-07-22 | 010 | [PR #19](https://github.com/segueix/validaccio/pull/19) | FET | Tallafoc que embolcalla `fetch`: inventari de peticions (només mateix origen), mode sense xarxa persistent, consentiment previ per a hosts externs i registre d'intents. Prova que un enviament extern de fitxer queda bloquejat. 8 proves; lint i build verificats. Fusionat a main; completat amb la CSP de la PR #20. |
 | 2026-07-22 | 010 | [PR #20](https://github.com/segueix/validaccio/pull/20) | FET | CSP local-first, recuperació exacta i textos precisats; 39 proves, lint, build i comprovació visual superats. Fusionat a `main`. |
 | 2026-07-22 | 502 | [PR #20](https://github.com/segueix/validaccio/pull/20) | FET | Workflow de lint, proves i build fusionat; `main` exigeix el control «Lint, proves i build». |
 | 2026-07-22 | 101 | [PR #22](https://github.com/segueix/validaccio/pull/22) | FET | Importació de fonts (PDF, DOCX, TXT, Markdown, imatges) amb validació de tipus/mida i errors comprensibles; esquema v4 amb magatzem `sources` indexat per projecte i vista «Fonts» amb arrossegar-i-deixar. 11 proves noves; fusionada a main. |
 | 2026-07-22 | 102 | [PR #22](https://github.com/segueix/validaccio/pull/22) | FET | Contingut de cada font desat com a ArrayBuffer a IndexedDB (esquema v5, magatzem `blobs` indexat per projecte), mai incrustat al codi; recuperació (baixada), mida total per projecte i eliminació controlada amb confirmació i cascada. 6 proves noves; fusionada a main. |
 | 2026-07-22 | 103 | [PR #22](https://github.com/segueix/validaccio/pull/22) | FET | Fitxa bibliogràfica per font (autor, títol, data, edició, arxiu, URL, data de consulta, tipus, etiquetes) amb citekey estable i únic generat i desambiguat (`lib/bibliography.ts`); editor a la vista «Fonts». Fusionada a main. |
-| 2026-07-22 | 105 | `feat/105-extraccio-text` | EN CURS | Extracció de text de TXT/Markdown (UTF-8) i DOCX (ZIP inflat amb `DecompressionStream` natiu, sense dependències) a `lib/text-extraction.ts`; paràgrafs amb índex reproduïble i previsualització a la vista «Fonts». 8 proves noves (73 totals); lint i build verificats. |
+| 2026-07-22 | 105 | [PR #23](https://github.com/segueix/validaccio/pull/23) | FET | Extracció de text de TXT/Markdown (UTF-8) i DOCX (ZIP inflat amb `DecompressionStream` natiu, sense dependències) a `lib/text-extraction.ts`; paràgrafs amb índex reproduïble i previsualització a la vista «Fonts». 8 proves noves (73 totals); lint i build verificats. Fusionada a main. |
+| 2026-07-23 | 104 | `feat/104-visor-pdf` | EN CURS | Visor PDF amb pdf.js (build **legacy**, primera dependència de runtime; worker empaquetat localment, sense CDN, compatible amb la CSP i el tallafoc). Navegació per pàgines, cerca a tot el document amb salt a la coincidència, panell de text seleccionable i referències ancorades (font+pàgina+fragment) desades a IndexedDB (esquema v6, magatzem `references`) que reobren el context exacte. Lògica pura provada (`lib/pdf-references.ts`) i integració v5→v6 amb `fake-indexeddb`; 6 proves noves (79 totals). Render, worker i extracció de text verificats en Chromium 141 (el build modern de pdf.js peta per `Map.prototype.getOrInsertComputed`; el legacy inclou el polyfill). Lint i build verificats. |
 
 ## 7. Definició global de «fet»
 

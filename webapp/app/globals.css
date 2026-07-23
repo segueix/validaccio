@@ -148,6 +148,40 @@ button { color: inherit; }
 .modal input:focus { border-color: var(--forest-2); box-shadow: 0 0 0 3px rgba(36,91,79,.12); }
 .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 22px; }
 
+/* Funció 104 — Visor PDF amb ancoratge de referències */
+.pdf-modal { width: min(1180px, 100%); height: min(88vh, 900px); display: flex; flex-direction: column; border-radius: 16px; background: white; box-shadow: 0 30px 90px rgba(0,0,0,.24); overflow: hidden; }
+.pdf-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 18px; border-bottom: 1px solid var(--line); background: #f9f9f5; }
+.pdf-toolbar strong { font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pdf-nav { display: flex; align-items: center; gap: 8px; }
+.pdf-nav span { min-width: 72px; text-align: center; font-size: 12px; color: var(--muted); }
+.pdf-body { flex: 1; display: grid; grid-template-columns: 1fr 340px; min-height: 0; }
+.pdf-canvas-wrap { overflow: auto; padding: 20px; background: var(--sand); display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.pdf-canvas { max-width: 100%; height: auto; background: white; box-shadow: 0 8px 24px rgba(0,0,0,.14); border-radius: 4px; }
+.pdf-side { border-left: 1px solid var(--line); overflow: auto; padding: 16px; display: flex; flex-direction: column; gap: 18px; }
+.pdf-search { display: flex; gap: 8px; }
+.pdf-search input { flex: 1; padding: 9px 11px; border: 1px solid var(--line); border-radius: 8px; outline: none; font-size: 12px; }
+.pdf-search input:focus { border-color: var(--forest-2); box-shadow: 0 0 0 3px rgba(36,91,79,.12); }
+.pdf-results small, .pdf-refs small { display: block; margin-bottom: 8px; font-size: 11px; font-weight: 700; color: var(--muted); }
+.pdf-results ul, .pdf-refs ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.pdf-results li button { width: 100%; border: 1px solid var(--line); background: white; border-radius: 8px; padding: 8px 10px; text-align: left; cursor: pointer; font-size: 12px; line-height: 1.5; }
+.pdf-results li button:hover { border-color: var(--forest-2); }
+.pdf-results li span, .pdf-refs li span { display: inline-block; margin-right: 6px; padding: 1px 6px; border-radius: 5px; background: var(--forest); color: white; font-size: 10px; font-weight: 700; }
+.pdf-section-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+.pdf-section-head small { font-size: 11px; font-weight: 700; color: var(--muted); }
+.pdf-text-body { margin: 0; max-height: 240px; overflow: auto; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: #fbfbf8; font-size: 12px; line-height: 1.7; user-select: text; }
+.pdf-refs li { display: flex; align-items: flex-start; gap: 6px; }
+.pdf-refs li button:first-child { flex: 1; border: 1px solid var(--line); background: white; border-radius: 8px; padding: 8px 10px; text-align: left; cursor: pointer; font-size: 12px; line-height: 1.5; }
+.pdf-refs li button:first-child:hover { border-color: var(--forest-2); }
+.pdf-ref-del { border: 1px solid var(--line); background: white; border-radius: 8px; padding: 6px 10px; cursor: pointer; font-weight: 700; }
+.pdf-ref-del:hover { border-color: #c98a80; }
+.pdf-side mark, .pdf-results mark { background: var(--lime); color: var(--ink); border-radius: 2px; padding: 0 1px; }
+
+@media (max-width: 860px) {
+  .pdf-modal { height: min(92vh, 900px); }
+  .pdf-body { grid-template-columns: 1fr; grid-template-rows: minmax(0, 1fr) auto; }
+  .pdf-side { border-left: 0; border-top: 1px solid var(--line); max-height: 42vh; }
+}
+
 @media (max-width: 980px) {
   .workspace-shell { grid-template-columns: 78px 1fr; }
   .sidebar { padding-inline: 12px; }
@@ -403,3 +437,19 @@ button { color: inherit; }
 .text-paragraphs li { display: grid; grid-template-columns: 42px 1fr; gap: 12px; align-items: start; }
 .paragraph-loc { padding-top: 2px; font: 700 11px Georgia, serif; color: var(--forest-2); }
 .text-paragraphs p { margin: 0; font-size: 13px; line-height: 1.6; white-space: pre-wrap; }
+
+
+/* Funció 104 — Visor PDF */
+.pdf-modal {
+  width: min(900px, 100%); max-height: 92vh; display: flex; flex-direction: column;
+  background: var(--paper); border-radius: 16px; overflow: hidden; box-shadow: 0 30px 90px rgba(0,0,0,.28);
+}
+.pdf-toolbar {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  padding: 14px 18px; border-bottom: 1px solid var(--line); background: white;
+}
+.pdf-toolbar strong { font: 700 13px Georgia, serif; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pdf-nav { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.pdf-nav span { font-size: 12px; color: var(--muted); min-width: 60px; text-align: center; }
+.pdf-canvas-wrap { flex: 1; overflow: auto; display: grid; place-items: center; padding: 18px; background: #e9ebe8; }
+.pdf-canvas { max-width: 100%; height: auto; box-shadow: 0 8px 30px rgba(0,0,0,.15); background: white; }

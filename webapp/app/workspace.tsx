@@ -1,7 +1,9 @@
 "use client";
 
-import { ChangeEvent, FormEvent, useEffect, useRef, useState } from "react";
+import { ChangeEvent, FormEvent, lazy, Suspense, useEffect, useRef, useState } from "react";
 import ProjectManager from "./project-manager";
+
+const PdfViewer = lazy(() => import("./pdf-viewer"));
 import {
   createProjectPackage,
   MAX_PROJECT_PACKAGE_BYTES,
@@ -14,6 +16,7 @@ import {
   duplicateProjectRecord,
   ensureProjectsMigrated,
   metadataRepository,
+  pdfReferenceRepository,
   projectRepository,
   PROJECT_DATA_VERSION,
   recoverProjectsFromBackup,
@@ -33,6 +36,7 @@ import {
   createSourceBlobRecord,
   sourceBlobToObjectUrl,
 } from "../lib/source-blobs";
+import { createPdfReference, type PdfReference } from "../lib/pdf-references";
 import {
   type Citation,
   CITATION_TYPES,
@@ -219,6 +223,13 @@ export default function Workspace() {
     "loading",
   );
   const [textError, setTextError] = useState("");
+  const [pdfDoc, setPdfDoc] = useState<{
+    sourceId: string;
+    projectId: string;
+    name: string;
+    data: ArrayBuffer;
+  } | null>(null);
+  const [pdfReferences, setPdfReferences] = useState<PdfReference[]>([]);
   const fileInput = useRef<HTMLInputElement>(null);
   const sourceInput = useRef<HTMLInputElement>(null);
   const firewallRef = useRef<PrivacyFirewall | null>(null);
@@ -390,6 +401,60 @@ export default function Workspace() {
       );
       setTextState("error");
     }
+  }
+
+  async function openPdf(target: SourceRecord) {
+    try {
+      const record = await sourceBlobRepository.get(target.id);
+      if (!record) {
+        setNotice("El contingut d’aquesta font no és al dispositiu");
+        return;
+      }
+      const references = await pdfReferenceRepository.getAllForSource(target.id);
+      setPdfReferences(references);
+      setPdfDoc({
+        sourceId: target.id,
+        projectId: target.projectId,
+        name: target.name,
+        data: record.data,
+      });
+    } catch {
+      setNotice("No s’ha pogut obrir el PDF");
+    }
+  }
+
+  async function createReference(page: number, text: string) {
+    if (!pdfDoc) return;
+    try {
+      const reference = createPdfReference({
+        sourceId: pdfDoc.sourceId,
+        projectId: pdfDoc.projectId,
+        page,
+        text,
+      });
+      await pdfReferenceRepository.save(reference);
+      setPdfReferences((current) =>
+        [...current, reference].sort((left, right) => left.page - right.page),
+      );
+    } catch {
+      setNotice("No s’ha pogut desar la referència");
+    }
+  }
+
+  async function deleteReference(id: string) {
+    try {
+      await pdfReferenceRepository.delete(id);
+      setPdfReferences((current) =>
+        current.filter((reference) => reference.id !== id),
+      );
+    } catch {
+      setNotice("No s’ha pogut esborrar la referència");
+    }
+  }
+
+  function closePdf() {
+    setPdfDoc(null);
+    setPdfReferences([]);
   }
 
   async function refreshStorageHealth() {
@@ -842,6 +907,7 @@ export default function Workspace() {
             onDownload={downloadSource}
             onEditCitation={openCitation}
             onExtractText={openText}
+            onOpenPdf={openPdf}
             onDismissErrors={() => setSourceErrors([])}
           />
         ) : (
@@ -1027,6 +1093,19 @@ export default function Workspace() {
             </div>
           </div>
         </div>
+      )}
+
+      {pdfDoc && (
+        <Suspense fallback={null}>
+          <PdfViewer
+            data={pdfDoc.data}
+            name={pdfDoc.name}
+            references={pdfReferences}
+            onCreateReference={createReference}
+            onDeleteReference={deleteReference}
+            onClose={closePdf}
+          />
+        </Suspense>
       )}
     </main>
   );
@@ -1549,6 +1628,7 @@ function SourcesLibrary({
   onDownload,
   onEditCitation,
   onExtractText,
+  onOpenPdf,
   onDismissErrors,
 }: {
   sources: SourceRecord[];
@@ -1560,6 +1640,7 @@ function SourcesLibrary({
   onDownload: (source: SourceRecord) => void;
   onEditCitation: (source: SourceRecord) => void;
   onExtractText: (source: SourceRecord) => void;
+  onOpenPdf: (source: SourceRecord) => void;
   onDismissErrors: () => void;
 }) {
   const [dragging, setDragging] = useState(false);
@@ -1662,6 +1743,14 @@ function SourcesLibrary({
                   </small>
                 </div>
                 <div className="source-actions">
+                  {source.kind === "pdf" && (
+                    <button
+                      className="quiet-button"
+                      onClick={() => onOpenPdf(source)}
+                    >
+                      Visor
+                    </button>
+                  )}
                   {isExtractableKind(source.kind) && (
                     <button
                       className="quiet-button"

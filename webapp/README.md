@@ -13,6 +13,7 @@ en una eina de treball per a obres històriques traçables.
 - canvi de nom, protecció de l'emmagatzematge i còpia/restauració JSON;
 - panell de salut de l'emmagatzematge amb ús, quota, persistència i avisos;
 - importació local de fonts (PDF, DOCX, TXT, Markdown, imatges) amb validació;
+- visor PDF local amb cerca i referències ancorades (font + pàgina + fragment);
 - disseny responsiu per a Chromebook, tauleta i mòbil;
 - manifest i shell bàsic per a ús com a PWA.
 
@@ -168,3 +169,25 @@ localitza `word/document.xml` amb un lector de ZIP mínim, s'infla amb l'API
 se n'extreu el text dels elements `<w:t>` i l'estructura de paràgrafs dels `<w:p>`.
 Cada paràgraf conserva un **índex reproduïble** (posició dins el document) per
 poder-lo tornar a localitzar, i la vista «Fonts» en mostra una previsualització.
+
+## Visor PDF amb ancoratge
+
+La funció 104 obre un visor de PDF dins la vista «Fonts» (botó **Visor** a cada
+font PDF). El render fa servir **pdf.js**, la primera dependència de runtime del
+projecte. Es fa servir el **build «legacy»** de `pdfjs-dist` de manera
+deliberada: el build modern crida `Map.prototype.getOrInsertComputed`, un mètode
+que encara no tenen la majoria de navegadors, mentre que el legacy en porta el
+polyfill. El *worker* s'empaqueta **localment** (mai des d'un CDN), de manera que
+el visor respecta la CSP local-first i el tallafoc de privacitat: cap byte del
+PDF surt del dispositiu.
+
+El visor permet navegar per pàgines, **cercar** a tot el document i saltar a la
+coincidència, i mostra el **text seleccionable** de la pàgina. Seleccionant un
+fragment es crea una **referència ancorada** (font + pàgina + fragment) que es
+desa a IndexedDB (esquema v6, magatzem `references` indexat per `sourceId`) i que
+**reobre el context exacte** —la pàgina i el fragment ressaltat— quan s'hi torna.
+
+La part comprovable sense navegador viu a `lib/pdf-references.ts` (model de
+referència i cerca amb context) i està coberta per proves unitàries i d'integració
+(`fake-indexeddb`, actualització v5→v6). El render, la càrrega del *worker* i
+l'extracció de text s'han verificat en Chromium.

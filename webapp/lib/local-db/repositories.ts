@@ -6,6 +6,7 @@ import {
 } from "./types.ts";
 import { type SourceRecord } from "../source-library.ts";
 import { type SourceBlobRecord } from "../source-blobs.ts";
+import { type PdfReference } from "../pdf-references.ts";
 
 export class IndexedDbRepository<T extends { id: string }> {
   private readonly storeName: "projects";
@@ -160,7 +161,32 @@ class SourceBlobRepository {
   }
 }
 
+class PdfReferenceRepository {
+  save(record: PdfReference): Promise<PdfReference> {
+    return withTransaction("references", "readwrite", async (store) => {
+      await requestResult(store.put(record));
+      return record;
+    });
+  }
+
+  getAllForSource(sourceId: string): Promise<PdfReference[]> {
+    return withTransaction("references", "readonly", async (store) => {
+      const records = (await requestResult(
+        store.index("sourceId").getAll(sourceId),
+      )) as PdfReference[];
+      return records.sort((left, right) => left.page - right.page);
+    });
+  }
+
+  delete(id: string): Promise<void> {
+    return withTransaction("references", "readwrite", async (store) => {
+      await requestResult(store.delete(id));
+    });
+  }
+}
+
 export const projectRepository = new ProjectRepository();
 export const metadataRepository = new MetadataRepository();
 export const sourceRepository = new SourceRepository();
 export const sourceBlobRepository = new SourceBlobRepository();
+export const pdfReferenceRepository = new PdfReferenceRepository();
