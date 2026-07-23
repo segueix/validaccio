@@ -168,3 +168,14 @@ localitza `word/document.xml` amb un lector de ZIP mínim, s'infla amb l'API
 se n'extreu el text dels elements `<w:t>` i l'estructura de paràgrafs dels `<w:p>`.
 Cada paràgraf conserva un **índex reproduïble** (posició dins el document) per
 poder-lo tornar a localitzar, i la vista «Fonts» en mostra una previsualització.
+
+## Editor d'hipòtesis (H1/H2/H3)
+
+La funció 201 obre el nucli de validació ACH. La lògica pura viu a
+`lib/hypotheses.ts`, amb l'ordre nomenclàtric **immutable H1 = Consens,
+H2 = Ombra, H3 = Nova teoria**. Cada hipòtesi es defineix amb enunciat falsable,
+prediccions observables, supòsits, condicions d'abandonament, nucli no
+negociable i estat de revisió, i recorda la **Regla 10 (Red Teaming)**: el
+consens i l'ombra s'han de formular amb una font independent, no debilitar-los.
+Les hipòtesis es desen per projecte a l'esquema local v6 (magatzem `hypotheses`)
+i s'editen des de la vista «Hipòtesis».

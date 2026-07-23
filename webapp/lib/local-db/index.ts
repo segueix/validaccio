@@ -5,6 +5,7 @@ export {
   withTransaction,
 } from "./database.ts";
 export {
+  hypothesisRepository,
   metadataRepository,
   projectRepository,
   sourceBlobRepository,

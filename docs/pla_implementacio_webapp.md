@@ -57,10 +57,10 @@ Prioritats: **P0** imprescindible per al primer ús real; **P1** nucli metodolò
 
 | Situació | Funcions |
 |---|---|
-| **FET** | 001, 002, 003, 004, 006, 007, 009, 010, 101, 102, 103 i 502 |
-| **EN CURS** | 105 |
+| **FET** | 001, 002, 003, 004, 006, 007, 009, 010, 101, 102, 103, 105 i 502 |
+| **EN CURS** | 201 |
 | **PARCIAL** | 005, 008, 501, 503 i 505 |
-| **SEGÜENT BLOC FUNCIONAL** | 107 → 104 → 110: notes citables, visor PDF i cerca |
+| **SEGÜENT BLOC FUNCIONAL** | 201 → 205 · 204 → 209 → 211 → 216: hipòtesis, AID/EID, matriu ACH i mapa d'abast del llibre |
 
 Aquesta foto s’ha d’actualitzar dins de la mateixa PR que canviï qualsevol estat.
 
@@ -89,7 +89,7 @@ Aquesta foto s’ha d’actualitzar dins de la mateixa PR que canviï qualsevol 
 | **102** | Emmagatzematge local de fitxers | P0 | 002, 101 | **FET** | Desar blobs grans sense incrustar-los al codi, conservar-los offline i eliminar-los de manera controlada. |
 | **103** | Fitxa bibliogràfica i citekey | P0 | 101 | **FET** | Autor, títol, data, edició, arxiu, URL, data de consulta, tipus, etiquetes i identificador estable únic. |
 | **104** | Visor PDF amb ancoratge | P0 | 102, 103 | **PENDENT** | Llegir PDF, anar a pàgina, cercar, seleccionar fragment i crear una referència que reobre el context exacte. |
-| **105** | Extracció de text DOCX/TXT/MD | P0 | 101, 102 | **EN CURS** | Extreure text i estructura conservant origen, paràgrafs i localitzacions reproduïbles. |
+| **105** | Extracció de text DOCX/TXT/MD | P0 | 101, 102 | **FET** | Extreure text i estructura conservant origen, paràgrafs i localitzacions reproduïbles. |
 | **106** | OCR per documents escanejats | P2 | 102, 104 | **PENDENT** | OCR opcional per pàgina, llengua seleccionable, confiança visible i text sempre vinculat a la imatge original. |
 | **107** | Notes i extractes citables | P0 | 103, 104, 105 | **PENDENT** | Crear extractes amb cita, paràfrasi separada, comentari propi, pàgina/context i enllaç a la font. |
 | **108** | Qualitat i límits de la font | P1 | 103 | **PENDENT** | Registrar primària/secundària, proximitat, autoria, biaixos, limitacions i justificació sense convertir-ho en veritat automàtica. |
@@ -102,7 +102,7 @@ Aquesta foto s’ha d’actualitzar dins de la mateixa PR que canviï qualsevol 
 
 | ID | Funció | Prioritat | Depèn de | Estat | Criteri d'acceptació |
 |---:|---|:---:|---|---|---|
-| **201** | Editor d'hipòtesis H1/H2/H3 | P0 | 002, 003 | **PENDENT** | Crear i editar H1 consens, H2 ombra i H3 teoria nova, amb definició precisa i estat de revisió. |
+| **201** | Editor d'hipòtesis H1/H2/H3 | P0 | 002, 003 | **EN CURS** | Crear i editar H1 consens, H2 ombra i H3 teoria nova, amb definició precisa i estat de revisió. |
 | **202** | Prediccions i condicions de derrota | P0 | 201 | **PENDENT** | Cada hipòtesi declara prediccions, supòsits, què l'afavoriria i què la faria caure. |
 | **203** | Registre de mutacions | P0 | 201 | **PENDENT** | Qualsevol canvi substancial conserva abans/després, motiu, data i aprovació humana. |
 | **204** | Registre d'evidències EID | P0 | 103, 107, 201 | **PENDENT** | Crear EID únic amb descripció neutral, font, pàgina, extracte, família i qualitat. |
@@ -203,7 +203,8 @@ S'afegeix una fila després de cada funció acabada. No s'esborren entrades.
 | 2026-07-22 | 101 | [PR #22](https://github.com/segueix/validaccio/pull/22) | FET | Importació de fonts (PDF, DOCX, TXT, Markdown, imatges) amb validació de tipus/mida i errors comprensibles; esquema v4 amb magatzem `sources` indexat per projecte i vista «Fonts» amb arrossegar-i-deixar. 11 proves noves; fusionada a main. |
 | 2026-07-22 | 102 | [PR #22](https://github.com/segueix/validaccio/pull/22) | FET | Contingut de cada font desat com a ArrayBuffer a IndexedDB (esquema v5, magatzem `blobs` indexat per projecte), mai incrustat al codi; recuperació (baixada), mida total per projecte i eliminació controlada amb confirmació i cascada. 6 proves noves; fusionada a main. |
 | 2026-07-22 | 103 | [PR #22](https://github.com/segueix/validaccio/pull/22) | FET | Fitxa bibliogràfica per font (autor, títol, data, edició, arxiu, URL, data de consulta, tipus, etiquetes) amb citekey estable i únic generat i desambiguat (`lib/bibliography.ts`); editor a la vista «Fonts». Fusionada a main. |
-| 2026-07-22 | 105 | `feat/105-extraccio-text` | EN CURS | Extracció de text de TXT/Markdown (UTF-8) i DOCX (ZIP inflat amb `DecompressionStream` natiu, sense dependències) a `lib/text-extraction.ts`; paràgrafs amb índex reproduïble i previsualització a la vista «Fonts». 8 proves noves (73 totals); lint i build verificats. |
+| 2026-07-22 | 105 | [PR #23](https://github.com/segueix/validaccio/pull/23) | FET | Extracció de text de TXT/Markdown (UTF-8) i DOCX (ZIP inflat amb `DecompressionStream` natiu, sense dependències) a `lib/text-extraction.ts`; paràgrafs amb índex reproduïble i previsualització a la vista «Fonts». Fusionada a main. |
+| 2026-07-22 | 201 | `feat/201-editor-hipotesis` | EN CURS | Editor d'hipòtesis H1/H2/H3 (`lib/hypotheses.ts`) amb nomenclatura immutable, camps de definició (enunciat, prediccions, supòsits, condicions d'abandonament, nucli), estat de revisió i recordatori de Red Teaming; esquema v6 amb magatzem `hypotheses` per projecte i vista «Hipòtesis». 8 proves noves (81 totals); lint i build verificats. |
 
 ## 7. Definició global de «fet»
 
