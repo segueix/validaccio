@@ -263,6 +263,21 @@ evidència documental diagnòstica). Quan una afirmació és condicional, l'edit
 recorda que no se n'ha de pujar l'assertivitat sense aquell suport. La lògica pura
 viu a `lib/affirmations.ts` i està coberta per proves unitàries i d'integració.
 
-Els magatzems de les funcions 104, 107, 201, 204 i 205 conviuen a l'esquema local
-**v9** (`references`, `notes`, `hypotheses`, `evidence` i `affirmations`), creats
-de manera additiva i protegida.
+## Enllaç AID ↔ EID
+
+La funció 206 connecta cada afirmació (AID) amb les evidències (EID) que la
+**sostenen**, la **contradiuen** o la **contextualitzen**, i registra com se'n
+deriva l'afirmació (cita literal, paràfrasi o inferència). L'enllaç és navegable
+en **tots dos sentits**: des de la vista «Afirmacions» cada afirmació mostra les
+seves evidències amb la postura i un resum ràpid (a favor / en contra / context),
+i des de «Evidències» cada evidència mostra les afirmacions que hi depenen.
+
+Cada enllaç té un identificador determinista per parella (AID, EID), de manera que
+no se'n poden crear duplicats, i s'esborra en cascada quan s'elimina l'afirmació o
+l'evidència. La lògica pura viu a `lib/aid-eid-links.ts` (model, consultes
+bidireccionals, resum de postures) i està coberta per proves unitàries i
+d'integració.
+
+Els magatzems de les funcions 104, 107, 201, 204, 205 i 206 conviuen a l'esquema
+local **v10** (`references`, `notes`, `hypotheses`, `evidence`, `affirmations` i
+`links`), creats de manera additiva i protegida.

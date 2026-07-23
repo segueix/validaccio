@@ -11,6 +11,7 @@ import { type CitableNote, normalizeCitableNote } from "../citable-notes.ts";
 import { type Hypothesis } from "../hypotheses.ts";
 import { type EvidenceRecord, normalizeEvidence } from "../evidence.ts";
 import { type Affirmation, normalizeAffirmation } from "../affirmations.ts";
+import { type AidEidLink, normalizeLink } from "../aid-eid-links.ts";
 
 export class IndexedDbRepository<T extends { id: string }> {
   private readonly storeName: "projects";
@@ -321,6 +322,49 @@ class AffirmationRepository {
   }
 }
 
+class AidEidLinkRepository {
+  save(record: AidEidLink): Promise<AidEidLink> {
+    return withTransaction("links", "readwrite", async (store) => {
+      await requestResult(store.put(record));
+      return record;
+    });
+  }
+
+  getAllForProject(projectId: string): Promise<AidEidLink[]> {
+    return withTransaction("links", "readonly", async (store) => {
+      const records = (await requestResult(
+        store.index("projectId").getAll(projectId),
+      )) as Record<string, unknown>[];
+      return records.map((record) => normalizeLink(record));
+    });
+  }
+
+  delete(id: string): Promise<void> {
+    return withTransaction("links", "readwrite", async (store) => {
+      await requestResult(store.delete(id));
+    });
+  }
+
+  // En esborrar una afirmació o una evidència, els seus enllaços desapareixen
+  // per no deixar vincles orfes que apuntin a res.
+  private deleteByIndex(index: "affirmationId" | "evidenceId", value: string): Promise<void> {
+    return withTransaction("links", "readwrite", async (store) => {
+      const keys = (await requestResult(
+        store.index(index).getAllKeys(value),
+      )) as IDBValidKey[];
+      await Promise.all(keys.map((key) => requestResult(store.delete(key))));
+    });
+  }
+
+  deleteForAffirmation(affirmationId: string): Promise<void> {
+    return this.deleteByIndex("affirmationId", affirmationId);
+  }
+
+  deleteForEvidence(evidenceId: string): Promise<void> {
+    return this.deleteByIndex("evidenceId", evidenceId);
+  }
+}
+
 export const projectRepository = new ProjectRepository();
 export const metadataRepository = new MetadataRepository();
 export const sourceRepository = new SourceRepository();
@@ -330,3 +374,4 @@ export const pdfReferenceRepository = new PdfReferenceRepository();
 export const citableNoteRepository = new CitableNoteRepository();
 export const evidenceRepository = new EvidenceRepository();
 export const affirmationRepository = new AffirmationRepository();
+export const aidEidLinkRepository = new AidEidLinkRepository();

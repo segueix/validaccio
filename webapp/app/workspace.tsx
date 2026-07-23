@@ -15,6 +15,7 @@ import {
   createProjectRecord,
   duplicateProjectRecord,
   affirmationRepository,
+  aidEidLinkRepository,
   citableNoteRepository,
   ensureProjectsMigrated,
   evidenceRepository,
@@ -96,6 +97,20 @@ import {
   nextAffirmationCode,
   requiresDiagnosticEvidence,
 } from "../lib/affirmations";
+import {
+  type AidEidLink,
+  createLink,
+  DERIVATION_TYPES,
+  type DerivationType,
+  derivationLabel,
+  EVIDENCE_STANCES,
+  type EvidenceStance,
+  hasLink,
+  linksForAffirmation,
+  linksForEvidence,
+  stanceInfo,
+  summarizeStances,
+} from "../lib/aid-eid-links";
 import {
   evaluateStorageHealth,
   formatBytes,
@@ -317,6 +332,7 @@ export default function Workspace() {
   const [affirmations, setAffirmations] = useState<Affirmation[]>([]);
   const [affirmationDraft, setAffirmationDraft] =
     useState<AffirmationDraft | null>(null);
+  const [links, setLinks] = useState<AidEidLink[]>([]);
   const fileInput = useRef<HTMLInputElement>(null);
   const sourceInput = useRef<HTMLInputElement>(null);
   const firewallRef = useRef<PrivacyFirewall | null>(null);
@@ -690,6 +706,14 @@ export default function Workspace() {
     }
   }
 
+  async function loadLinks(projectId: string) {
+    try {
+      setLinks(await aidEidLinkRepository.getAllForProject(projectId));
+    } catch {
+      setLinks([]);
+    }
+  }
+
   async function seedHypotheses() {
     for (const hypothesis of defaultHypotheses(project.id)) {
       await hypothesisRepository.save(hypothesis);
@@ -835,7 +859,9 @@ export default function Workspace() {
       return;
     }
     await evidenceRepository.delete(id).catch(() => undefined);
+    await aidEidLinkRepository.deleteForEvidence(id).catch(() => undefined);
     setEvidence((current) => current.filter((item) => item.id !== id));
+    setLinks((current) => current.filter((link) => link.evidenceId !== id));
   }
 
   function startNewAffirmation() {
@@ -913,7 +939,39 @@ export default function Workspace() {
       return;
     }
     await affirmationRepository.delete(id).catch(() => undefined);
+    await aidEidLinkRepository.deleteForAffirmation(id).catch(() => undefined);
     setAffirmations((current) => current.filter((item) => item.id !== id));
+    setLinks((current) => current.filter((link) => link.affirmationId !== id));
+  }
+
+  async function linkEvidenceToAffirmation(
+    affirmationId: string,
+    evidenceId: string,
+    stance: EvidenceStance,
+    derivation: DerivationType,
+  ) {
+    if (!evidenceId || hasLink(links, affirmationId, evidenceId)) return;
+    try {
+      const link = createLink({
+        projectId: project.id,
+        affirmationId,
+        evidenceId,
+        stance,
+        derivation,
+      });
+      await aidEidLinkRepository.save(link);
+      setLinks((current) => [
+        ...current.filter((item) => item.id !== link.id),
+        link,
+      ]);
+    } catch {
+      setNotice("No s’ha pogut vincular l’evidència");
+    }
+  }
+
+  async function unlink(id: string) {
+    await aidEidLinkRepository.delete(id).catch(() => undefined);
+    setLinks((current) => current.filter((link) => link.id !== id));
   }
 
   async function refreshStorageHealth() {
@@ -988,6 +1046,7 @@ export default function Workspace() {
       await loadNotes(activeProject.id);
       await loadEvidence(activeProject.id);
       await loadAffirmations(activeProject.id);
+      await loadLinks(activeProject.id);
     }
 
     prepareWorkspace()
@@ -1064,6 +1123,7 @@ export default function Workspace() {
     await loadHypotheses(nextProject.id);
     await loadEvidence(nextProject.id);
     await loadAffirmations(nextProject.id);
+    await loadLinks(nextProject.id);
   }
 
   async function createProject(title: string) {
@@ -1413,23 +1473,31 @@ export default function Workspace() {
             sources={sources}
             notes={notes}
             draft={evidenceDraft}
+            affirmations={affirmations}
+            links={links}
             onNew={startNewEvidence}
             onEdit={editEvidence}
             onDelete={deleteEvidence}
             onDraftChange={updateEvidenceDraft}
             onSave={saveEvidence}
             onCancel={() => setEvidenceDraft(null)}
+            onOpenAffirmations={() => setView("afirmacions")}
           />
         ) : view === "afirmacions" ? (
           <AffirmationsRegistry
             affirmations={affirmations}
             draft={affirmationDraft}
+            evidence={evidence}
+            links={links}
             onNew={startNewAffirmation}
             onEdit={editAffirmation}
             onDelete={deleteAffirmation}
             onDraftChange={updateAffirmationDraft}
             onSave={saveAffirmation}
             onCancel={() => setAffirmationDraft(null)}
+            onLink={linkEvidenceToAffirmation}
+            onUnlink={unlink}
+            onOpenEvidence={() => setView("evidencies")}
           />
         ) : (
           <ModuleView
@@ -2766,25 +2834,34 @@ function EvidenceRegistry({
   sources,
   notes,
   draft,
+  affirmations,
+  links,
   onNew,
   onEdit,
   onDelete,
   onDraftChange,
   onSave,
   onCancel,
+  onOpenAffirmations,
 }: {
   evidence: EvidenceRecord[];
   sources: SourceRecord[];
   notes: CitableNote[];
   draft: EvidenceDraft | null;
+  affirmations: Affirmation[];
+  links: AidEidLink[];
   onNew: () => void;
   onEdit: (record: EvidenceRecord) => void;
   onDelete: (id: string) => void;
   onDraftChange: (patch: Partial<EvidenceDraft>) => void;
   onSave: () => void;
   onCancel: () => void;
+  onOpenAffirmations: () => void;
 }) {
   const sourceById = new Map(sources.map((source) => [source.id, source]));
+  const affirmationById = new Map(
+    affirmations.map((item) => [item.id, item]),
+  );
   const canSave = Boolean(draft && draft.description.trim());
   // Els extractes triables són els de la font seleccionada.
   const draftNotes = draft
@@ -2958,6 +3035,39 @@ function EvidenceRegistry({
                     )}
                   </div>
                   <p className="evidence-desc">{item.description}</p>
+                  {(() => {
+                    const incoming = linksForEvidence(links, item.id);
+                    if (incoming.length === 0) return null;
+                    return (
+                      <div className="aid-links">
+                        <div className="aid-links-head">
+                          <small>Afirmacions que hi depenen ({incoming.length})</small>
+                        </div>
+                        <ul className="aid-link-list">
+                          {incoming.map((link) => {
+                            const aff = affirmationById.get(link.affirmationId);
+                            return (
+                              <li key={link.id} className="aid-link-chip">
+                                <span className={`aid-stance s-${link.stance}`}>
+                                  {stanceInfo(link.stance).label}
+                                </span>
+                                <button
+                                  className="aid-link-open"
+                                  onClick={onOpenAffirmations}
+                                  title="Ves a Afirmacions"
+                                >
+                                  {aff ? aff.code : "AID"}
+                                </button>
+                                <span className="aid-link-text">
+                                  {aff ? aff.text.slice(0, 60) : "(afirmació eliminada)"}
+                                </span>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      </div>
+                    );
+                  })()}
                   <div className="evidence-meta">
                     <small>
                       {source ? source.name : "Sense font"}
@@ -2989,23 +3099,39 @@ function EvidenceRegistry({
 function AffirmationsRegistry({
   affirmations,
   draft,
+  evidence,
+  links,
   onNew,
   onEdit,
   onDelete,
   onDraftChange,
   onSave,
   onCancel,
+  onLink,
+  onUnlink,
+  onOpenEvidence,
 }: {
   affirmations: Affirmation[];
   draft: AffirmationDraft | null;
+  evidence: EvidenceRecord[];
+  links: AidEidLink[];
   onNew: () => void;
   onEdit: (record: Affirmation) => void;
   onDelete: (id: string) => void;
   onDraftChange: (patch: Partial<AffirmationDraft>) => void;
   onSave: () => void;
   onCancel: () => void;
+  onLink: (
+    affirmationId: string,
+    evidenceId: string,
+    stance: EvidenceStance,
+    derivation: DerivationType,
+  ) => void;
+  onUnlink: (id: string) => void;
+  onOpenEvidence: () => void;
 }) {
   const canSave = Boolean(draft && draft.text.trim());
+  const evidenceById = new Map(evidence.map((item) => [item.id, item]));
 
   return (
     <div className="page-content module-page">
@@ -3168,6 +3294,15 @@ function AffirmationsRegistry({
                   )}
                 </div>
                 <p className="aff-text">{item.text}</p>
+                <AffirmationLinkPanel
+                  affirmationId={item.id}
+                  links={linksForAffirmation(links, item.id)}
+                  evidence={evidence}
+                  evidenceById={evidenceById}
+                  onLink={onLink}
+                  onUnlink={onUnlink}
+                  onOpenEvidence={onOpenEvidence}
+                />
                 <div className="evidence-meta">
                   <small>{affirmationStateLabel(item.reviewState)}</small>
                   <div className="extract-actions">
@@ -3186,6 +3321,122 @@ function AffirmationsRegistry({
             ))}
           </ul>
         </section>
+      )}
+    </div>
+  );
+}
+
+function AffirmationLinkPanel({
+  affirmationId,
+  links,
+  evidence,
+  evidenceById,
+  onLink,
+  onUnlink,
+  onOpenEvidence,
+}: {
+  affirmationId: string;
+  links: AidEidLink[];
+  evidence: EvidenceRecord[];
+  evidenceById: Map<string, EvidenceRecord>;
+  onLink: (
+    affirmationId: string,
+    evidenceId: string,
+    stance: EvidenceStance,
+    derivation: DerivationType,
+  ) => void;
+  onUnlink: (id: string) => void;
+  onOpenEvidence: () => void;
+}) {
+  const [adding, setAdding] = useState(false);
+  const [evidenceId, setEvidenceId] = useState("");
+  const [stance, setStance] = useState<EvidenceStance>("favorable");
+  const [derivation, setDerivation] = useState<DerivationType>("cita-literal");
+  const summary = summarizeStances(links);
+  // Evidències encara no vinculades a aquesta afirmació.
+  const linkedIds = new Set(links.map((link) => link.evidenceId));
+  const available = evidence.filter((item) => !linkedIds.has(item.id));
+
+  function add() {
+    if (!evidenceId) return;
+    onLink(affirmationId, evidenceId, stance, derivation);
+    setEvidenceId("");
+    setStance("favorable");
+    setDerivation("cita-literal");
+    setAdding(false);
+  }
+
+  return (
+    <div className="aid-links">
+      <div className="aid-links-head">
+        <small>
+          Evidències ({summary.total})
+          {summary.total > 0 &&
+            ` · ${summary.favorable} a favor · ${summary.contraria} en contra · ${summary.contextual} context`}
+        </small>
+        {evidence.length === 0 ? (
+          <button className="text-button" onClick={onOpenEvidence}>
+            Registra evidències →
+          </button>
+        ) : (
+          <button className="text-button" onClick={() => setAdding((value) => !value)}>
+            {adding ? "Tanca" : "+ Vincula evidència"}
+          </button>
+        )}
+      </div>
+
+      {adding && available.length > 0 && (
+        <div className="aid-link-form">
+          <select value={evidenceId} onChange={(event) => setEvidenceId(event.target.value)}>
+            <option value="">— Tria una evidència —</option>
+            {available.map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.code} · {item.description.slice(0, 40)}
+              </option>
+            ))}
+          </select>
+          <select value={stance} onChange={(event) => setStance(event.target.value as EvidenceStance)}>
+            {EVIDENCE_STANCES.map((option) => (
+              <option key={option.value} value={option.value}>{option.label}</option>
+            ))}
+          </select>
+          <select value={derivation} onChange={(event) => setDerivation(event.target.value as DerivationType)}>
+            {DERIVATION_TYPES.map((option) => (
+              <option key={option.value} value={option.value}>{option.label}</option>
+            ))}
+          </select>
+          <button className="quiet-button" disabled={!evidenceId} onClick={add}>
+            Afegeix
+          </button>
+        </div>
+      )}
+      {adding && available.length === 0 && (
+        <p className="field-hint">Totes les evidències registrades ja hi estan vinculades.</p>
+      )}
+
+      {links.length > 0 && (
+        <ul className="aid-link-list">
+          {links.map((link) => {
+            const target = evidenceById.get(link.evidenceId);
+            return (
+              <li key={link.id} className="aid-link-chip">
+                <span className={`aid-stance s-${link.stance}`}>
+                  {stanceInfo(link.stance).label}
+                </span>
+                <button className="aid-link-open" onClick={onOpenEvidence} title="Ves a Evidències">
+                  {target ? target.code : "EID"}
+                </button>
+                <span className="aid-link-text">
+                  {target ? target.description.slice(0, 60) : "(evidència eliminada)"}
+                  <em> · {derivationLabel(link.derivation)}</em>
+                </span>
+                <button className="aid-link-del danger-text" onClick={() => onUnlink(link.id)} title="Desvincula">
+                  ×
+                </button>
+              </li>
+            );
+          })}
+        </ul>
       )}
     </div>
   );
