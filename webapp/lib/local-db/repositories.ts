@@ -9,6 +9,7 @@ import { type SourceBlobRecord } from "../source-blobs.ts";
 import { type PdfReference } from "../pdf-references.ts";
 import { type CitableNote, normalizeCitableNote } from "../citable-notes.ts";
 import { type Hypothesis } from "../hypotheses.ts";
+import { type EvidenceRecord, normalizeEvidence } from "../evidence.ts";
 
 export class IndexedDbRepository<T extends { id: string }> {
   private readonly storeName: "projects";
@@ -265,6 +266,32 @@ class CitableNoteRepository {
   }
 }
 
+class EvidenceRepository {
+  save(record: EvidenceRecord): Promise<EvidenceRecord> {
+    return withTransaction("evidence", "readwrite", async (store) => {
+      await requestResult(store.put(record));
+      return record;
+    });
+  }
+
+  getAllForProject(projectId: string): Promise<EvidenceRecord[]> {
+    return withTransaction("evidence", "readonly", async (store) => {
+      const records = (await requestResult(
+        store.index("projectId").getAll(projectId),
+      )) as Record<string, unknown>[];
+      return records
+        .map((record) => normalizeEvidence(record))
+        .sort((left, right) => left.code.localeCompare(right.code, "en", { numeric: true }));
+    });
+  }
+
+  delete(id: string): Promise<void> {
+    return withTransaction("evidence", "readwrite", async (store) => {
+      await requestResult(store.delete(id));
+    });
+  }
+}
+
 export const projectRepository = new ProjectRepository();
 export const metadataRepository = new MetadataRepository();
 export const sourceRepository = new SourceRepository();
@@ -272,3 +299,4 @@ export const sourceBlobRepository = new SourceBlobRepository();
 export const hypothesisRepository = new HypothesisRepository();
 export const pdfReferenceRepository = new PdfReferenceRepository();
 export const citableNoteRepository = new CitableNoteRepository();
+export const evidenceRepository = new EvidenceRepository();

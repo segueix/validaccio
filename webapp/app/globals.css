@@ -208,6 +208,21 @@ button { color: inherit; }
 .extract-tags span { padding: 2px 8px; border-radius: 999px; background: var(--sand); font-size: 10px; font-weight: 700; }
 .extract-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 2px; }
 
+/* Funció 204 — Registre d'evidències (EID) */
+.evidence-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.evidence-item { border: 1px solid var(--line); border-radius: 12px; padding: 15px 18px; background: #fbfbf8; display: grid; gap: 8px; }
+.evidence-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.evidence-code { font: 700 15px Georgia, serif; color: var(--forest-2); }
+.evidence-quality { padding: 2px 9px; border-radius: 999px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; border: 1px solid var(--line); }
+.evidence-quality.q-primaria { background: #e6f0e0; color: #2f5327; border-color: #bcd7ac; }
+.evidence-quality.q-secundaria { background: #eef1d6; color: #5a5a1f; border-color: #d9dca8; }
+.evidence-quality.q-terciaria { background: #f0e9dd; color: #6d5a30; border-color: #ddccae; }
+.evidence-quality.q-incerta { background: #eee; color: var(--muted); border-color: var(--line); }
+.evidence-family { padding: 2px 8px; border-radius: 999px; background: var(--sand); font-size: 10px; font-weight: 700; }
+.evidence-desc { margin: 0; font-size: 14px; line-height: 1.6; }
+.evidence-meta { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.evidence-meta small { color: var(--muted); font-size: 11px; }
+
 @media (max-width: 620px) {
   .extract-fields { grid-template-columns: 1fr; }
 }

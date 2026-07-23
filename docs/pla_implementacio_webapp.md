@@ -57,10 +57,10 @@ Prioritats: **P0** imprescindible per al primer ús real; **P1** nucli metodolò
 
 | Situació | Funcions |
 |---|---|
-| **FET** | 001, 002, 003, 004, 006, 007, 009, 010, 101, 102, 103, 104, 105, 107, 201 i 502 |
+| **FET** | 001, 002, 003, 004, 006, 007, 009, 010, 101, 102, 103, 104, 105, 107, 201, 204 i 502 |
 | **EN CURS** | — |
 | **PARCIAL** | 005, 008, 501, 503 i 505 |
-| **SEGÜENT BLOC FUNCIONAL** | 204 → 205 → 209 → 211 → 216: EID/AID, matriu ACH i mapa d'abast del llibre 1 |
+| **SEGÜENT BLOC FUNCIONAL** | 205 → 206 → 209 → 211 → 216: AID, enllaç AID–EID, matriu ACH i mapa d'abast del llibre 1 |
 
 Aquesta foto s’ha d’actualitzar dins de la mateixa PR que canviï qualsevol estat.
 
@@ -105,7 +105,7 @@ Aquesta foto s’ha d’actualitzar dins de la mateixa PR que canviï qualsevol 
 | **201** | Editor d'hipòtesis H1/H2/H3 | P0 | 002, 003 | **FET** | Crear i editar H1 consens, H2 ombra i H3 teoria nova, amb definició precisa i estat de revisió. |
 | **202** | Prediccions i condicions de derrota | P0 | 201 | **PENDENT** | Cada hipòtesi declara prediccions, supòsits, què l'afavoriria i què la faria caure. |
 | **203** | Registre de mutacions | P0 | 201 | **PENDENT** | Qualsevol canvi substancial conserva abans/després, motiu, data i aprovació humana. |
-| **204** | Registre d'evidències EID | P0 | 103, 107, 201 | **PENDENT** | Crear EID únic amb descripció neutral, font, pàgina, extracte, família i qualitat. |
+| **204** | Registre d'evidències EID | P0 | 103, 107, 201 | **FET** | Crear EID únic amb descripció neutral, font, pàgina, extracte, família i qualitat. |
 | **205** | Registre d'afirmacions AID | P0 | 201 | **PENDENT** | Crear AID únic amb text exacte, tipus, capítol, estat i grau d'assertivitat. |
 | **206** | Enllaç AID–EID | P0 | 204, 205 | **PENDENT** | Cada afirmació mostra evidències favorables, contràries o contextuals i permet navegar en tots dos sentits. |
 | **207** | Famílies de dependència | P1 | 204 | **PENDENT** | Agrupar evidències no independents, justificar la relació i evitar recompte múltiple silenciós. |
@@ -209,6 +209,7 @@ S'afegeix una fila després de cada funció acabada. No s'esborren entrades.
 | 2026-07-23 | 201 | [PR #24](https://github.com/segueix/validaccio/pull/24) | FET | Editor d'hipòtesis H1/H2/H3 (`lib/hypotheses.ts`) amb nomenclatura immutable, camps de definició (enunciat, prediccions, supòsits, condicions d'abandonament, nucli), estat de revisió i recordatori de Red Teaming; magatzem `hypotheses` per projecte i vista «Hipòtesis». 8 proves noves; lint i build verificats. Fusionada a main. |
 | 2026-07-23 | 104 | `feat/104-visor-pdf` | FET | Visor PDF amb pdf.js (build **legacy**, primera dependència de runtime; worker empaquetat localment, sense CDN, compatible amb la CSP i el tallafoc). Navegació per pàgines, cerca a tot el document amb salt a la coincidència, panell de text seleccionable i referències ancorades (font+pàgina+fragment) desades a IndexedDB (magatzem `references`) que reobren el context exacte. Lògica pura provada (`lib/pdf-references.ts`) i integració d'esquema amb `fake-indexeddb`; 6 proves noves. Render, worker i extracció de text verificats en Chromium 141 (el build modern de pdf.js peta per `Map.prototype.getOrInsertComputed`; el legacy inclou el polyfill). El teardown del visor es fa amb `loadingTask.destroy()` (PDFDocumentProxy no té `destroy()`), corregit després de la verificació E2E. Fusionat a main amb 107. |
 | 2026-07-23 | 107 | `feat/107-notes-citables` | FET | Extractes citables amb tres registres separats —cita, paràfrasi i comentari propi— ancorats a font, pàgina i (si ve del visor) referència del PDF. Nova vista «Extractes» amb cerca, filtre per font, editor i pont des del visor («→ Extracte» promou una referència a extracte). Lògica pura provada (`lib/citable-notes.ts`) i magatzem `notes` (índexs projecte/font) amb esborrat en cascada. Flux complet (importa PDF → visor → referència → extracte → recàrrega) verificat end-to-end en Chromium. En fusionar amb 201, l'esquema es reconcilia a **v7** amb els tres magatzems (`hypotheses` + `references` + `notes`), additius i protegits; 88 proves totals; lint i build verificats. |
+| 2026-07-23 | 204 | `feat/204-registre-eid` | FET | Registre d'evidències amb **descripció neutral** (el fet, no la interpretació), ancoratge a font + pàgina + extracte citable (107), **família de dependència** i **qualitat** (primària/secundària/terciària/incerta). Codi **EID** seqüencial i estable (E1, E2…) que encapçalarà les files de la matriu ACH. Nova vista «Evidències» amb editor i **pont des dels extractes** («→ Evidència» pren la paràfrasi com a descripció neutral de partida). Lògica pura provada (`lib/evidence.ts`: model, validació, generació de codi, qualitat, pont) i esquema **v8** amb magatzem `evidence` (índex per projecte); 8 proves noves (104 totals), incloent integració v7→v8 amb `fake-indexeddb`. Flux complet (evidència directa + pont extracte→evidència + recàrrega persistent) verificat end-to-end en Chromium; lint i build verificats. |
 
 ## 7. Definició global de «fet»
 

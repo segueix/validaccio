@@ -11,7 +11,7 @@ import {
 
 test("l'esquema local té una versió explícita i magatzems separats", () => {
   assert.equal(LOCAL_DATABASE_SCHEMA.name, "validaccio-local");
-  assert.equal(LOCAL_DATABASE_SCHEMA.version, 7);
+  assert.equal(LOCAL_DATABASE_SCHEMA.version, 8);
   assert.equal(LOCAL_DATABASE_SCHEMA.dataVersion, PROJECT_DATA_VERSION);
   assert.equal(LOCAL_DATABASE_SCHEMA.stores.projects, "projects");
   assert.equal(LOCAL_DATABASE_SCHEMA.stores.metadata, "metadata");

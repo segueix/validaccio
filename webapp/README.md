@@ -229,5 +229,24 @@ consens i l'ombra s'han de formular amb una font independent, no debilitar-los.
 Les hipòtesis es desen per projecte al magatzem `hypotheses` i s'editen des de la
 vista «Hipòtesis».
 
-Els magatzems de les funcions 104, 107 i 201 conviuen a l'esquema local **v7**
-(`references`, `notes` i `hypotheses`), creats de manera additiva i protegida.
+## Registre d'evidències (EID)
+
+La funció 204 obre el registre d'evidències, el pas de l'ACH on la font es
+converteix en dada avaluable. Cada evidència es registra amb una **descripció
+neutral** —el fet, no la interpretació— i queda ancorada a la **font**, la
+**pàgina** i l'**extracte citable** (funció 107). S'hi afegeix la **família de
+dependència** (per agrupar evidències que no són independents, funció 207) i la
+**qualitat** (primària / secundària / terciària / incerta). Cada evidència rep un
+codi **EID** seqüencial i estable (E1, E2…) que després encapçalarà les files de
+la matriu ACH (funció 209).
+
+Des de la vista «Extractes», el botó **«→ Evidència»** promou un extracte a
+evidència prenent la **paràfrasi** com a descripció neutral de partida i
+enllaçant la font, la pàgina i l'extracte. Així la cadena queda sencera:
+font → extracte (cita / paràfrasi / comentari) → evidència (EID). La lògica pura
+viu a `lib/evidence.ts` (model, validació, generació de codi, qualitat i pont),
+coberta per proves unitàries i d'integració.
+
+Els magatzems de les funcions 104, 107, 201 i 204 conviuen a l'esquema local
+**v8** (`references`, `notes`, `hypotheses` i `evidence`), creats de manera
+additiva i protegida.
