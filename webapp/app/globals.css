@@ -403,3 +403,35 @@ button { color: inherit; }
 .text-paragraphs li { display: grid; grid-template-columns: 42px 1fr; gap: 12px; align-items: start; }
 .paragraph-loc { padding-top: 2px; font: 700 11px Georgia, serif; color: var(--forest-2); }
 .text-paragraphs p { margin: 0; font-size: 13px; line-height: 1.6; white-space: pre-wrap; }
+
+
+/* Funció 201 — Hipòtesis */
+.citation-field textarea {
+  width: 100%; padding: 11px 12px; border: 1px solid var(--line); border-radius: 8px;
+  background: white; outline: none; resize: vertical; font: inherit; line-height: 1.5;
+}
+.citation-field textarea:focus { border-color: var(--forest-2); box-shadow: 0 0 0 3px rgba(36,91,79,.12); }
+.redteam-note {
+  margin: 0 0 4px; padding: 10px 12px; border-radius: 8px;
+  background: #f6efd8; border: 1px solid #e6d7a8; color: #6d5a1f; font-size: 11px; line-height: 1.5;
+}
+.hyp-list { display: grid; gap: 14px; margin-top: 18px; }
+.hyp-card {
+  padding: 20px 22px; border: 1px solid var(--line); border-left: 4px solid var(--line);
+  border-radius: 14px; background: var(--panel); box-shadow: var(--shadow);
+}
+.hyp-consens { border-left-color: #9b5545; }
+.hyp-ombra { border-left-color: #d8b24a; }
+.hyp-nova { border-left-color: var(--forest); }
+.hyp-card-head { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 14px; }
+.hyp-code { font: 700 16px Georgia, serif; color: var(--forest-2); }
+.hyp-title strong { display: block; font: 700 15px Georgia, serif; }
+.hyp-title small { display: block; margin-top: 3px; color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: .06em; }
+.hyp-statement { margin: 14px 0 0; color: var(--ink); font-size: 13px; line-height: 1.6; }
+.hyp-card .redteam-note { margin-top: 12px; }
+.hyp-actions { display: flex; gap: 10px; margin-top: 14px; }
+
+@media (max-width: 720px) {
+  .hyp-card-head { grid-template-columns: auto 1fr; }
+  .hyp-card-head .status-chip { grid-column: 2; justify-self: start; }
+}
