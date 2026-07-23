@@ -16,6 +16,7 @@ import {
   duplicateProjectRecord,
   citableNoteRepository,
   ensureProjectsMigrated,
+  evidenceRepository,
   hypothesisRepository,
   metadataRepository,
   pdfReferenceRepository,
@@ -71,6 +72,15 @@ import {
   roleInfo,
 } from "../lib/hypotheses";
 import {
+  createEvidence,
+  type EvidenceQuality,
+  type EvidenceRecord,
+  EVIDENCE_QUALITIES,
+  evidenceInputFromNote,
+  nextEvidenceCode,
+  qualityInfo,
+} from "../lib/evidence";
+import {
   evaluateStorageHealth,
   formatBytes,
   formatPercent,
@@ -118,6 +128,18 @@ type NoteDraft = {
   tags: string;
 };
 
+// Esborrany del formulari d'evidència (funció 204): id null quan és nova.
+type EvidenceDraft = {
+  id: string | null;
+  code: string;
+  description: string;
+  sourceId: string;
+  page: number | null;
+  noteId: string;
+  family: string;
+  quality: EvidenceQuality;
+};
+
 const initialTimestamp = new Date().toISOString();
 
 const defaultProject: Project = {
@@ -159,13 +181,7 @@ const phases = [
   "Revisió",
 ];
 
-const moduleCopy: Record<Exclude<ViewId, "tauler" | "salut" | "privadesa" | "fonts" | "extractes" | "hipotesis">, { eyebrow: string; title: string; body: string; status: string }> = {
-  evidencies: {
-    eyebrow: "Fase 2",
-    title: "Registre d’evidències",
-    body: "Cataloga EID, fiabilitat, família de dependència i interpretació mínima sense perdre la font original.",
-    status: "Estructura disponible",
-  },
+const moduleCopy: Record<Exclude<ViewId, "tauler" | "salut" | "privadesa" | "fonts" | "extractes" | "hipotesis" | "evidencies">, { eyebrow: string; title: string; body: string; status: string }> = {
   matriu: {
     eyebrow: "Fase 3",
     title: "Matriu ACH",
@@ -267,6 +283,8 @@ export default function Workspace() {
   const [hypothesisDraft, setHypothesisDraft] = useState<Hypothesis | null>(
     null,
   );
+  const [evidence, setEvidence] = useState<EvidenceRecord[]>([]);
+  const [evidenceDraft, setEvidenceDraft] = useState<EvidenceDraft | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
   const sourceInput = useRef<HTMLInputElement>(null);
   const firewallRef = useRef<PrivacyFirewall | null>(null);
@@ -624,6 +642,14 @@ export default function Workspace() {
     }
   }
 
+  async function loadEvidence(projectId: string) {
+    try {
+      setEvidence(await evidenceRepository.getAllForProject(projectId));
+    } catch {
+      setEvidence([]);
+    }
+  }
+
   async function seedHypotheses() {
     for (const hypothesis of defaultHypotheses(project.id)) {
       await hypothesisRepository.save(hypothesis);
@@ -668,6 +694,108 @@ export default function Workspace() {
     }
     await hypothesisRepository.delete(id);
     setHypotheses((current) => current.filter((item) => item.id !== id));
+  }
+
+  function emptyEvidenceDraft(): EvidenceDraft {
+    return {
+      id: null,
+      code: nextEvidenceCode(evidence.map((item) => item.code)),
+      description: "",
+      sourceId: "",
+      page: null,
+      noteId: "",
+      family: "",
+      quality: "incerta",
+    };
+  }
+
+  function startNewEvidence() {
+    setEvidenceDraft(emptyEvidenceDraft());
+  }
+
+  function editEvidence(record: EvidenceRecord) {
+    setEvidenceDraft({
+      id: record.id,
+      code: record.code,
+      description: record.description,
+      sourceId: record.sourceId ?? "",
+      page: record.page,
+      noteId: record.noteId ?? "",
+      family: record.family,
+      quality: record.quality,
+    });
+  }
+
+  function updateEvidenceDraft(patch: Partial<EvidenceDraft>) {
+    setEvidenceDraft((current) => (current ? { ...current, ...patch } : current));
+  }
+
+  // Pont amb la funció 107: promou un extracte citable a evidència, amb la
+  // paràfrasi com a descripció neutral de partida i la font/pàgina/extracte enllaçats.
+  function promoteNoteToEvidence(note: CitableNote) {
+    const input = evidenceInputFromNote(note);
+    setEvidenceDraft({
+      id: null,
+      code: nextEvidenceCode(evidence.map((item) => item.code)),
+      description: input.description ?? "",
+      sourceId: input.sourceId ?? "",
+      page: input.page ?? null,
+      noteId: input.noteId ?? "",
+      family: "",
+      quality: "incerta",
+    });
+    setView("evidencies");
+  }
+
+  async function saveEvidence() {
+    if (!evidenceDraft) return;
+    const draft = evidenceDraft;
+    try {
+      const existing = draft.id
+        ? evidence.find((item) => item.id === draft.id)
+        : null;
+      const now = new Date().toISOString();
+      const record = createEvidence(
+        {
+          projectId: project.id,
+          description: draft.description,
+          sourceId: draft.sourceId || null,
+          page: draft.page,
+          noteId: draft.noteId || null,
+          family: draft.family,
+          quality: draft.quality,
+        },
+        { id: draft.id ?? undefined, code: draft.code, now: existing?.createdAt ?? now },
+      );
+      const saved = { ...record, updatedAt: now };
+      await evidenceRepository.save(saved);
+      setEvidence((current) =>
+        [saved, ...current.filter((item) => item.id !== saved.id)].sort(
+          (left, right) =>
+            left.code.localeCompare(right.code, "en", { numeric: true }),
+        ),
+      );
+      setEvidenceDraft(null);
+    } catch (error) {
+      setNotice(
+        error instanceof TypeError
+          ? error.message
+          : "No s’ha pogut desar l’evidència",
+      );
+    }
+  }
+
+  async function deleteEvidence(id: string) {
+    const target = evidence.find((item) => item.id === id);
+    if (
+      !window.confirm(
+        `Vols eliminar ${target?.code ?? "l’evidència"} d’aquest projecte?`,
+      )
+    ) {
+      return;
+    }
+    await evidenceRepository.delete(id).catch(() => undefined);
+    setEvidence((current) => current.filter((item) => item.id !== id));
   }
 
   async function refreshStorageHealth() {
@@ -740,6 +868,7 @@ export default function Workspace() {
         setHypotheses([]);
       }
       await loadNotes(activeProject.id);
+      await loadEvidence(activeProject.id);
     }
 
     prepareWorkspace()
@@ -814,6 +943,7 @@ export default function Workspace() {
     await loadSources(nextProject.id);
     await loadNotes(nextProject.id);
     await loadHypotheses(nextProject.id);
+    await loadEvidence(nextProject.id);
   }
 
   async function createProject(title: string) {
@@ -1041,7 +1171,9 @@ export default function Workspace() {
             >
               <span className="nav-icon">{item.short}</span>
               <span>{item.label}</span>
-              {item.id === "evidencies" && <span className="nav-count">0</span>}
+              {item.id === "evidencies" && evidence.length > 0 && (
+                <span className="nav-count">{evidence.length}</span>
+              )}
               {item.id === "fonts" && sources.length > 0 && (
                 <span className="nav-count">{sources.length}</span>
               )}
@@ -1140,6 +1272,7 @@ export default function Workspace() {
             onEdit={editNote}
             onDelete={deleteNote}
             onOpenSource={openNoteSource}
+            onPromoteToEvidence={promoteNoteToEvidence}
             onDraftChange={updateNoteDraft}
             onSave={saveNote}
             onCancel={() => setNoteDraft(null)}
@@ -1150,6 +1283,19 @@ export default function Workspace() {
             onSeed={seedHypotheses}
             onEdit={openHypothesis}
             onDelete={deleteHypothesis}
+          />
+        ) : view === "evidencies" ? (
+          <EvidenceRegistry
+            evidence={evidence}
+            sources={sources}
+            notes={notes}
+            draft={evidenceDraft}
+            onNew={startNewEvidence}
+            onEdit={editEvidence}
+            onDelete={deleteEvidence}
+            onDraftChange={updateEvidenceDraft}
+            onSave={saveEvidence}
+            onCancel={() => setEvidenceDraft(null)}
           />
         ) : (
           <ModuleView
@@ -1532,7 +1678,7 @@ function ModuleView({
   onExport,
   onImport,
 }: {
-  view: Exclude<ViewId, "tauler" | "salut" | "privadesa" | "fonts" | "extractes" | "hipotesis">;
+  view: Exclude<ViewId, "tauler" | "salut" | "privadesa" | "fonts" | "extractes" | "hipotesis" | "evidencies">;
   project: Project;
   onExport: () => void;
   onImport: () => void;
@@ -2130,6 +2276,7 @@ function ExtractsLibrary({
   onEdit,
   onDelete,
   onOpenSource,
+  onPromoteToEvidence,
   onDraftChange,
   onSave,
   onCancel,
@@ -2143,6 +2290,7 @@ function ExtractsLibrary({
   onEdit: (note: CitableNote) => void;
   onDelete: (id: string) => void;
   onOpenSource: (note: CitableNote) => void;
+  onPromoteToEvidence: (note: CitableNote) => void;
   onDraftChange: (patch: Partial<NoteDraft>) => void;
   onSave: () => void;
   onCancel: () => void;
@@ -2364,6 +2512,9 @@ function ExtractsLibrary({
                           Obre la font
                         </button>
                       )}
+                      <button className="quiet-button" onClick={() => onPromoteToEvidence(note)}>
+                        → Evidència
+                      </button>
                       <button className="quiet-button" onClick={() => onEdit(note)}>
                         Edita
                       </button>
@@ -2470,6 +2621,231 @@ function HypothesesEditor({
               </article>
             );
           })}
+        </section>
+      )}
+    </div>
+  );
+}
+
+function EvidenceRegistry({
+  evidence,
+  sources,
+  notes,
+  draft,
+  onNew,
+  onEdit,
+  onDelete,
+  onDraftChange,
+  onSave,
+  onCancel,
+}: {
+  evidence: EvidenceRecord[];
+  sources: SourceRecord[];
+  notes: CitableNote[];
+  draft: EvidenceDraft | null;
+  onNew: () => void;
+  onEdit: (record: EvidenceRecord) => void;
+  onDelete: (id: string) => void;
+  onDraftChange: (patch: Partial<EvidenceDraft>) => void;
+  onSave: () => void;
+  onCancel: () => void;
+}) {
+  const sourceById = new Map(sources.map((source) => [source.id, source]));
+  const canSave = Boolean(draft && draft.description.trim());
+  // Els extractes triables són els de la font seleccionada.
+  const draftNotes = draft
+    ? notes.filter((note) => note.sourceId === draft.sourceId)
+    : [];
+
+  return (
+    <div className="page-content module-page">
+      <section className="module-hero">
+        <div>
+          <span className="eyebrow">Fase 2 · Validació ACH</span>
+          <h1>Registre d’evidències</h1>
+          <p>
+            Cada evidència es registra amb una <strong>descripció neutral</strong>
+            —el fet, no la interpretació— i queda ancorada a la font, la pàgina i
+            l’extracte citable. El seu codi <strong>EID</strong> (E1, E2…)
+            encapçalarà les files de la matriu ACH.
+          </p>
+        </div>
+        <span className="status-chip live">
+          {evidence.length} {evidence.length === 1 ? "evidència" : "evidències"}
+        </span>
+      </section>
+
+      <section className="stat-panel extract-toolbar">
+        <button className="primary-button" onClick={onNew}>
+          + Nova evidència
+        </button>
+      </section>
+
+      {draft && (
+        <section className="stat-panel extract-editor">
+          <div className="section-heading">
+            <div>
+              <span className="eyebrow">
+                {draft.id ? "Edita l’evidència" : "Nova evidència"}
+              </span>
+              <h2>{draft.code}</h2>
+            </div>
+            {draft.noteId && (
+              <span className="status-chip live">Des d’un extracte</span>
+            )}
+          </div>
+
+          <label className="extract-field">
+            <span>Descripció neutral (el fet, sense interpretar)</span>
+            <textarea
+              rows={3}
+              value={draft.description}
+              placeholder="Què diu la font, en termes neutrals i verificables."
+              onChange={(event) => onDraftChange({ description: event.target.value })}
+            />
+          </label>
+
+          <div className="extract-fields">
+            <label className="extract-field">
+              <span>Font</span>
+              <select
+                value={draft.sourceId}
+                onChange={(event) =>
+                  onDraftChange({ sourceId: event.target.value, noteId: "" })
+                }
+              >
+                <option value="">— Sense font —</option>
+                {sources.map((source) => (
+                  <option key={source.id} value={source.id}>
+                    {source.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="extract-field extract-field-page">
+              <span>Pàgina</span>
+              <input
+                type="number"
+                min={1}
+                value={draft.page ?? ""}
+                onChange={(event) =>
+                  onDraftChange({
+                    page: event.target.value
+                      ? Number.parseInt(event.target.value, 10)
+                      : null,
+                  })
+                }
+              />
+            </label>
+          </div>
+
+          <div className="extract-fields">
+            <label className="extract-field">
+              <span>Extracte citable</span>
+              <select
+                value={draft.noteId}
+                disabled={!draft.sourceId}
+                onChange={(event) => onDraftChange({ noteId: event.target.value })}
+              >
+                <option value="">
+                  {draft.sourceId ? "— Cap extracte —" : "Tria una font primer"}
+                </option>
+                {draftNotes.map((note) => (
+                  <option key={note.id} value={note.id}>
+                    {(note.quote || note.paraphrase || "extracte").slice(0, 50)}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="extract-field">
+              <span>Qualitat</span>
+              <select
+                value={draft.quality}
+                onChange={(event) =>
+                  onDraftChange({ quality: event.target.value as EvidenceQuality })
+                }
+              >
+                {EVIDENCE_QUALITIES.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+
+          <label className="extract-field">
+            <span>Família de dependència</span>
+            <input
+              value={draft.family}
+              placeholder="Agrupa evidències que no són independents (p. ex. «albarans-visconti»)"
+              onChange={(event) => onDraftChange({ family: event.target.value })}
+            />
+          </label>
+
+          <div className="modal-actions">
+            <button className="quiet-button" onClick={onCancel}>
+              Cancel·la
+            </button>
+            <button className="primary-button" disabled={!canSave} onClick={onSave}>
+              Desa l’evidència
+            </button>
+          </div>
+        </section>
+      )}
+
+      {evidence.length === 0 ? (
+        <section className="empty-state">
+          <div className="empty-orbit">
+            <span>E</span>
+          </div>
+          <h2>Encara no hi ha evidències</h2>
+          <p>
+            Registra la primera evidència amb una descripció neutral, o promou-la
+            des d’un extracte citable amb «→ Evidència».
+          </p>
+        </section>
+      ) : (
+        <section className="stat-panel">
+          <ul className="evidence-list">
+            {evidence.map((item) => {
+              const source = item.sourceId
+                ? sourceById.get(item.sourceId)
+                : undefined;
+              return (
+                <li key={item.id} className="evidence-item">
+                  <div className="evidence-head">
+                    <span className="evidence-code">{item.code}</span>
+                    <span className={`evidence-quality q-${item.quality}`}>
+                      {qualityInfo(item.quality).label}
+                    </span>
+                    {item.family && (
+                      <span className="evidence-family">{item.family}</span>
+                    )}
+                  </div>
+                  <p className="evidence-desc">{item.description}</p>
+                  <div className="evidence-meta">
+                    <small>
+                      {source ? source.name : "Sense font"}
+                      {item.page ? ` · p. ${item.page}` : ""}
+                      {item.noteId ? " · extracte enllaçat" : ""}
+                    </small>
+                    <div className="extract-actions">
+                      <button className="quiet-button" onClick={() => onEdit(item)}>
+                        Edita
+                      </button>
+                      <button
+                        className="quiet-button danger-text"
+                        onClick={() => onDelete(item.id)}
+                      >
+                        Esborra
+                      </button>
+                    </div>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
         </section>
       )}
     </div>
