@@ -16,6 +16,7 @@ import {
   duplicateProjectRecord,
   citableNoteRepository,
   ensureProjectsMigrated,
+  hypothesisRepository,
   metadataRepository,
   pdfReferenceRepository,
   projectRepository,
@@ -60,6 +61,15 @@ import {
   isExtractableKind,
   TextExtractionError,
 } from "../lib/text-extraction";
+import {
+  defaultHypotheses,
+  type Hypothesis,
+  HYPOTHESIS_REVIEW_STATES,
+  normalizeHypothesis,
+  requiresRedTeaming,
+  reviewStateLabel,
+  roleInfo,
+} from "../lib/hypotheses";
 import {
   evaluateStorageHealth,
   formatBytes,
@@ -149,13 +159,7 @@ const phases = [
   "Revisió",
 ];
 
-const moduleCopy: Record<Exclude<ViewId, "tauler" | "salut" | "privadesa" | "fonts" | "extractes">, { eyebrow: string; title: string; body: string; status: string }> = {
-  hipotesis: {
-    eyebrow: "Fase 1",
-    title: "Hipòtesis competitives",
-    body: "Formula H1, H2 i H3 amb prediccions, condicions d’abandonament i registre de modificacions.",
-    status: "Estructura disponible",
-  },
+const moduleCopy: Record<Exclude<ViewId, "tauler" | "salut" | "privadesa" | "fonts" | "extractes" | "hipotesis">, { eyebrow: string; title: string; body: string; status: string }> = {
   evidencies: {
     eyebrow: "Fase 2",
     title: "Registre d’evidències",
@@ -259,6 +263,10 @@ export default function Workspace() {
     query: "",
     sourceId: "",
   });
+  const [hypotheses, setHypotheses] = useState<Hypothesis[]>([]);
+  const [hypothesisDraft, setHypothesisDraft] = useState<Hypothesis | null>(
+    null,
+  );
   const fileInput = useRef<HTMLInputElement>(null);
   const sourceInput = useRef<HTMLInputElement>(null);
   const firewallRef = useRef<PrivacyFirewall | null>(null);
@@ -608,6 +616,60 @@ export default function Workspace() {
     await openPdf(source, note.page ?? 1);
   }
 
+  async function loadHypotheses(projectId: string) {
+    try {
+      setHypotheses(await hypothesisRepository.getAllForProject(projectId));
+    } catch {
+      setHypotheses([]);
+    }
+  }
+
+  async function seedHypotheses() {
+    for (const hypothesis of defaultHypotheses(project.id)) {
+      await hypothesisRepository.save(hypothesis);
+    }
+    await loadHypotheses(project.id);
+    setNotice("Joc d’hipòtesis H1/H2/H3 creat");
+  }
+
+  function openHypothesis(target: Hypothesis) {
+    setHypothesisDraft({ ...target });
+  }
+
+  function updateHypothesisDraft(patch: Partial<Hypothesis>) {
+    setHypothesisDraft((current) =>
+      current ? { ...current, ...patch } : current,
+    );
+  }
+
+  async function saveHypothesis(event: FormEvent) {
+    event.preventDefault();
+    if (!hypothesisDraft) return;
+    const saved = await hypothesisRepository.save(
+      normalizeHypothesis(hypothesisDraft),
+    );
+    setHypotheses((current) =>
+      current
+        .map((item) => (item.id === saved.id ? saved : item))
+        .sort((left, right) => left.code.localeCompare(right.code)),
+    );
+    setHypothesisDraft(null);
+    setNotice(`${saved.code} desada`);
+  }
+
+  async function deleteHypothesis(id: string) {
+    const target = hypotheses.find((item) => item.id === id);
+    if (
+      !window.confirm(
+        `Vols eliminar ${target?.code ?? "la hipòtesi"} d’aquest projecte?`,
+      )
+    ) {
+      return;
+    }
+    await hypothesisRepository.delete(id);
+    setHypotheses((current) => current.filter((item) => item.id !== id));
+  }
+
   async function refreshStorageHealth() {
     try {
       setStorageReport(await computeStorageReport());
@@ -664,15 +726,18 @@ export default function Workspace() {
       setDraftTitle(activeProject.title);
       await metadataRepository.set("activeProjectId", activeProject.id);
       try {
-        const [list, size] = await Promise.all([
+        const [list, size, hyps] = await Promise.all([
           sourceRepository.getAllForProject(activeProject.id),
           sourceBlobRepository.totalSizeForProject(activeProject.id),
+          hypothesisRepository.getAllForProject(activeProject.id),
         ]);
         setSources(list);
         setStoredSize(size);
+        setHypotheses(hyps);
       } catch {
         setSources([]);
         setStoredSize(0);
+        setHypotheses([]);
       }
       await loadNotes(activeProject.id);
     }
@@ -748,6 +813,7 @@ export default function Workspace() {
     await metadataRepository.set("activeProjectId", nextProject.id);
     await loadSources(nextProject.id);
     await loadNotes(nextProject.id);
+    await loadHypotheses(nextProject.id);
   }
 
   async function createProject(title: string) {
@@ -1078,6 +1144,13 @@ export default function Workspace() {
             onSave={saveNote}
             onCancel={() => setNoteDraft(null)}
           />
+        ) : view === "hipotesis" ? (
+          <HypothesesEditor
+            hypotheses={hypotheses}
+            onSeed={seedHypotheses}
+            onEdit={openHypothesis}
+            onDelete={deleteHypothesis}
+          />
         ) : (
           <ModuleView
             view={view}
@@ -1277,6 +1350,99 @@ export default function Workspace() {
           />
         </Suspense>
       )}
+
+      {hypothesisDraft && (
+        <div className="modal-backdrop" role="presentation" onMouseDown={() => setHypothesisDraft(null)}>
+          <form className="modal citation-modal hyp-modal" onSubmit={saveHypothesis} onMouseDown={(event) => event.stopPropagation()}>
+            <span className="eyebrow">{hypothesisDraft.code} · {roleInfo(hypothesisDraft.role).label}</span>
+            <h2>Defineix la hipòtesi</h2>
+            {requiresRedTeaming(hypothesisDraft.role) && (
+              <p className="redteam-note">
+                Regla 10 (Red Teaming): formula-la amb una font independent o
+                extreta de la bibliografia contrària; no la debilitis.
+              </p>
+            )}
+            <div className="citation-grid">
+              <label className="citation-field">
+                <span>Títol curt</span>
+                <input
+                  value={hypothesisDraft.title}
+                  onChange={(event) => updateHypothesisDraft({ title: event.target.value })}
+                />
+              </label>
+              <label className="citation-field">
+                <span>Estat de revisió</span>
+                <select
+                  value={hypothesisDraft.reviewState}
+                  onChange={(event) =>
+                    updateHypothesisDraft({
+                      reviewState: event.target.value as Hypothesis["reviewState"],
+                    })
+                  }
+                >
+                  {HYPOTHESIS_REVIEW_STATES.map((option) => (
+                    <option key={option.value} value={option.value}>{option.label}</option>
+                  ))}
+                </select>
+              </label>
+              <label className="citation-field wide">
+                <span>Enunciat (clar i falsable)</span>
+                <textarea
+                  rows={3}
+                  value={hypothesisDraft.statement}
+                  onChange={(event) => updateHypothesisDraft({ statement: event.target.value })}
+                />
+              </label>
+              <label className="citation-field wide">
+                <span>Prediccions observables</span>
+                <textarea
+                  rows={3}
+                  value={hypothesisDraft.predictions}
+                  onChange={(event) => updateHypothesisDraft({ predictions: event.target.value })}
+                  placeholder="Si és certa, esperaríem trobar… / NO esperaríem trobar…"
+                />
+              </label>
+              <label className="citation-field wide">
+                <span>Supòsits</span>
+                <textarea
+                  rows={2}
+                  value={hypothesisDraft.assumptions}
+                  onChange={(event) => updateHypothesisDraft({ assumptions: event.target.value })}
+                />
+              </label>
+              <label className="citation-field wide">
+                <span>Condicions d’abandonament</span>
+                <textarea
+                  rows={2}
+                  value={hypothesisDraft.defeatConditions}
+                  onChange={(event) => updateHypothesisDraft({ defeatConditions: event.target.value })}
+                  placeholder="Abandonaria aquesta hipòtesi si es demostrés que…"
+                />
+              </label>
+              <label className="citation-field wide">
+                <span>Nucli no negociable</span>
+                <textarea
+                  rows={2}
+                  value={hypothesisDraft.core}
+                  onChange={(event) => updateHypothesisDraft({ core: event.target.value })}
+                />
+              </label>
+              <label className="citation-field wide">
+                <span>Font o autoria de la formulació</span>
+                <input
+                  value={hypothesisDraft.source}
+                  onChange={(event) => updateHypothesisDraft({ source: event.target.value })}
+                  placeholder="Qui l’ha formulada (Red Teaming per a H1/H2)"
+                />
+              </label>
+            </div>
+            <div className="modal-actions">
+              <button type="button" className="quiet-button" onClick={() => setHypothesisDraft(null)}>Cancel·la</button>
+              <button className="primary-button" type="submit">Desa la hipòtesi</button>
+            </div>
+          </form>
+        </div>
+      )}
     </main>
   );
 }
@@ -1366,7 +1532,7 @@ function ModuleView({
   onExport,
   onImport,
 }: {
-  view: Exclude<ViewId, "tauler" | "salut" | "privadesa" | "fonts" | "extractes">;
+  view: Exclude<ViewId, "tauler" | "salut" | "privadesa" | "fonts" | "extractes" | "hipotesis">;
   project: Project;
   onExport: () => void;
   onImport: () => void;
@@ -2213,6 +2379,97 @@ function ExtractsLibrary({
               })}
             </ul>
           )}
+        </section>
+      )}
+    </div>
+  );
+}
+
+function HypothesesEditor({
+  hypotheses,
+  onSeed,
+  onEdit,
+  onDelete,
+}: {
+  hypotheses: Hypothesis[];
+  onSeed: () => void;
+  onEdit: (hypothesis: Hypothesis) => void;
+  onDelete: (id: string) => void;
+}) {
+  return (
+    <div className="page-content module-page">
+      <section className="module-hero">
+        <div>
+          <span className="eyebrow">Fase 1 · Validació ACH</span>
+          <h1>Hipòtesis en competència</h1>
+          <p>
+            Ordre obligatori i immutable: <strong>H1 = Consens</strong>,{" "}
+            <strong>H2 = Ombra</strong> i <strong>H3 = Nova teoria</strong>. El
+            consens i l’ombra s’han de formular amb Red Teaming (font
+            independent); jutja’ls totes amb el mateix estàndard.
+          </p>
+        </div>
+        <span className="status-chip">
+          {hypotheses.length} {hypotheses.length === 1 ? "hipòtesi" : "hipòtesis"}
+        </span>
+      </section>
+
+      {hypotheses.length === 0 ? (
+        <section className="empty-state">
+          <div className="empty-orbit">
+            <span>H</span>
+          </div>
+          <h2>Encara no hi ha hipòtesis</h2>
+          <p>
+            Crea el joc inicial H1/H2/H3 i defineix cadascuna amb enunciat,
+            prediccions, supòsits, condicions d’abandonament i nucli no
+            negociable.
+          </p>
+          <button className="primary-button" onClick={onSeed}>
+            Crea el joc H1 · H2 · H3
+          </button>
+        </section>
+      ) : (
+        <section className="hyp-list">
+          {hypotheses.map((hypothesis) => {
+            const info = roleInfo(hypothesis.role);
+            return (
+              <article key={hypothesis.id} className={`hyp-card hyp-${hypothesis.role}`}>
+                <div className="hyp-card-head">
+                  <span className="hyp-code">{hypothesis.code}</span>
+                  <div className="hyp-title">
+                    <strong>{hypothesis.title || info.label}</strong>
+                    <small>{info.label}</small>
+                  </div>
+                  <span className="status-chip">
+                    {reviewStateLabel(hypothesis.reviewState)}
+                  </span>
+                </div>
+                <p className="hyp-statement">
+                  {hypothesis.statement || "Sense enunciat encara."}
+                </p>
+                {requiresRedTeaming(hypothesis.role) && (
+                  <p className="redteam-note">
+                    Red Teaming:{" "}
+                    {hypothesis.source
+                      ? `formulada per ${hypothesis.source}`
+                      : "cal indicar la font independent de la formulació."}
+                  </p>
+                )}
+                <div className="hyp-actions">
+                  <button className="quiet-button" onClick={() => onEdit(hypothesis)}>
+                    Edita
+                  </button>
+                  <button
+                    className="quiet-button danger-text"
+                    onClick={() => onDelete(hypothesis.id)}
+                  >
+                    Elimina
+                  </button>
+                </div>
+              </article>
+            );
+          })}
         </section>
       )}
     </div>

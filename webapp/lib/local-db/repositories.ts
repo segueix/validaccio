@@ -8,6 +8,7 @@ import { type SourceRecord } from "../source-library.ts";
 import { type SourceBlobRecord } from "../source-blobs.ts";
 import { type PdfReference } from "../pdf-references.ts";
 import { type CitableNote, normalizeCitableNote } from "../citable-notes.ts";
+import { type Hypothesis } from "../hypotheses.ts";
 
 export class IndexedDbRepository<T extends { id: string }> {
   private readonly storeName: "projects";
@@ -162,6 +163,37 @@ class SourceBlobRepository {
   }
 }
 
+class HypothesisRepository {
+  save(record: Hypothesis): Promise<Hypothesis> {
+    return withTransaction("hypotheses", "readwrite", async (store) => {
+      await requestResult(store.put(record));
+      return record;
+    });
+  }
+
+  getAllForProject(projectId: string): Promise<Hypothesis[]> {
+    return withTransaction("hypotheses", "readonly", async (store) => {
+      const records = (await requestResult(
+        store.index("projectId").getAll(projectId),
+      )) as Hypothesis[];
+      return records.sort((left, right) => left.code.localeCompare(right.code));
+    });
+  }
+
+  get(id: string): Promise<Hypothesis | null> {
+    return withTransaction("hypotheses", "readonly", async (store) => {
+      const result = await requestResult(store.get(id));
+      return (result as Hypothesis | undefined) ?? null;
+    });
+  }
+
+  delete(id: string): Promise<void> {
+    return withTransaction("hypotheses", "readwrite", async (store) => {
+      await requestResult(store.delete(id));
+    });
+  }
+}
+
 class PdfReferenceRepository {
   save(record: PdfReference): Promise<PdfReference> {
     return withTransaction("references", "readwrite", async (store) => {
@@ -237,5 +269,6 @@ export const projectRepository = new ProjectRepository();
 export const metadataRepository = new MetadataRepository();
 export const sourceRepository = new SourceRepository();
 export const sourceBlobRepository = new SourceBlobRepository();
+export const hypothesisRepository = new HypothesisRepository();
 export const pdfReferenceRepository = new PdfReferenceRepository();
 export const citableNoteRepository = new CitableNoteRepository();

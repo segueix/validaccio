@@ -9,6 +9,7 @@ export const LOCAL_DATABASE_SCHEMA = {
     projects: "projects",
     sources: "sources",
     blobs: "blobs",
+    hypotheses: "hypotheses",
     references: "references",
     notes: "notes",
     legacyWorkspace: "workspace",
@@ -20,6 +21,7 @@ export type LocalStoreName =
   | typeof LOCAL_DATABASE_SCHEMA.stores.projects
   | typeof LOCAL_DATABASE_SCHEMA.stores.sources
   | typeof LOCAL_DATABASE_SCHEMA.stores.blobs
+  | typeof LOCAL_DATABASE_SCHEMA.stores.hypotheses
   | typeof LOCAL_DATABASE_SCHEMA.stores.references
   | typeof LOCAL_DATABASE_SCHEMA.stores.notes;
 
@@ -148,6 +150,18 @@ function upgradeDatabase(
 
   if (!blobs.indexNames.contains("projectId")) {
     blobs.createIndex("projectId", "projectId");
+  }
+
+  const hypotheses = database.objectStoreNames.contains(
+    LOCAL_DATABASE_SCHEMA.stores.hypotheses,
+  )
+    ? transaction.objectStore(LOCAL_DATABASE_SCHEMA.stores.hypotheses)
+    : database.createObjectStore(LOCAL_DATABASE_SCHEMA.stores.hypotheses, {
+        keyPath: "id",
+      });
+
+  if (!hypotheses.indexNames.contains("projectId")) {
+    hypotheses.createIndex("projectId", "projectId");
   }
 
   const references = database.objectStoreNames.contains(

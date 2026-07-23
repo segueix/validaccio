@@ -185,16 +185,16 @@ PDF surt del dispositiu.
 El visor permet navegar per pàgines, **cercar** a tot el document i saltar a la
 coincidència, i mostra el **text seleccionable** de la pàgina. Seleccionant un
 fragment es crea una **referència ancorada** (font + pàgina + fragment) que es
-desa a IndexedDB (esquema v6, magatzem `references` indexat per `sourceId`) i que
-**reobre el context exacte** —la pàgina i el fragment ressaltat— quan s'hi torna.
+desa a IndexedDB (magatzem `references` indexat per `sourceId`) i que **reobre el
+context exacte** —la pàgina i el fragment ressaltat— quan s'hi torna.
 
 La part comprovable sense navegador viu a `lib/pdf-references.ts` (model de
 referència i cerca amb context) i està coberta per proves unitàries i d'integració
-(`fake-indexeddb`, actualització v5→v6). El render, la càrrega del *worker* i
-l'extracció de text s'han verificat en Chromium. El *teardown* del visor es fa amb
-`loadingTask.destroy()` —`PDFDocumentProxy` no exposa `destroy()`—, cosa que només
-va aflorar en la verificació end-to-end i que el compilador no detecta perquè
-esbuild elimina els tipus sense comprovar-los.
+(`fake-indexeddb`). El render, la càrrega del *worker* i l'extracció de text s'han
+verificat en Chromium. El *teardown* del visor es fa amb `loadingTask.destroy()`
+—`PDFDocumentProxy` no exposa `destroy()`—, cosa que només va aflorar en la
+verificació end-to-end i que el compilador no detecta perquè esbuild elimina els
+tipus sense comprovar-los.
 
 ## Extractes citables
 
@@ -213,8 +213,21 @@ nota citable. La citació breu es deriva del citekey de la font i la pàgina
 
 La lògica pura i comprovable viu a `lib/citable-notes.ts` (model, validació que
 obliga a omplir com a mínim un registre, format de citació, filtre i pont des
-d'una referència), coberta per proves unitàries i d'integració (esquema v7 amb el
-magatzem `notes`, actualització v6→v7). En esborrar una font, els seus extractes
-s'eliminen en cascada. El flux complet —importar un PDF, obrir el visor, ancorar
-una referència, promoure-la a extracte i retrobar-lo després de recarregar— s'ha
-verificat end-to-end en Chromium.
+d'una referència), coberta per proves unitàries i d'integració (magatzem `notes`).
+En esborrar una font, els seus extractes s'eliminen en cascada. El flux complet
+—importar un PDF, obrir el visor, ancorar una referència, promoure-la a extracte i
+retrobar-lo després de recarregar— s'ha verificat end-to-end en Chromium.
+
+## Editor d'hipòtesis (H1/H2/H3)
+
+La funció 201 obre el nucli de validació ACH. La lògica pura viu a
+`lib/hypotheses.ts`, amb l'ordre nomenclàtric **immutable H1 = Consens,
+H2 = Ombra, H3 = Nova teoria**. Cada hipòtesi es defineix amb enunciat falsable,
+prediccions observables, supòsits, condicions d'abandonament, nucli no
+negociable i estat de revisió, i recorda la **Regla 10 (Red Teaming)**: el
+consens i l'ombra s'han de formular amb una font independent, no debilitar-los.
+Les hipòtesis es desen per projecte al magatzem `hypotheses` i s'editen des de la
+vista «Hipòtesis».
+
+Els magatzems de les funcions 104, 107 i 201 conviuen a l'esquema local **v7**
+(`references`, `notes` i `hypotheses`), creats de manera additiva i protegida.

@@ -6,6 +6,7 @@ export {
 } from "./database.ts";
 export {
   citableNoteRepository,
+  hypothesisRepository,
   metadataRepository,
   pdfReferenceRepository,
   projectRepository,
