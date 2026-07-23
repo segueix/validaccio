@@ -12,6 +12,7 @@ import { type Hypothesis } from "../hypotheses.ts";
 import { type EvidenceRecord, normalizeEvidence } from "../evidence.ts";
 import { type Affirmation, normalizeAffirmation } from "../affirmations.ts";
 import { type AidEidLink, normalizeLink } from "../aid-eid-links.ts";
+import { type MatrixCell, normalizeCell } from "../ach-matrix.ts";
 
 export class IndexedDbRepository<T extends { id: string }> {
   private readonly storeName: "projects";
@@ -365,6 +366,48 @@ class AidEidLinkRepository {
   }
 }
 
+class MatrixCellRepository {
+  save(record: MatrixCell): Promise<MatrixCell> {
+    return withTransaction("cells", "readwrite", async (store) => {
+      await requestResult(store.put(record));
+      return record;
+    });
+  }
+
+  getAllForProject(projectId: string): Promise<MatrixCell[]> {
+    return withTransaction("cells", "readonly", async (store) => {
+      const records = (await requestResult(
+        store.index("projectId").getAll(projectId),
+      )) as Record<string, unknown>[];
+      return records.map((record) => normalizeCell(record));
+    });
+  }
+
+  delete(id: string): Promise<void> {
+    return withTransaction("cells", "readwrite", async (store) => {
+      await requestResult(store.delete(id));
+    });
+  }
+
+  // En esborrar una evidència o una hipòtesi, les seves cel·les desapareixen.
+  private deleteByIndex(index: "evidenceId" | "hypothesisId", value: string): Promise<void> {
+    return withTransaction("cells", "readwrite", async (store) => {
+      const keys = (await requestResult(
+        store.index(index).getAllKeys(value),
+      )) as IDBValidKey[];
+      await Promise.all(keys.map((key) => requestResult(store.delete(key))));
+    });
+  }
+
+  deleteForEvidence(evidenceId: string): Promise<void> {
+    return this.deleteByIndex("evidenceId", evidenceId);
+  }
+
+  deleteForHypothesis(hypothesisId: string): Promise<void> {
+    return this.deleteByIndex("hypothesisId", hypothesisId);
+  }
+}
+
 export const projectRepository = new ProjectRepository();
 export const metadataRepository = new MetadataRepository();
 export const sourceRepository = new SourceRepository();
@@ -375,3 +418,4 @@ export const citableNoteRepository = new CitableNoteRepository();
 export const evidenceRepository = new EvidenceRepository();
 export const affirmationRepository = new AffirmationRepository();
 export const aidEidLinkRepository = new AidEidLinkRepository();
+export const matrixCellRepository = new MatrixCellRepository();

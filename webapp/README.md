@@ -278,6 +278,24 @@ l'evidència. La lògica pura viu a `lib/aid-eid-links.ts` (model, consultes
 bidireccionals, resum de postures) i està coberta per proves unitàries i
 d'integració.
 
-Els magatzems de les funcions 104, 107, 201, 204, 205 i 206 conviuen a l'esquema
-local **v10** (`references`, `notes`, `hypotheses`, `evidence`, `affirmations` i
-`links`), creats de manera additiva i protegida.
+## Matriu ACH
+
+La funció 209 tanca el nucli metodològic amb la matriu d'Anàlisi d'Hipòtesis en
+Competència (Heuer 1999). Creua cada **evidència** (files EID) amb cada
+**hipòtesi** (columnes) i marca la consistència: **C** (consistent), **I**
+(inconsistent) o **N** (neutral), amb **comentari obligatori** per a C i I —cap
+judici de consistència sense justificació.
+
+L'eina en deriva dues lectures clau. La **diagnosticitat** de cada evidència: és
+*diagnòstica* si discrimina entre hipòtesis (valors diferents), *ornamental* si és
+consistent amb totes igual, o *incompleta* si en falta alguna. I la **puntuació de
+refutació** per hipòtesi: seguint Heuer, la hipòtesi més sòlida no és la que té més
+suport sinó la que acumula **menys inconsistències** (la més difícil de refutar);
+la menys refutada queda ressaltada. Un filtre mostra només les evidències
+diagnòstiques i el botó **Exporta CSV** genera una taula compatible amb fulls de
+càlcul. La lògica pura viu a `lib/ach-matrix.ts` i està coberta per proves
+unitàries i d'integració.
+
+Els magatzems de les funcions 104, 107, 201, 204, 205, 206 i 209 conviuen a
+l'esquema local **v11** (`references`, `notes`, `hypotheses`, `evidence`,
+`affirmations`, `links` i `cells`), creats de manera additiva i protegida.

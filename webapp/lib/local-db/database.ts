@@ -2,7 +2,7 @@ import { normalizeProjectRecord, PROJECT_DATA_VERSION } from "./types.ts";
 
 export const LOCAL_DATABASE_SCHEMA = {
   name: "validaccio-local",
-  version: 10,
+  version: 11,
   dataVersion: PROJECT_DATA_VERSION,
   stores: {
     metadata: "metadata",
@@ -15,6 +15,7 @@ export const LOCAL_DATABASE_SCHEMA = {
     evidence: "evidence",
     affirmations: "affirmations",
     links: "links",
+    cells: "cells",
     legacyWorkspace: "workspace",
   },
 } as const;
@@ -29,7 +30,8 @@ export type LocalStoreName =
   | typeof LOCAL_DATABASE_SCHEMA.stores.notes
   | typeof LOCAL_DATABASE_SCHEMA.stores.evidence
   | typeof LOCAL_DATABASE_SCHEMA.stores.affirmations
-  | typeof LOCAL_DATABASE_SCHEMA.stores.links;
+  | typeof LOCAL_DATABASE_SCHEMA.stores.links
+  | typeof LOCAL_DATABASE_SCHEMA.stores.cells;
 
 let databasePromise: Promise<IDBDatabase> | null = null;
 
@@ -237,6 +239,24 @@ function upgradeDatabase(
   }
   if (!links.indexNames.contains("evidenceId")) {
     links.createIndex("evidenceId", "evidenceId");
+  }
+
+  const cells = database.objectStoreNames.contains(
+    LOCAL_DATABASE_SCHEMA.stores.cells,
+  )
+    ? transaction.objectStore(LOCAL_DATABASE_SCHEMA.stores.cells)
+    : database.createObjectStore(LOCAL_DATABASE_SCHEMA.stores.cells, {
+        keyPath: "id",
+      });
+
+  if (!cells.indexNames.contains("projectId")) {
+    cells.createIndex("projectId", "projectId");
+  }
+  if (!cells.indexNames.contains("evidenceId")) {
+    cells.createIndex("evidenceId", "evidenceId");
+  }
+  if (!cells.indexNames.contains("hypothesisId")) {
+    cells.createIndex("hypothesisId", "hypothesisId");
   }
 
   metadata.put({

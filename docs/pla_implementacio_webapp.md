@@ -57,10 +57,10 @@ Prioritats: **P0** imprescindible per al primer ús real; **P1** nucli metodolò
 
 | Situació | Funcions |
 |---|---|
-| **FET** | 001, 002, 003, 004, 006, 007, 009, 010, 101, 102, 103, 104, 105, 107, 201, 204, 205, 206 i 502 |
+| **FET** | 001, 002, 003, 004, 006, 007, 009, 010, 101, 102, 103, 104, 105, 107, 201, 204, 205, 206, 209 i 502 |
 | **EN CURS** | — |
 | **PARCIAL** | 005, 008, 501, 503 i 505 |
-| **SEGÜENT BLOC FUNCIONAL** | 209 → 211 → 216: matriu ACH, sensibilitat i mapa d'abast del llibre 1 |
+| **SEGÜENT BLOC FUNCIONAL** | 211 → 216: anàlisi de sensibilitat i mapa d'abast del llibre 1 (Visconti vs. naips) |
 
 Aquesta foto s’ha d’actualitzar dins de la mateixa PR que canviï qualsevol estat.
 
@@ -110,7 +110,7 @@ Aquesta foto s’ha d’actualitzar dins de la mateixa PR que canviï qualsevol 
 | **206** | Enllaç AID–EID | P0 | 204, 205 | **FET** | Cada afirmació mostra evidències favorables, contràries o contextuals i permet navegar en tots dos sentits. |
 | **207** | Famílies de dependència | P1 | 204 | **PENDENT** | Agrupar evidències no independents, justificar la relació i evitar recompte múltiple silenciós. |
 | **208** | Priors com a rangs justificats | P1 | 201 | **PENDENT** | Definir rangs, font/justificació i sensibilitat; cap prior fix o ocult. |
-| **209** | Matriu ACH editable | P0 | 201, 204 | **PENDENT** | Files EID, columnes d'hipòtesi, valors C/I/N, comentari obligatori i filtres; exportació CSV compatible. |
+| **209** | Matriu ACH editable | P0 | 201, 204 | **FET** | Files EID, columnes d'hipòtesi, valors C/I/N, comentari obligatori i filtres; exportació CSV compatible. |
 | **210** | Doble codificació | P1 | 209 | **PENDENT** | Dues passades independents o dos revisors, comparació de discrepàncies i resolució registrada. |
 | **211** | Evidència diagnòstica vs ornamental | P1 | 207, 209 | **PENDENT** | Detectar evidència compatible amb totes les hipòtesis i impedir que infli la força atributiva. |
 | **212** | Anàlisi de sensibilitat | P1 | 207, 208, 209 | **PENDENT** | Recalcular escenaris alterant priors, pesos i dependències, mostrant quines decisions són robustes. |
@@ -212,6 +212,7 @@ S'afegeix una fila després de cada funció acabada. No s'esborren entrades.
 | 2026-07-23 | 204 | `feat/204-registre-eid` | FET | Registre d'evidències amb **descripció neutral** (el fet, no la interpretació), ancoratge a font + pàgina + extracte citable (107), **família de dependència** i **qualitat** (primària/secundària/terciària/incerta). Codi **EID** seqüencial i estable (E1, E2…) que encapçalarà les files de la matriu ACH. Nova vista «Evidències» amb editor i **pont des dels extractes** («→ Evidència» pren la paràfrasi com a descripció neutral de partida). Lògica pura provada (`lib/evidence.ts`: model, validació, generació de codi, qualitat, pont) i esquema **v8** amb magatzem `evidence` (índex per projecte); 8 proves noves (104 totals), incloent integració v7→v8 amb `fake-indexeddb`. Flux complet (evidència directa + pont extracte→evidència + recàrrega persistent) verificat end-to-end en Chromium; lint i build verificats. |
 | 2026-07-23 | 205 | `feat/205-registre-aid` | FET | Registre d'afirmacions amb codi **AID** seqüencial i estable (A1, A2…), **text exacte**, **capítol**, **estat** i **grau d'assertivitat** (escala ordinal de cinc nivells del marc). Cada afirmació es classifica per la **bifurcació de la certesa**: incondicional (fet mecànic verificable) o condicional (atributiva), amb recordatori que la condicional exigeix evidència documental diagnòstica. Nova vista «Afirmacions». Lògica pura provada (`lib/affirmations.ts`: model, tipus, assertivitat, estats, generació de codi) i esquema **v9** amb magatzem `affirmations` (índex per projecte); 8 proves noves (112 totals), incloent integració v8→v9 amb `fake-indexeddb`. Flux complet (crea afirmació condicional amb assertivitat + recàrrega persistent) verificat end-to-end en Chromium; lint i build verificats. |
 | 2026-07-23 | 206 | `feat/206-enllac-aid-eid` | FET | Enllaç **AID ↔ EID** amb **postura** (a favor / en contra / context) i **derivació** (cita literal / paràfrasi / inferència). Navegable en tots dos sentits: des de l'afirmació es veuen les evidències vinculades amb resum de postures, i des de l'evidència les afirmacions que hi depenen. Id determinista per parella (un únic enllaç per AID–EID) i **esborrat en cascada** en eliminar l'afirmació o l'evidència. Lògica pura provada (`lib/aid-eid-links.ts`: model, consultes bidireccionals, resum de postures) i esquema **v10** amb magatzem `links` (índexs projecte/AID/EID); 8 proves noves (120 totals), incloent integració v9→v10 amb `fake-indexeddb`. Flux complet (crea AID + EID, vincula, comprova la vista inversa, recàrrega persistent) verificat end-to-end en Chromium; lint i build verificats. |
+| 2026-07-23 | 209 | `feat/209-matriu-ach` | FET | Matriu ACH editable (files EID × columnes d'hipòtesi) amb valors **C/I/N** i **comentari obligatori** per a C i I. Calcula la **diagnosticitat** de cada evidència (discrimina / ornamental / incompleta) i la **puntuació de refutació** per hipòtesi (menys inconsistències = més sòlida, mètode de Heuer), amb la menys refutada ressaltada. Filtre «només diagnòstiques» i **exportació CSV** compatible amb fulls de càlcul. Lògica pura provada (`lib/ach-matrix.ts`: cel·les, diagnosticitat, puntuació, CSV) i esquema **v11** amb magatzem `cells` (índexs projecte/EID/hipòtesi) amb esborrat en cascada; 9 proves noves (129 totals), incloent integració v10→v11 amb `fake-indexeddb`. Flux complet (sembra H1/H2/H3, crea evidències, marca C/I/N, comprova diagnosticitat i puntuació, recàrrega persistent) verificat end-to-end en Chromium; lint i build verificats. |
 
 ## 7. Definició global de «fet»
 
