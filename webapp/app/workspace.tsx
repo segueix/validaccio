@@ -18,6 +18,7 @@ import {
   aidEidLinkRepository,
   citableNoteRepository,
   ensureProjectsMigrated,
+  matrixCellRepository,
   evidenceRepository,
   hypothesisRepository,
   metadataRepository,
@@ -112,6 +113,17 @@ import {
   summarizeStances,
 } from "../lib/aid-eid-links";
 import {
+  buildMatrix,
+  type ConsistencyValue,
+  CONSISTENCY_VALUES,
+  consistencyLabel,
+  createCell,
+  leastRefutedHypotheses,
+  type MatrixCell,
+  scoreHypotheses,
+  toCsv,
+} from "../lib/ach-matrix";
+import {
   evaluateStorageHealth,
   formatBytes,
   formatPercent,
@@ -183,6 +195,14 @@ type AffirmationDraft = {
   assertiveness: Assertiveness;
 };
 
+// Esborrany d'una cel·la de la matriu ACH (funció 209): creuament evidència × hipòtesi.
+type CellDraft = {
+  evidenceId: string;
+  hypothesisId: string;
+  value: ConsistencyValue;
+  comment: string;
+};
+
 const initialTimestamp = new Date().toISOString();
 
 const defaultProject: Project = {
@@ -225,13 +245,7 @@ const phases = [
   "Revisió",
 ];
 
-const moduleCopy: Record<Exclude<ViewId, "tauler" | "salut" | "privadesa" | "fonts" | "extractes" | "hipotesis" | "evidencies" | "afirmacions">, { eyebrow: string; title: string; body: string; status: string }> = {
-  matriu: {
-    eyebrow: "Fase 3",
-    title: "Matriu ACH",
-    body: "Compara cada evidència amb totes les hipòtesis i separa allò diagnòstic d’allò ornamental.",
-    status: "Properament",
-  },
+const moduleCopy: Record<Exclude<ViewId, "tauler" | "salut" | "privadesa" | "fonts" | "extractes" | "hipotesis" | "evidencies" | "afirmacions" | "matriu">, { eyebrow: string; title: string; body: string; status: string }> = {
   sensibilitat: {
     eyebrow: "Fase 4",
     title: "Anàlisi de sensibilitat",
@@ -333,6 +347,8 @@ export default function Workspace() {
   const [affirmationDraft, setAffirmationDraft] =
     useState<AffirmationDraft | null>(null);
   const [links, setLinks] = useState<AidEidLink[]>([]);
+  const [cells, setCells] = useState<MatrixCell[]>([]);
+  const [cellDraft, setCellDraft] = useState<CellDraft | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
   const sourceInput = useRef<HTMLInputElement>(null);
   const firewallRef = useRef<PrivacyFirewall | null>(null);
@@ -714,6 +730,14 @@ export default function Workspace() {
     }
   }
 
+  async function loadCells(projectId: string) {
+    try {
+      setCells(await matrixCellRepository.getAllForProject(projectId));
+    } catch {
+      setCells([]);
+    }
+  }
+
   async function seedHypotheses() {
     for (const hypothesis of defaultHypotheses(project.id)) {
       await hypothesisRepository.save(hypothesis);
@@ -757,7 +781,9 @@ export default function Workspace() {
       return;
     }
     await hypothesisRepository.delete(id);
+    await matrixCellRepository.deleteForHypothesis(id).catch(() => undefined);
     setHypotheses((current) => current.filter((item) => item.id !== id));
+    setCells((current) => current.filter((cell) => cell.hypothesisId !== id));
   }
 
   function emptyEvidenceDraft(): EvidenceDraft {
@@ -860,8 +886,10 @@ export default function Workspace() {
     }
     await evidenceRepository.delete(id).catch(() => undefined);
     await aidEidLinkRepository.deleteForEvidence(id).catch(() => undefined);
+    await matrixCellRepository.deleteForEvidence(id).catch(() => undefined);
     setEvidence((current) => current.filter((item) => item.id !== id));
     setLinks((current) => current.filter((link) => link.evidenceId !== id));
+    setCells((current) => current.filter((cell) => cell.evidenceId !== id));
   }
 
   function startNewAffirmation() {
@@ -974,6 +1002,70 @@ export default function Workspace() {
     setLinks((current) => current.filter((link) => link.id !== id));
   }
 
+  function openCell(evidenceId: string, hypothesisId: string) {
+    const existing = cells.find(
+      (cell) => cell.evidenceId === evidenceId && cell.hypothesisId === hypothesisId,
+    );
+    setCellDraft({
+      evidenceId,
+      hypothesisId,
+      value: existing?.value ?? "N",
+      comment: existing?.comment ?? "",
+    });
+  }
+
+  function updateCellDraft(patch: Partial<CellDraft>) {
+    setCellDraft((current) => (current ? { ...current, ...patch } : current));
+  }
+
+  async function saveCell() {
+    if (!cellDraft) return;
+    const draft = cellDraft;
+    try {
+      const cell = createCell({
+        projectId: project.id,
+        evidenceId: draft.evidenceId,
+        hypothesisId: draft.hypothesisId,
+        value: draft.value,
+        comment: draft.comment,
+      });
+      await matrixCellRepository.save(cell);
+      setCells((current) => [
+        ...current.filter((item) => item.id !== cell.id),
+        cell,
+      ]);
+      setCellDraft(null);
+    } catch (error) {
+      setNotice(
+        error instanceof TypeError
+          ? error.message
+          : "No s’ha pogut desar la cel·la",
+      );
+    }
+  }
+
+  function exportMatrixCsv() {
+    const rows = buildMatrix(
+      cells,
+      evidence.map((item) => item.id),
+      hypotheses.map((item) => item.id),
+    );
+    const csv = toCsv(
+      rows,
+      hypotheses.map((item) => ({ hypothesisId: item.id, code: item.code })),
+      (id) => evidence.find((item) => item.id === id)?.code ?? id,
+    );
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `matriu-ach-${project.id}.csv`;
+    document.body.append(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 0);
+  }
+
   async function refreshStorageHealth() {
     try {
       setStorageReport(await computeStorageReport());
@@ -1047,6 +1139,7 @@ export default function Workspace() {
       await loadEvidence(activeProject.id);
       await loadAffirmations(activeProject.id);
       await loadLinks(activeProject.id);
+      await loadCells(activeProject.id);
     }
 
     prepareWorkspace()
@@ -1124,6 +1217,7 @@ export default function Workspace() {
     await loadEvidence(nextProject.id);
     await loadAffirmations(nextProject.id);
     await loadLinks(nextProject.id);
+    await loadCells(nextProject.id);
   }
 
   async function createProject(title: string) {
@@ -1498,6 +1592,20 @@ export default function Workspace() {
             onLink={linkEvidenceToAffirmation}
             onUnlink={unlink}
             onOpenEvidence={() => setView("evidencies")}
+          />
+        ) : view === "matriu" ? (
+          <MatrixView
+            evidence={evidence}
+            hypotheses={hypotheses}
+            cells={cells}
+            draft={cellDraft}
+            onOpenCell={openCell}
+            onCellDraftChange={updateCellDraft}
+            onSaveCell={saveCell}
+            onCancelCell={() => setCellDraft(null)}
+            onExportCsv={exportMatrixCsv}
+            onOpenEvidence={() => setView("evidencies")}
+            onOpenHypotheses={() => setView("hipotesis")}
           />
         ) : (
           <ModuleView
@@ -1880,7 +1988,7 @@ function ModuleView({
   onExport,
   onImport,
 }: {
-  view: Exclude<ViewId, "tauler" | "salut" | "privadesa" | "fonts" | "extractes" | "hipotesis" | "evidencies" | "afirmacions">;
+  view: Exclude<ViewId, "tauler" | "salut" | "privadesa" | "fonts" | "extractes" | "hipotesis" | "evidencies" | "afirmacions" | "matriu">;
   project: Project;
   onExport: () => void;
   onImport: () => void;
@@ -3437,6 +3545,237 @@ function AffirmationLinkPanel({
             );
           })}
         </ul>
+      )}
+    </div>
+  );
+}
+
+function MatrixView({
+  evidence,
+  hypotheses,
+  cells,
+  draft,
+  onOpenCell,
+  onCellDraftChange,
+  onSaveCell,
+  onCancelCell,
+  onExportCsv,
+  onOpenEvidence,
+  onOpenHypotheses,
+}: {
+  evidence: EvidenceRecord[];
+  hypotheses: Hypothesis[];
+  cells: MatrixCell[];
+  draft: CellDraft | null;
+  onOpenCell: (evidenceId: string, hypothesisId: string) => void;
+  onCellDraftChange: (patch: Partial<CellDraft>) => void;
+  onSaveCell: () => void;
+  onCancelCell: () => void;
+  onExportCsv: () => void;
+  onOpenEvidence: () => void;
+  onOpenHypotheses: () => void;
+}) {
+  const [onlyDiagnostic, setOnlyDiagnostic] = useState(false);
+  const hypothesisIds = hypotheses.map((item) => item.id);
+  const rows = buildMatrix(
+    cells,
+    evidence.map((item) => item.id),
+    hypothesisIds,
+  );
+  const scores = scoreHypotheses(cells, hypothesisIds);
+  const leastRefuted = new Set(leastRefutedHypotheses(scores));
+  const evidenceById = new Map(evidence.map((item) => [item.id, item]));
+  const scoreById = new Map(scores.map((score) => [score.hypothesisId, score]));
+  const visibleRows = onlyDiagnostic
+    ? rows.filter((row) => row.diagnosticity === "diagnostica")
+    : rows;
+  const diagnosticCount = rows.filter((row) => row.diagnosticity === "diagnostica").length;
+
+  const canSaveCell = Boolean(
+    draft && (draft.value === "N" || draft.comment.trim()),
+  );
+  const draftEvidence = draft ? evidenceById.get(draft.evidenceId) : undefined;
+  const draftHypothesis = draft
+    ? hypotheses.find((item) => item.id === draft.hypothesisId)
+    : undefined;
+
+  return (
+    <div className="page-content module-page">
+      <section className="module-hero">
+        <div>
+          <span className="eyebrow">Fase 3 · Validació ACH</span>
+          <h1>Matriu ACH</h1>
+          <p>
+            Cada evidència es creua amb cada hipòtesi i es marca <strong>C</strong>
+            (consistent), <strong>I</strong> (inconsistent) o <strong>N</strong>
+            (neutral), amb comentari obligatori per a C i I. L’evidència
+            <strong> diagnòstica</strong> és la que discrimina entre hipòtesis; la
+            hipòtesi més sòlida és la que acumula <strong>menys inconsistències</strong>,
+            no la que té més suport.
+          </p>
+        </div>
+        <span className="status-chip live">
+          {diagnosticCount} diagnòstiques / {rows.length}
+        </span>
+      </section>
+
+      {evidence.length === 0 || hypotheses.length === 0 ? (
+        <section className="empty-state">
+          <div className="empty-orbit">
+            <span>M</span>
+          </div>
+          <h2>Falta material per creuar</h2>
+          <p>
+            La matriu necessita, com a mínim, una hipòtesi i una evidència.
+          </p>
+          <div className="extract-actions">
+            {hypotheses.length === 0 && (
+              <button className="primary-button" onClick={onOpenHypotheses}>
+                Ves a Hipòtesis
+              </button>
+            )}
+            {evidence.length === 0 && (
+              <button className="quiet-button" onClick={onOpenEvidence}>
+                Ves a Evidències
+              </button>
+            )}
+          </div>
+        </section>
+      ) : (
+        <>
+          <section className="stat-panel extract-toolbar">
+            <label className="matrix-toggle">
+              <input
+                type="checkbox"
+                checked={onlyDiagnostic}
+                onChange={(event) => setOnlyDiagnostic(event.target.checked)}
+              />
+              Només diagnòstiques
+            </label>
+            <button className="quiet-button" onClick={onExportCsv}>
+              Exporta CSV
+            </button>
+          </section>
+
+          <section className="stat-panel matrix-panel">
+            <div className="matrix-scroll">
+              <table className="ach-matrix">
+                <thead>
+                  <tr>
+                    <th className="matrix-corner">EID \ Hipòtesi</th>
+                    {hypotheses.map((hypothesis) => (
+                      <th key={hypothesis.id} title={hypothesis.title}>
+                        {hypothesis.code}
+                      </th>
+                    ))}
+                    <th>Diagnòstic</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {visibleRows.map((row) => {
+                    const source = evidenceById.get(row.evidenceId);
+                    return (
+                      <tr key={row.evidenceId}>
+                        <th scope="row" className="matrix-eid">
+                          <span className="evidence-code">{source?.code ?? "EID"}</span>
+                          <small>{source?.description.slice(0, 44)}</small>
+                        </th>
+                        {hypotheses.map((hypothesis) => {
+                          const value = row.values[hypothesis.id];
+                          return (
+                            <td key={hypothesis.id}>
+                              <button
+                                className={`cell-btn cell-${value ?? "empty"}`}
+                                onClick={() => onOpenCell(row.evidenceId, hypothesis.id)}
+                                title={`${source?.code ?? "EID"} × ${hypothesis.code}`}
+                              >
+                                {value ?? "—"}
+                              </button>
+                            </td>
+                          );
+                        })}
+                        <td>
+                          <span className={`diag-badge d-${row.diagnosticity}`}>
+                            {row.diagnosticity === "diagnostica"
+                              ? "Diagnòstica"
+                              : row.diagnosticity === "ornamental"
+                                ? "Ornamental"
+                                : "Incompleta"}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+                <tfoot>
+                  <tr>
+                    <th scope="row" className="matrix-eid">
+                      <span>Inconsistències (menys = més sòlida)</span>
+                    </th>
+                    {hypotheses.map((hypothesis) => {
+                      const score = scoreById.get(hypothesis.id);
+                      return (
+                        <td key={hypothesis.id}>
+                          <span
+                            className={`score-badge${leastRefuted.has(hypothesis.id) ? " best" : ""}`}
+                          >
+                            {score?.inconsistencies ?? 0}
+                          </span>
+                        </td>
+                      );
+                    })}
+                    <td />
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </section>
+        </>
+      )}
+
+      {draft && (
+        <div className="modal-backdrop" role="presentation" onMouseDown={onCancelCell}>
+          <div className="modal" onMouseDown={(event) => event.stopPropagation()}>
+            <span className="eyebrow">
+              {draftEvidence?.code ?? "EID"} × {draftHypothesis?.code ?? "H"}
+            </span>
+            <h2>Consistència</h2>
+            <p className="field-hint">
+              {draftHypothesis?.title || "Hipòtesi"} — {draftEvidence?.description.slice(0, 90)}
+            </p>
+            <div className="cell-values">
+              {CONSISTENCY_VALUES.map((option) => (
+                <button
+                  key={option.value}
+                  className={`cell-choice cell-${option.value}${draft.value === option.value ? " active" : ""}`}
+                  onClick={() => onCellDraftChange({ value: option.value })}
+                  title={option.hint}
+                >
+                  {option.value} · {option.label}
+                </button>
+              ))}
+            </div>
+            <label className="extract-field">
+              <span>
+                Comentari{draft.value === "N" ? " (opcional)" : " (obligatori)"}
+              </span>
+              <textarea
+                rows={3}
+                value={draft.comment}
+                placeholder="Justifica per què és consistent o inconsistent."
+                onChange={(event) => onCellDraftChange({ comment: event.target.value })}
+              />
+            </label>
+            <div className="modal-actions">
+              <button className="quiet-button" onClick={onCancelCell}>
+                Cancel·la
+              </button>
+              <button className="primary-button" disabled={!canSaveCell} onClick={onSaveCell}>
+                Desa · {consistencyLabel(draft.value)}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

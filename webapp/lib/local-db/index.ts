@@ -10,6 +10,7 @@ export {
   citableNoteRepository,
   evidenceRepository,
   hypothesisRepository,
+  matrixCellRepository,
   metadataRepository,
   pdfReferenceRepository,
   projectRepository,

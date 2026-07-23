@@ -259,6 +259,36 @@ button { color: inherit; }
 .aid-link-text em { color: var(--muted); font-style: normal; }
 .aid-link-del { border: 0; background: transparent; padding: 0 4px; cursor: pointer; font-weight: 700; font-size: 15px; }
 
+/* Funció 209 — Matriu ACH */
+.matrix-toggle { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; color: var(--ink); cursor: pointer; }
+.matrix-toggle input { width: 15px; height: 15px; }
+.matrix-panel { padding: 0; overflow: hidden; }
+.matrix-scroll { overflow-x: auto; }
+.ach-matrix { border-collapse: collapse; width: 100%; font-size: 12px; }
+.ach-matrix th, .ach-matrix td { border: 1px solid var(--line); padding: 8px 10px; text-align: center; }
+.ach-matrix thead th { background: #f6f6f1; font: 700 13px Georgia, serif; color: var(--forest-2); position: sticky; top: 0; }
+.matrix-corner { text-align: left !important; font: italic 11px Georgia, serif !important; color: var(--muted) !important; }
+.matrix-eid { text-align: left !important; min-width: 200px; }
+.matrix-eid .evidence-code { display: inline-block; margin-right: 6px; }
+.matrix-eid small { display: block; color: var(--muted); font-weight: 400; }
+.cell-btn { width: 40px; height: 34px; border: 1px solid var(--line); border-radius: 8px; background: white; font: 700 13px Georgia, serif; cursor: pointer; }
+.cell-btn:hover { border-color: var(--forest-2); }
+.cell-C { background: #e0efd8; color: #34612a; border-color: #bcd7ac; }
+.cell-I { background: #f3ddd8; color: #8a3d30; border-color: #d9b3aa; }
+.cell-N { background: #eceef0; color: #566; }
+.cell-empty { color: var(--muted); }
+.diag-badge { padding: 2px 9px; border-radius: 999px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; white-space: nowrap; }
+.diag-badge.d-diagnostica { background: var(--forest); color: white; }
+.diag-badge.d-ornamental { background: #f0eeea; color: var(--muted); }
+.diag-badge.d-incompleta { background: #f4ead9; color: #7a5a2c; }
+.ach-matrix tfoot th, .ach-matrix tfoot td { background: #faf9f4; }
+.ach-matrix tfoot .matrix-eid span { font-size: 11px; font-weight: 700; color: var(--muted); }
+.score-badge { display: inline-block; min-width: 26px; padding: 2px 6px; border-radius: 8px; background: white; border: 1px solid var(--line); font-weight: 700; }
+.score-badge.best { background: var(--lime); border-color: var(--lime); color: var(--ink); }
+.cell-values { display: flex; gap: 8px; margin: 14px 0; flex-wrap: wrap; }
+.cell-choice { flex: 1; min-width: 120px; padding: 10px; border: 1px solid var(--line); border-radius: 10px; background: white; font-size: 12px; font-weight: 700; cursor: pointer; }
+.cell-choice.active { border-color: var(--forest-2); box-shadow: 0 0 0 3px rgba(36,91,79,.12); }
+
 @media (max-width: 620px) {
   .extract-fields { grid-template-columns: 1fr; }
 }
