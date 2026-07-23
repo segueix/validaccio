@@ -223,6 +223,24 @@ button { color: inherit; }
 .evidence-meta { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 .evidence-meta small { color: var(--muted); font-size: 11px; }
 
+/* Funció 205 — Registre d'afirmacions (AID) */
+.field-hint { margin: -6px 0 0; font-size: 11px; line-height: 1.5; color: var(--muted); }
+.affirmation-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.affirmation-item { border: 1px solid var(--line); border-radius: 12px; padding: 15px 18px; background: #fbfbf8; display: grid; gap: 8px; }
+.affirmation-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.aff-code { font: 700 15px Georgia, serif; color: var(--forest-2); }
+.aff-assertiveness { padding: 2px 9px; border-radius: 999px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; border: 1px solid var(--line); }
+.aff-assertiveness.a-molt-baixa { background: #f0eeea; color: var(--muted); }
+.aff-assertiveness.a-baixa { background: #ecefe0; color: #6a6a3a; }
+.aff-assertiveness.a-moderada { background: #e6efd9; color: #566a2c; }
+.aff-assertiveness.a-alta { background: #d9ead0; color: #34612a; }
+.aff-assertiveness.a-molt-alta { background: var(--forest); color: white; border-color: var(--forest); }
+.aff-type { padding: 2px 8px; border-radius: 999px; font-size: 10px; font-weight: 700; border: 1px solid var(--line); }
+.aff-type.t-incondicional { background: #e4eef1; color: #2c5560; }
+.aff-type.t-condicional { background: #f4ead9; color: #7a5a2c; }
+.aff-chapter { padding: 2px 8px; border-radius: 999px; background: var(--sand); font-size: 10px; font-weight: 700; }
+.aff-text { margin: 0; font-size: 14px; line-height: 1.6; }
+
 @media (max-width: 620px) {
   .extract-fields { grid-template-columns: 1fr; }
 }
