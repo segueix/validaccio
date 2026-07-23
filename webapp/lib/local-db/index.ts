@@ -5,8 +5,10 @@ export {
   withTransaction,
 } from "./database.ts";
 export {
+  citableNoteRepository,
   hypothesisRepository,
   metadataRepository,
+  pdfReferenceRepository,
   projectRepository,
   sourceBlobRepository,
   sourceRepository,

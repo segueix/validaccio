@@ -13,6 +13,8 @@ en una eina de treball per a obres històriques traçables.
 - canvi de nom, protecció de l'emmagatzematge i còpia/restauració JSON;
 - panell de salut de l'emmagatzematge amb ús, quota, persistència i avisos;
 - importació local de fonts (PDF, DOCX, TXT, Markdown, imatges) amb validació;
+- visor PDF local amb cerca i referències ancorades (font + pàgina + fragment);
+- extractes citables amb cita, paràfrasi i comentari separats, ancorats a la font;
 - disseny responsiu per a Chromebook, tauleta i mòbil;
 - manifest i shell bàsic per a ús com a PWA.
 
@@ -169,6 +171,53 @@ se n'extreu el text dels elements `<w:t>` i l'estructura de paràgrafs dels `<w:
 Cada paràgraf conserva un **índex reproduïble** (posició dins el document) per
 poder-lo tornar a localitzar, i la vista «Fonts» en mostra una previsualització.
 
+## Visor PDF amb ancoratge
+
+La funció 104 obre un visor de PDF dins la vista «Fonts» (botó **Visor** a cada
+font PDF). El render fa servir **pdf.js**, la primera dependència de runtime del
+projecte. Es fa servir el **build «legacy»** de `pdfjs-dist` de manera
+deliberada: el build modern crida `Map.prototype.getOrInsertComputed`, un mètode
+que encara no tenen la majoria de navegadors, mentre que el legacy en porta el
+polyfill. El *worker* s'empaqueta **localment** (mai des d'un CDN), de manera que
+el visor respecta la CSP local-first i el tallafoc de privacitat: cap byte del
+PDF surt del dispositiu.
+
+El visor permet navegar per pàgines, **cercar** a tot el document i saltar a la
+coincidència, i mostra el **text seleccionable** de la pàgina. Seleccionant un
+fragment es crea una **referència ancorada** (font + pàgina + fragment) que es
+desa a IndexedDB (magatzem `references` indexat per `sourceId`) i que **reobre el
+context exacte** —la pàgina i el fragment ressaltat— quan s'hi torna.
+
+La part comprovable sense navegador viu a `lib/pdf-references.ts` (model de
+referència i cerca amb context) i està coberta per proves unitàries i d'integració
+(`fake-indexeddb`). El render, la càrrega del *worker* i l'extracció de text s'han
+verificat en Chromium. El *teardown* del visor es fa amb `loadingTask.destroy()`
+—`PDFDocumentProxy` no exposa `destroy()`—, cosa que només va aflorar en la
+verificació end-to-end i que el compilador no detecta perquè esbuild elimina els
+tipus sense comprovar-los.
+
+## Extractes citables
+
+La funció 107 afegeix la vista «Extractes», el taller on cada afirmació del llibre
+neix amb la seva traça. Un extracte manté **tres registres separats** que la
+recerca rigorosa no ha de barrejar mai: la **cita** textual de la font, la
+**paràfrasi** amb paraules pròpies i el **comentari** o judici propi. Cada extracte
+queda ancorat a una font i, si ve del visor PDF, a una **pàgina** i una
+**referència** concretes; el botó «Obre la font» reobre el PDF exactament en
+aquesta pàgina.
+
+Des del visor, el botó **«→ Extracte»** de cada referència la **promou** a extracte
+amb la cita i la pàgina ja emplenades, tancant el cercle lectura → ancoratge →
+nota citable. La citació breu es deriva del citekey de la font i la pàgina
+(`@citekey, p. N`).
+
+La lògica pura i comprovable viu a `lib/citable-notes.ts` (model, validació que
+obliga a omplir com a mínim un registre, format de citació, filtre i pont des
+d'una referència), coberta per proves unitàries i d'integració (magatzem `notes`).
+En esborrar una font, els seus extractes s'eliminen en cascada. El flux complet
+—importar un PDF, obrir el visor, ancorar una referència, promoure-la a extracte i
+retrobar-lo després de recarregar— s'ha verificat end-to-end en Chromium.
+
 ## Editor d'hipòtesis (H1/H2/H3)
 
 La funció 201 obre el nucli de validació ACH. La lògica pura viu a
@@ -177,5 +226,8 @@ H2 = Ombra, H3 = Nova teoria**. Cada hipòtesi es defineix amb enunciat falsable
 prediccions observables, supòsits, condicions d'abandonament, nucli no
 negociable i estat de revisió, i recorda la **Regla 10 (Red Teaming)**: el
 consens i l'ombra s'han de formular amb una font independent, no debilitar-los.
-Les hipòtesis es desen per projecte a l'esquema local v6 (magatzem `hypotheses`)
-i s'editen des de la vista «Hipòtesis».
+Les hipòtesis es desen per projecte al magatzem `hypotheses` i s'editen des de la
+vista «Hipòtesis».
+
+Els magatzems de les funcions 104, 107 i 201 conviuen a l'esquema local **v7**
+(`references`, `notes` i `hypotheses`), creats de manera additiva i protegida.
