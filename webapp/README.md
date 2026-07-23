@@ -14,6 +14,7 @@ en una eina de treball per a obres històriques traçables.
 - panell de salut de l'emmagatzematge amb ús, quota, persistència i avisos;
 - importació local de fonts (PDF, DOCX, TXT, Markdown, imatges) amb validació;
 - visor PDF local amb cerca i referències ancorades (font + pàgina + fragment);
+- extractes citables amb cita, paràfrasi i comentari separats, ancorats a la font;
 - disseny responsiu per a Chromebook, tauleta i mòbil;
 - manifest i shell bàsic per a ús com a PWA.
 
@@ -190,4 +191,30 @@ desa a IndexedDB (esquema v6, magatzem `references` indexat per `sourceId`) i qu
 La part comprovable sense navegador viu a `lib/pdf-references.ts` (model de
 referència i cerca amb context) i està coberta per proves unitàries i d'integració
 (`fake-indexeddb`, actualització v5→v6). El render, la càrrega del *worker* i
-l'extracció de text s'han verificat en Chromium.
+l'extracció de text s'han verificat en Chromium. El *teardown* del visor es fa amb
+`loadingTask.destroy()` —`PDFDocumentProxy` no exposa `destroy()`—, cosa que només
+va aflorar en la verificació end-to-end i que el compilador no detecta perquè
+esbuild elimina els tipus sense comprovar-los.
+
+## Extractes citables
+
+La funció 107 afegeix la vista «Extractes», el taller on cada afirmació del llibre
+neix amb la seva traça. Un extracte manté **tres registres separats** que la
+recerca rigorosa no ha de barrejar mai: la **cita** textual de la font, la
+**paràfrasi** amb paraules pròpies i el **comentari** o judici propi. Cada extracte
+queda ancorat a una font i, si ve del visor PDF, a una **pàgina** i una
+**referència** concretes; el botó «Obre la font» reobre el PDF exactament en
+aquesta pàgina.
+
+Des del visor, el botó **«→ Extracte»** de cada referència la **promou** a extracte
+amb la cita i la pàgina ja emplenades, tancant el cercle lectura → ancoratge →
+nota citable. La citació breu es deriva del citekey de la font i la pàgina
+(`@citekey, p. N`).
+
+La lògica pura i comprovable viu a `lib/citable-notes.ts` (model, validació que
+obliga a omplir com a mínim un registre, format de citació, filtre i pont des
+d'una referència), coberta per proves unitàries i d'integració (esquema v7 amb el
+magatzem `notes`, actualització v6→v7). En esborrar una font, els seus extractes
+s'eliminen en cascada. El flux complet —importar un PDF, obrir el visor, ancorar
+una referència, promoure-la a extracte i retrobar-lo després de recarregar— s'ha
+verificat end-to-end en Chromium.

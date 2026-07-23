@@ -172,6 +172,8 @@ button { color: inherit; }
 .pdf-refs li { display: flex; align-items: flex-start; gap: 6px; }
 .pdf-refs li button:first-child { flex: 1; border: 1px solid var(--line); background: white; border-radius: 8px; padding: 8px 10px; text-align: left; cursor: pointer; font-size: 12px; line-height: 1.5; }
 .pdf-refs li button:first-child:hover { border-color: var(--forest-2); }
+.pdf-ref-promote { border: 1px solid var(--line); background: white; border-radius: 8px; padding: 6px 8px; cursor: pointer; font-size: 10px; font-weight: 700; white-space: nowrap; color: var(--forest-2); }
+.pdf-ref-promote:hover { border-color: var(--forest-2); }
 .pdf-ref-del { border: 1px solid var(--line); background: white; border-radius: 8px; padding: 6px 10px; cursor: pointer; font-weight: 700; }
 .pdf-ref-del:hover { border-color: #c98a80; }
 .pdf-side mark, .pdf-results mark { background: var(--lime); color: var(--ink); border-radius: 2px; padding: 0 1px; }
@@ -180,6 +182,34 @@ button { color: inherit; }
   .pdf-modal { height: min(92vh, 900px); }
   .pdf-body { grid-template-columns: 1fr; grid-template-rows: minmax(0, 1fr) auto; }
   .pdf-side { border-left: 0; border-top: 1px solid var(--line); max-height: 42vh; }
+}
+
+/* Funció 107 — Extractes citables */
+.extract-toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.extract-search { flex: 1; min-width: 180px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; outline: none; }
+.extract-search:focus, .extract-editor select:focus, .extract-editor input:focus, .extract-editor textarea:focus { border-color: var(--forest-2); box-shadow: 0 0 0 3px rgba(36,91,79,.12); }
+.extract-select { padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: white; outline: none; }
+.extract-editor { display: flex; flex-direction: column; gap: 14px; }
+.extract-fields { display: grid; grid-template-columns: 1fr 120px; gap: 12px; }
+.extract-field { display: flex; flex-direction: column; gap: 6px; }
+.extract-field > span { font-size: 11px; font-weight: 700; color: var(--muted); }
+.extract-field select, .extract-field input, .extract-field textarea { width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; outline: none; font: inherit; background: white; }
+.extract-field textarea { resize: vertical; line-height: 1.6; }
+.extract-list { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 14px; }
+.extract-item { border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; background: #fbfbf8; display: grid; gap: 10px; }
+.extract-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.extract-cite { font: 700 12px "Courier New", monospace; color: var(--forest-2); }
+.extract-source { font-size: 11px; color: var(--muted); }
+.extract-register { display: grid; gap: 3px; }
+.extract-register > small { font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.extract-register p { margin: 0; font-size: 13px; line-height: 1.65; }
+.extract-quote blockquote { margin: 0; padding: 6px 0 6px 12px; border-left: 3px solid var(--lime); font: italic 14px Georgia, serif; line-height: 1.6; }
+.extract-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.extract-tags span { padding: 2px 8px; border-radius: 999px; background: var(--sand); font-size: 10px; font-weight: 700; }
+.extract-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 2px; }
+
+@media (max-width: 620px) {
+  .extract-fields { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 980px) {

@@ -14,6 +14,7 @@ import {
 import {
   createProjectRecord,
   duplicateProjectRecord,
+  citableNoteRepository,
   ensureProjectsMigrated,
   metadataRepository,
   pdfReferenceRepository,
@@ -37,6 +38,13 @@ import {
   sourceBlobToObjectUrl,
 } from "../lib/source-blobs";
 import { createPdfReference, type PdfReference } from "../lib/pdf-references";
+import {
+  type CitableNote,
+  createCitableNote,
+  filterNotes,
+  formatNoteCitation,
+  noteInputFromReference,
+} from "../lib/citable-notes";
 import {
   type Citation,
   CITATION_TYPES,
@@ -75,6 +83,7 @@ import {
 type ViewId =
   | "tauler"
   | "fonts"
+  | "extractes"
   | "hipotesis"
   | "evidencies"
   | "matriu"
@@ -86,6 +95,18 @@ type ViewId =
   | "privadesa";
 
 type Project = ProjectRecord;
+
+// Esborrany del formulari d'extracte (funció 107): id null quan és nou.
+type NoteDraft = {
+  id: string | null;
+  sourceId: string;
+  referenceId: string | null;
+  page: number | null;
+  quote: string;
+  paraphrase: string;
+  comment: string;
+  tags: string;
+};
 
 const initialTimestamp = new Date().toISOString();
 
@@ -106,6 +127,7 @@ const defaultProject: Project = {
 const views: Array<{ id: ViewId; label: string; short: string }> = [
   { id: "tauler", label: "Tauler", short: "T" },
   { id: "fonts", label: "Fonts", short: "F" },
+  { id: "extractes", label: "Extractes", short: "Ex" },
   { id: "hipotesis", label: "Hipòtesis", short: "H" },
   { id: "evidencies", label: "Evidències", short: "E" },
   { id: "matriu", label: "Matriu ACH", short: "M" },
@@ -127,7 +149,7 @@ const phases = [
   "Revisió",
 ];
 
-const moduleCopy: Record<Exclude<ViewId, "tauler" | "salut" | "privadesa" | "fonts">, { eyebrow: string; title: string; body: string; status: string }> = {
+const moduleCopy: Record<Exclude<ViewId, "tauler" | "salut" | "privadesa" | "fonts" | "extractes">, { eyebrow: string; title: string; body: string; status: string }> = {
   hipotesis: {
     eyebrow: "Fase 1",
     title: "Hipòtesis competitives",
@@ -228,8 +250,15 @@ export default function Workspace() {
     projectId: string;
     name: string;
     data: ArrayBuffer;
+    initialPage: number;
   } | null>(null);
   const [pdfReferences, setPdfReferences] = useState<PdfReference[]>([]);
+  const [notes, setNotes] = useState<CitableNote[]>([]);
+  const [noteDraft, setNoteDraft] = useState<NoteDraft | null>(null);
+  const [noteFilter, setNoteFilter] = useState<{ query: string; sourceId: string }>({
+    query: "",
+    sourceId: "",
+  });
   const fileInput = useRef<HTMLInputElement>(null);
   const sourceInput = useRef<HTMLInputElement>(null);
   const firewallRef = useRef<PrivacyFirewall | null>(null);
@@ -245,6 +274,14 @@ export default function Workspace() {
     } catch {
       setSources([]);
       setStoredSize(0);
+    }
+  }
+
+  async function loadNotes(projectId: string) {
+    try {
+      setNotes(await citableNoteRepository.getAllForProject(projectId));
+    } catch {
+      setNotes([]);
     }
   }
 
@@ -320,7 +357,9 @@ export default function Workspace() {
     if (!confirmed) return;
     await sourceRepository.delete(id);
     await sourceBlobRepository.delete(id).catch(() => undefined);
+    await citableNoteRepository.deleteForSource(id).catch(() => undefined);
     setSources((current) => current.filter((item) => item.id !== id));
+    setNotes((current) => current.filter((note) => note.sourceId !== id));
     setStoredSize(
       await sourceBlobRepository
         .totalSizeForProject(project.id)
@@ -403,7 +442,7 @@ export default function Workspace() {
     }
   }
 
-  async function openPdf(target: SourceRecord) {
+  async function openPdf(target: SourceRecord, initialPage = 1) {
     try {
       const record = await sourceBlobRepository.get(target.id);
       if (!record) {
@@ -417,6 +456,7 @@ export default function Workspace() {
         projectId: target.projectId,
         name: target.name,
         data: record.data,
+        initialPage,
       });
     } catch {
       setNotice("No s’ha pogut obrir el PDF");
@@ -455,6 +495,117 @@ export default function Workspace() {
   function closePdf() {
     setPdfDoc(null);
     setPdfReferences([]);
+  }
+
+  function emptyNoteDraft(sourceId: string): NoteDraft {
+    return {
+      id: null,
+      sourceId,
+      referenceId: null,
+      page: null,
+      quote: "",
+      paraphrase: "",
+      comment: "",
+      tags: "",
+    };
+  }
+
+  function startNewNote() {
+    setNoteDraft(emptyNoteDraft(noteFilter.sourceId || sources[0]?.id || ""));
+  }
+
+  function editNote(note: CitableNote) {
+    setNoteDraft({
+      id: note.id,
+      sourceId: note.sourceId,
+      referenceId: note.referenceId,
+      page: note.page,
+      quote: note.quote,
+      paraphrase: note.paraphrase,
+      comment: note.comment,
+      tags: formatTags(note.tags),
+    });
+  }
+
+  function updateNoteDraft(patch: Partial<NoteDraft>) {
+    setNoteDraft((current) => (current ? { ...current, ...patch } : current));
+  }
+
+  // Pont amb el visor PDF (funció 104): promou una referència ancorada a extracte,
+  // amb la cita i la pàgina ja emplenades, i porta l'usuari a la vista «Extractes».
+  function promoteReferenceToNote(reference: PdfReference) {
+    const input = noteInputFromReference(reference);
+    setNoteDraft({
+      id: null,
+      sourceId: input.sourceId,
+      referenceId: input.referenceId ?? null,
+      page: input.page ?? null,
+      quote: input.quote ?? "",
+      paraphrase: "",
+      comment: "",
+      tags: "",
+    });
+    closePdf();
+    setView("extractes");
+  }
+
+  async function saveNote() {
+    if (!noteDraft) return;
+    const draft = noteDraft;
+    try {
+      const existing = draft.id
+        ? notes.find((note) => note.id === draft.id)
+        : null;
+      const now = new Date().toISOString();
+      const note = createCitableNote(
+        {
+          projectId: project.id,
+          sourceId: draft.sourceId,
+          referenceId: draft.referenceId,
+          page: draft.page,
+          quote: draft.quote,
+          paraphrase: draft.paraphrase,
+          comment: draft.comment,
+          tags: draft.tags,
+        },
+        { id: draft.id ?? undefined, now: existing?.createdAt ?? now },
+      );
+      const saved = { ...note, updatedAt: now };
+      await citableNoteRepository.save(saved);
+      setNotes((current) =>
+        [saved, ...current.filter((item) => item.id !== saved.id)].sort(
+          (left, right) => right.updatedAt.localeCompare(left.updatedAt),
+        ),
+      );
+      setNoteDraft(null);
+    } catch (error) {
+      setNotice(
+        error instanceof TypeError
+          ? error.message
+          : "No s’ha pogut desar l’extracte",
+      );
+    }
+  }
+
+  async function deleteNote(id: string) {
+    if (!window.confirm("Vols esborrar aquest extracte d’aquest dispositiu?")) {
+      return;
+    }
+    await citableNoteRepository.delete(id).catch(() => undefined);
+    setNotes((current) => current.filter((note) => note.id !== id));
+  }
+
+  async function openNoteSource(note: CitableNote) {
+    const source = sources.find((item) => item.id === note.sourceId);
+    if (!source) {
+      setNotice("La font d’aquest extracte ja no és al dispositiu");
+      return;
+    }
+    if (source.kind !== "pdf") {
+      setNotice("Aquesta font no té visor de pàgina; obre-la des de «Fonts»");
+      return;
+    }
+    await openPdf(source, note.page ?? 1);
   }
 
   async function refreshStorageHealth() {
@@ -523,6 +674,7 @@ export default function Workspace() {
         setSources([]);
         setStoredSize(0);
       }
+      await loadNotes(activeProject.id);
     }
 
     prepareWorkspace()
@@ -595,6 +747,7 @@ export default function Workspace() {
     setSaved(true);
     await metadataRepository.set("activeProjectId", nextProject.id);
     await loadSources(nextProject.id);
+    await loadNotes(nextProject.id);
   }
 
   async function createProject(title: string) {
@@ -910,6 +1063,21 @@ export default function Workspace() {
             onOpenPdf={openPdf}
             onDismissErrors={() => setSourceErrors([])}
           />
+        ) : view === "extractes" ? (
+          <ExtractsLibrary
+            notes={notes}
+            sources={sources}
+            filter={noteFilter}
+            draft={noteDraft}
+            onFilter={setNoteFilter}
+            onNew={startNewNote}
+            onEdit={editNote}
+            onDelete={deleteNote}
+            onOpenSource={openNoteSource}
+            onDraftChange={updateNoteDraft}
+            onSave={saveNote}
+            onCancel={() => setNoteDraft(null)}
+          />
         ) : (
           <ModuleView
             view={view}
@@ -1100,9 +1268,11 @@ export default function Workspace() {
           <PdfViewer
             data={pdfDoc.data}
             name={pdfDoc.name}
+            initialPage={pdfDoc.initialPage}
             references={pdfReferences}
             onCreateReference={createReference}
             onDeleteReference={deleteReference}
+            onPromoteReference={promoteReferenceToNote}
             onClose={closePdf}
           />
         </Suspense>
@@ -1196,7 +1366,7 @@ function ModuleView({
   onExport,
   onImport,
 }: {
-  view: Exclude<ViewId, "tauler" | "salut" | "privadesa" | "fonts">;
+  view: Exclude<ViewId, "tauler" | "salut" | "privadesa" | "fonts" | "extractes">;
   project: Project;
   onExport: () => void;
   onImport: () => void;
@@ -1780,6 +1950,271 @@ function SourcesLibrary({
           </ul>
         )}
       </section>
+    </div>
+  );
+}
+
+function ExtractsLibrary({
+  notes,
+  sources,
+  filter,
+  draft,
+  onFilter,
+  onNew,
+  onEdit,
+  onDelete,
+  onOpenSource,
+  onDraftChange,
+  onSave,
+  onCancel,
+}: {
+  notes: CitableNote[];
+  sources: SourceRecord[];
+  filter: { query: string; sourceId: string };
+  draft: NoteDraft | null;
+  onFilter: (filter: { query: string; sourceId: string }) => void;
+  onNew: () => void;
+  onEdit: (note: CitableNote) => void;
+  onDelete: (id: string) => void;
+  onOpenSource: (note: CitableNote) => void;
+  onDraftChange: (patch: Partial<NoteDraft>) => void;
+  onSave: () => void;
+  onCancel: () => void;
+}) {
+  const sourceById = new Map(sources.map((source) => [source.id, source]));
+  const visible = filterNotes(notes, {
+    query: filter.query,
+    sourceId: filter.sourceId || undefined,
+  });
+  const canSave = Boolean(
+    draft &&
+      draft.sourceId &&
+      (draft.quote.trim() || draft.paraphrase.trim() || draft.comment.trim()),
+  );
+  const draftSource = draft ? sourceById.get(draft.sourceId) : undefined;
+
+  return (
+    <div className="page-content module-page">
+      <section className="module-hero">
+        <div>
+          <span className="eyebrow">Taller de fonts</span>
+          <h1>Extractes citables</h1>
+          <p>
+            Separa sempre tres registres: la <strong>cita</strong> textual de la
+            font, la teva <strong>paràfrasi</strong> i el teu <strong>comentari</strong>.
+            Cada extracte queda ancorat a la font i la pàgina perquè tota
+            afirmació del llibre es pugui resseguir fins a l’origen.
+          </p>
+        </div>
+        <span className="status-chip live">
+          {notes.length} {notes.length === 1 ? "extracte" : "extractes"}
+        </span>
+      </section>
+
+      {sources.length === 0 ? (
+        <section className="stat-panel">
+          <p className="storage-note">
+            Encara no hi ha fonts en aquest projecte. Importa un document a
+            «Fonts» abans de crear extractes.
+          </p>
+        </section>
+      ) : (
+        <section className="stat-panel extract-toolbar">
+          <input
+            className="extract-search"
+            value={filter.query}
+            placeholder="Cerca dins els extractes…"
+            onChange={(event) => onFilter({ ...filter, query: event.target.value })}
+          />
+          <select
+            className="extract-select"
+            value={filter.sourceId}
+            onChange={(event) => onFilter({ ...filter, sourceId: event.target.value })}
+          >
+            <option value="">Totes les fonts</option>
+            {sources.map((source) => (
+              <option key={source.id} value={source.id}>
+                {source.name}
+              </option>
+            ))}
+          </select>
+          <button className="primary-button" onClick={onNew}>
+            + Nou extracte
+          </button>
+        </section>
+      )}
+
+      {draft && (
+        <section className="stat-panel extract-editor">
+          <div className="section-heading">
+            <div>
+              <span className="eyebrow">
+                {draft.id ? "Edita l’extracte" : "Nou extracte"}
+              </span>
+              <h2>{draftSource?.name ?? "Tria una font"}</h2>
+            </div>
+            {draft.referenceId && (
+              <span className="status-chip live">Ancorat al PDF</span>
+            )}
+          </div>
+
+          <div className="extract-fields">
+            <label className="extract-field">
+              <span>Font</span>
+              <select
+                value={draft.sourceId}
+                onChange={(event) => onDraftChange({ sourceId: event.target.value })}
+              >
+                <option value="">— Tria una font —</option>
+                {sources.map((source) => (
+                  <option key={source.id} value={source.id}>
+                    {source.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="extract-field extract-field-page">
+              <span>Pàgina</span>
+              <input
+                type="number"
+                min={1}
+                value={draft.page ?? ""}
+                onChange={(event) =>
+                  onDraftChange({
+                    page: event.target.value
+                      ? Number.parseInt(event.target.value, 10)
+                      : null,
+                  })
+                }
+              />
+            </label>
+          </div>
+
+          <label className="extract-field">
+            <span>Cita textual</span>
+            <textarea
+              rows={3}
+              value={draft.quote}
+              placeholder="Les paraules exactes de la font, entre cometes."
+              onChange={(event) => onDraftChange({ quote: event.target.value })}
+            />
+          </label>
+          <label className="extract-field">
+            <span>Paràfrasi</span>
+            <textarea
+              rows={3}
+              value={draft.paraphrase}
+              placeholder="El mateix contingut amb les teves paraules, sense valorar."
+              onChange={(event) => onDraftChange({ paraphrase: event.target.value })}
+            />
+          </label>
+          <label className="extract-field">
+            <span>Comentari propi</span>
+            <textarea
+              rows={3}
+              value={draft.comment}
+              placeholder="La teva anàlisi, el pes com a evidència o els dubtes."
+              onChange={(event) => onDraftChange({ comment: event.target.value })}
+            />
+          </label>
+          <label className="extract-field">
+            <span>Etiquetes</span>
+            <input
+              value={draft.tags}
+              placeholder="separades per comes"
+              onChange={(event) => onDraftChange({ tags: event.target.value })}
+            />
+          </label>
+
+          <div className="modal-actions">
+            <button className="quiet-button" onClick={onCancel}>
+              Cancel·la
+            </button>
+            <button className="primary-button" disabled={!canSave} onClick={onSave}>
+              Desa l’extracte
+            </button>
+          </div>
+        </section>
+      )}
+
+      {sources.length > 0 && (
+        <section className="stat-panel">
+          <div className="section-heading">
+            <div>
+              <span className="eyebrow">Extractes d’aquest projecte</span>
+              <h2>
+                {visible.length === 0
+                  ? "Cap extracte"
+                  : `${visible.length} ${visible.length === 1 ? "extracte" : "extractes"}`}
+              </h2>
+            </div>
+          </div>
+          {visible.length === 0 ? (
+            <p className="storage-note">
+              Encara no hi ha extractes{filter.query || filter.sourceId ? " amb aquest filtre" : ""}.
+              Crea’n un de nou o promou una referència des del visor PDF.
+            </p>
+          ) : (
+            <ul className="extract-list">
+              {visible.map((note) => {
+                const source = sourceById.get(note.sourceId);
+                const citation = formatNoteCitation(note, source?.citation?.citekey);
+                return (
+                  <li key={note.id} className="extract-item">
+                    <div className="extract-head">
+                      <span className="extract-cite">{citation}</span>
+                      <span className="extract-source">
+                        {source?.name ?? "Font eliminada"}
+                      </span>
+                    </div>
+                    {note.quote && (
+                      <div className="extract-register extract-quote">
+                        <small>Cita</small>
+                        <blockquote>{note.quote}</blockquote>
+                      </div>
+                    )}
+                    {note.paraphrase && (
+                      <div className="extract-register">
+                        <small>Paràfrasi</small>
+                        <p>{note.paraphrase}</p>
+                      </div>
+                    )}
+                    {note.comment && (
+                      <div className="extract-register">
+                        <small>Comentari</small>
+                        <p>{note.comment}</p>
+                      </div>
+                    )}
+                    {note.tags.length > 0 && (
+                      <div className="extract-tags">
+                        {note.tags.map((tag) => (
+                          <span key={tag}>{tag}</span>
+                        ))}
+                      </div>
+                    )}
+                    <div className="extract-actions">
+                      {source?.kind === "pdf" && (
+                        <button className="quiet-button" onClick={() => onOpenSource(note)}>
+                          Obre la font
+                        </button>
+                      )}
+                      <button className="quiet-button" onClick={() => onEdit(note)}>
+                        Edita
+                      </button>
+                      <button
+                        className="quiet-button danger-text"
+                        onClick={() => onDelete(note.id)}
+                      >
+                        Esborra
+                      </button>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </section>
+      )}
     </div>
   );
 }

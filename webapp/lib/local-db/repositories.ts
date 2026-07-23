@@ -7,6 +7,7 @@ import {
 import { type SourceRecord } from "../source-library.ts";
 import { type SourceBlobRecord } from "../source-blobs.ts";
 import { type PdfReference } from "../pdf-references.ts";
+import { type CitableNote, normalizeCitableNote } from "../citable-notes.ts";
 
 export class IndexedDbRepository<T extends { id: string }> {
   private readonly storeName: "projects";
@@ -185,8 +186,56 @@ class PdfReferenceRepository {
   }
 }
 
+class CitableNoteRepository {
+  save(record: CitableNote): Promise<CitableNote> {
+    return withTransaction("notes", "readwrite", async (store) => {
+      await requestResult(store.put(record));
+      return record;
+    });
+  }
+
+  getAllForProject(projectId: string): Promise<CitableNote[]> {
+    return withTransaction("notes", "readonly", async (store) => {
+      const records = (await requestResult(
+        store.index("projectId").getAll(projectId),
+      )) as Record<string, unknown>[];
+      return records
+        .map((record) => normalizeCitableNote(record))
+        .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt));
+    });
+  }
+
+  getAllForSource(sourceId: string): Promise<CitableNote[]> {
+    return withTransaction("notes", "readonly", async (store) => {
+      const records = (await requestResult(
+        store.index("sourceId").getAll(sourceId),
+      )) as Record<string, unknown>[];
+      return records
+        .map((record) => normalizeCitableNote(record))
+        .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt));
+    });
+  }
+
+  delete(id: string): Promise<void> {
+    return withTransaction("notes", "readwrite", async (store) => {
+      await requestResult(store.delete(id));
+    });
+  }
+
+  // En esborrar una font s'esborren els seus extractes per no deixar cites òrfenes.
+  deleteForSource(sourceId: string): Promise<void> {
+    return withTransaction("notes", "readwrite", async (store) => {
+      const keys = (await requestResult(
+        store.index("sourceId").getAllKeys(sourceId),
+      )) as IDBValidKey[];
+      await Promise.all(keys.map((key) => requestResult(store.delete(key))));
+    });
+  }
+}
+
 export const projectRepository = new ProjectRepository();
 export const metadataRepository = new MetadataRepository();
 export const sourceRepository = new SourceRepository();
 export const sourceBlobRepository = new SourceBlobRepository();
 export const pdfReferenceRepository = new PdfReferenceRepository();
+export const citableNoteRepository = new CitableNoteRepository();

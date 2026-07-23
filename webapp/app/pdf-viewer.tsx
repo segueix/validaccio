@@ -27,16 +27,20 @@ function highlight(text: string, term: string) {
 export default function PdfViewer({
   data,
   name,
+  initialPage = 1,
   references,
   onCreateReference,
   onDeleteReference,
+  onPromoteReference,
   onClose,
 }: {
   data: ArrayBuffer;
   name: string;
+  initialPage?: number;
   references: PdfReference[];
   onCreateReference: (page: number, text: string) => void;
   onDeleteReference: (id: string) => void;
+  onPromoteReference: (reference: PdfReference) => void;
   onClose: () => void;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -85,7 +89,7 @@ export default function PdfViewer({
         docRef.current = doc;
         pageTextCache.current.clear();
         setNumPages(doc.numPages);
-        setPage(1);
+        setPage(Math.min(Math.max(1, initialPage), doc.numPages));
         setState("ready");
       } catch {
         if (!cancelled) setState("error");
@@ -97,7 +101,7 @@ export default function PdfViewer({
       void docRef.current?.loadingTask.destroy();
       docRef.current = null;
     };
-  }, [data]);
+  }, [data, initialPage]);
 
   useEffect(() => {
     let cancelled = false;
@@ -220,7 +224,8 @@ export default function PdfViewer({
                       <button onClick={() => { setPage(reference.page); setHighlightTerm(reference.text.slice(0, 60)); }}>
                         <span>p. {reference.page}</span> {reference.text || "(sense fragment)"}
                       </button>
-                      <button className="pdf-ref-del danger-text" onClick={() => onDeleteReference(reference.id)}>×</button>
+                      <button className="pdf-ref-promote" title="Crea un extracte citable a partir d’aquesta referència" onClick={() => onPromoteReference(reference)}>→ Extracte</button>
+                      <button className="pdf-ref-del danger-text" title="Esborra la referència" onClick={() => onDeleteReference(reference.id)}>×</button>
                     </li>
                   ))}
                 </ul>

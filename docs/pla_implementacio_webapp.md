@@ -58,9 +58,9 @@ Prioritats: **P0** imprescindible per al primer ús real; **P1** nucli metodolò
 | Situació | Funcions |
 |---|---|
 | **FET** | 001, 002, 003, 004, 006, 007, 009, 010, 101, 102, 103, 105 i 502 |
-| **EN CURS** | 104 |
+| **EN CURS** | 104 i 107 |
 | **PARCIAL** | 005, 008, 501, 503 i 505 |
-| **SEGÜENT BLOC FUNCIONAL** | 104 → 107 → 110: visor PDF, notes citables i cerca |
+| **SEGÜENT BLOC FUNCIONAL** | 108 → 110: qualitat de fonts i cerca de corpus, abans del nucli ACH (201…) |
 
 Aquesta foto s’ha d’actualitzar dins de la mateixa PR que canviï qualsevol estat.
 
@@ -91,7 +91,7 @@ Aquesta foto s’ha d’actualitzar dins de la mateixa PR que canviï qualsevol 
 | **104** | Visor PDF amb ancoratge | P0 | 102, 103 | **EN CURS** | Llegir PDF, anar a pàgina, cercar, seleccionar fragment i crear una referència que reobre el context exacte. |
 | **105** | Extracció de text DOCX/TXT/MD | P0 | 101, 102 | **FET** | Extreure text i estructura conservant origen, paràgrafs i localitzacions reproduïbles. |
 | **106** | OCR per documents escanejats | P2 | 102, 104 | **PENDENT** | OCR opcional per pàgina, llengua seleccionable, confiança visible i text sempre vinculat a la imatge original. |
-| **107** | Notes i extractes citables | P0 | 103, 104, 105 | **PENDENT** | Crear extractes amb cita, paràfrasi separada, comentari propi, pàgina/context i enllaç a la font. |
+| **107** | Notes i extractes citables | P0 | 103, 104, 105 | **EN CURS** | Crear extractes amb cita, paràfrasi separada, comentari propi, pàgina/context i enllaç a la font. |
 | **108** | Qualitat i límits de la font | P1 | 103 | **PENDENT** | Registrar primària/secundària, proximitat, autoria, biaixos, limitacions i justificació sense convertir-ho en veritat automàtica. |
 | **109** | Duplicats i procedència | P1 | 102, 103 | **PENDENT** | Hash dels fitxers, detecció de duplicats, versions/edicions i cadena de procedència. |
 | **110** | Cerca local de corpus | P1 | 105, 107 | **PENDENT** | Cerca de text complet, filtres per font/etiqueta/data i resultats amb context, sense servidor extern. |
@@ -179,9 +179,10 @@ L'ordre no obliga, però minimitza reimplementacions:
 ### Següent bloc recomanat
 
 La base local, la privacitat, la protecció de `main` i el corpus documental
-(101 → 102 → 103 → 105) ja estan completats. El pas funcional en curs és
-**104 → 107**: visor PDF amb referències ancorades i notes citables, per
-tancar el bloc de fonts abans d’entrar al nucli metodològic ACH (201…).
+(101 → 102 → 103 → 105) ja estan completats. El bloc de fonts es tanca amb el
+**visor PDF (104)** i els **extractes citables (107)**, tots dos verificats
+end-to-end. El pas natural següent és **108 → 110** (qualitat i límits de la
+font, cerca de corpus) i, tot seguit, el nucli metodològic ACH (201…).
 
 ## 6. Registre d'implementacions
 
@@ -205,7 +206,8 @@ S'afegeix una fila després de cada funció acabada. No s'esborren entrades.
 | 2026-07-22 | 102 | [PR #22](https://github.com/segueix/validaccio/pull/22) | FET | Contingut de cada font desat com a ArrayBuffer a IndexedDB (esquema v5, magatzem `blobs` indexat per projecte), mai incrustat al codi; recuperació (baixada), mida total per projecte i eliminació controlada amb confirmació i cascada. 6 proves noves; fusionada a main. |
 | 2026-07-22 | 103 | [PR #22](https://github.com/segueix/validaccio/pull/22) | FET | Fitxa bibliogràfica per font (autor, títol, data, edició, arxiu, URL, data de consulta, tipus, etiquetes) amb citekey estable i únic generat i desambiguat (`lib/bibliography.ts`); editor a la vista «Fonts». Fusionada a main. |
 | 2026-07-22 | 105 | [PR #23](https://github.com/segueix/validaccio/pull/23) | FET | Extracció de text de TXT/Markdown (UTF-8) i DOCX (ZIP inflat amb `DecompressionStream` natiu, sense dependències) a `lib/text-extraction.ts`; paràgrafs amb índex reproduïble i previsualització a la vista «Fonts». 8 proves noves (73 totals); lint i build verificats. Fusionada a main. |
-| 2026-07-23 | 104 | `feat/104-visor-pdf` | EN CURS | Visor PDF amb pdf.js (build **legacy**, primera dependència de runtime; worker empaquetat localment, sense CDN, compatible amb la CSP i el tallafoc). Navegació per pàgines, cerca a tot el document amb salt a la coincidència, panell de text seleccionable i referències ancorades (font+pàgina+fragment) desades a IndexedDB (esquema v6, magatzem `references`) que reobren el context exacte. Lògica pura provada (`lib/pdf-references.ts`) i integració v5→v6 amb `fake-indexeddb`; 6 proves noves (79 totals). Render, worker i extracció de text verificats en Chromium 141 (el build modern de pdf.js peta per `Map.prototype.getOrInsertComputed`; el legacy inclou el polyfill). Lint i build verificats. |
+| 2026-07-23 | 104 | `feat/104-visor-pdf` | EN CURS | Visor PDF amb pdf.js (build **legacy**, primera dependència de runtime; worker empaquetat localment, sense CDN, compatible amb la CSP i el tallafoc). Navegació per pàgines, cerca a tot el document amb salt a la coincidència, panell de text seleccionable i referències ancorades (font+pàgina+fragment) desades a IndexedDB (esquema v6, magatzem `references`) que reobren el context exacte. Lògica pura provada (`lib/pdf-references.ts`) i integració v5→v6 amb `fake-indexeddb`; 6 proves noves (79 totals). Render, worker i extracció de text verificats en Chromium 141 (el build modern de pdf.js peta per `Map.prototype.getOrInsertComputed`; el legacy inclou el polyfill). El teardown del visor es fa amb `loadingTask.destroy()` (PDFDocumentProxy no té `destroy()`), corregit després de la verificació E2E. Lint i build verificats. |
+| 2026-07-23 | 107 | `feat/107-notes-citables` | EN CURS | Extractes citables amb tres registres separats —cita, paràfrasi i comentari propi— ancorats a font, pàgina i (si ve del visor) referència del PDF. Nova vista «Extractes» amb cerca, filtre per font, editor i pont des del visor («→ Extracte» promou una referència a extracte). Lògica pura provada (`lib/citable-notes.ts`: model, validació, citació, filtre, pont) i esquema v7 amb magatzem `notes` (índexs projecte/font) i esborrat en cascada en eliminar la font. 9 proves noves (88 totals), incloent integració v6→v7 amb `fake-indexeddb`. Flux complet (importa PDF → visor → referència → extracte → recàrrega) verificat end-to-end en Chromium; lint i build verificats. |
 
 ## 7. Definició global de «fet»
 
