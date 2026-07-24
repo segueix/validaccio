@@ -25,6 +25,10 @@ import {
   type BookNode,
   normalizeBookNode,
 } from "../book-structure.ts";
+import {
+  type ChapterDraft,
+  normalizeChapterDraft,
+} from "../chapter-editor.ts";
 
 export class IndexedDbRepository<T extends { id: string }> {
   private readonly storeName: "projects";
@@ -504,6 +508,44 @@ class BookNodeRepository {
   }
 }
 
+class ChapterDraftRepository {
+  save(
+    record: ChapterDraft,
+    savedAt = new Date().toISOString(),
+  ): Promise<ChapterDraft> {
+    const normalized = normalizeChapterDraft(record);
+    return withTransaction("chapterDrafts", "readwrite", async (store) => {
+      const current = (await requestResult(
+        store.get(normalized.id),
+      )) as ChapterDraft | undefined;
+      if (current && current.revision > normalized.revision) {
+        return normalizeChapterDraft(current);
+      }
+      const saved = { ...normalized, savedAt };
+      await requestResult(store.put(saved));
+      return saved;
+    });
+  }
+
+  get(chapterId: string): Promise<ChapterDraft | null> {
+    return withTransaction("chapterDrafts", "readonly", async (store) => {
+      const record = (await requestResult(
+        store.get(chapterId),
+      )) as ChapterDraft | undefined;
+      return record ? normalizeChapterDraft(record) : null;
+    });
+  }
+
+  getAllForProject(projectId: string): Promise<ChapterDraft[]> {
+    return withTransaction("chapterDrafts", "readonly", async (store) => {
+      const records = (await requestResult(
+        store.index("projectId").getAll(projectId),
+      )) as ChapterDraft[];
+      return records.map(normalizeChapterDraft);
+    });
+  }
+}
+
 export const projectRepository = new ProjectRepository();
 export const metadataRepository = new MetadataRepository();
 export const sourceRepository = new SourceRepository();
@@ -517,3 +559,4 @@ export const aidEidLinkRepository = new AidEidLinkRepository();
 export const matrixCellRepository = new MatrixCellRepository();
 export const manuscriptRepository = new ManuscriptRepository();
 export const bookNodeRepository = new BookNodeRepository();
+export const chapterDraftRepository = new ChapterDraftRepository();

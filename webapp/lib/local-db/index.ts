@@ -9,6 +9,7 @@ export {
   affirmationRepository,
   aidEidLinkRepository,
   bookNodeRepository,
+  chapterDraftRepository,
   citableNoteRepository,
   evidenceRepository,
   hypothesisRepository,

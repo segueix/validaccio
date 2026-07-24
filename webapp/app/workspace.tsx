@@ -17,6 +17,7 @@ import {
   affirmationRepository,
   aidEidLinkRepository,
   bookNodeRepository,
+  chapterDraftRepository,
   citableNoteRepository,
   ensureProjectsMigrated,
   matrixCellRepository,
@@ -60,6 +61,11 @@ import {
   moveBookNode,
   siblingsOf,
 } from "../lib/book-structure";
+import {
+  type ChapterDraft,
+  createChapterDraft,
+  updateChapterDraft,
+} from "../lib/chapter-editor";
 import { createPdfReference, type PdfReference } from "../lib/pdf-references";
 import {
   type CitableNote,
@@ -116,6 +122,7 @@ import {
   nextAffirmationCode,
   requiresDiagnosticEvidence,
 } from "../lib/affirmations";
+
 import {
   type AidEidLink,
   createLink,
@@ -160,6 +167,14 @@ import {
   type PrivacyFirewall,
   PRIVACY_OFFLINE_METADATA_KEY,
 } from "../lib/privacy-firewall";
+
+type ChapterSaveState =
+  | "idle"
+  | "loading"
+  | "dirty"
+  | "saving"
+  | "saved"
+  | "error";
 
 type ViewId =
   | "tauler"
@@ -373,10 +388,17 @@ export default function Workspace() {
   const [bookNodes, setBookNodes] = useState<BookNode[]>([]);
   const [activeManuscriptId, setActiveManuscriptId] = useState("");
   const [bookNodeDraft, setBookNodeDraft] = useState<BookNode | null>(null);
+  const [activeChapterId, setActiveChapterId] = useState("");
+  const [chapterDraft, setChapterDraft] = useState<ChapterDraft | null>(null);
+  const [chapterSaveState, setChapterSaveState] =
+    useState<ChapterSaveState>("idle");
+  const [chapterRecoveryNotice, setChapterRecoveryNotice] = useState("");
   const fileInput = useRef<HTMLInputElement>(null);
   const sourceInput = useRef<HTMLInputElement>(null);
   const manuscriptInput = useRef<HTMLInputElement>(null);
   const firewallRef = useRef<PrivacyFirewall | null>(null);
+  const chapterDraftRef = useRef<ChapterDraft | null>(null);
+  const chapterSaveTimerRef = useRef<number | null>(null);
 
   async function loadSources(projectId: string) {
     try {
@@ -785,6 +807,11 @@ export default function Workspace() {
       setBookNodes([]);
     }
     setBookNodeDraft(null);
+    setActiveChapterId("");
+    setChapterDraft(null);
+    chapterDraftRef.current = null;
+    setChapterSaveState("idle");
+    setChapterRecoveryNotice("");
   }
 
   async function importManuscript(event: ChangeEvent<HTMLInputElement>) {
@@ -859,6 +886,11 @@ export default function Workspace() {
       return;
     }
     try {
+      if (chapterSaveTimerRef.current !== null) {
+        window.clearTimeout(chapterSaveTimerRef.current);
+        chapterSaveTimerRef.current = null;
+      }
+      await persistChapterDraft();
       const detected = detectBookStructure(manuscript);
       const saved = await bookNodeRepository.replaceForManuscript(
         manuscriptId,
@@ -869,6 +901,11 @@ export default function Workspace() {
         ...saved,
       ]);
       setBookNodeDraft(saved[0] ?? null);
+      setActiveChapterId("");
+      setChapterDraft(null);
+      chapterDraftRef.current = null;
+      setChapterSaveState("idle");
+      setChapterRecoveryNotice("");
       const chapters = saved.filter((node) => node.kind === "chapter").length;
       setProject((current) => ({
         ...current,
@@ -927,6 +964,104 @@ export default function Workspace() {
     setBookNodeDraft((current) =>
       current ? (next.find((node) => node.id === current.id) ?? current) : null,
     );
+  }
+
+  async function persistChapterDraft(target = chapterDraftRef.current) {
+    if (!target) return;
+    setChapterSaveState("saving");
+    try {
+      const savedDraft = await chapterDraftRepository.save(target);
+      const current = chapterDraftRef.current;
+      if (
+        current?.id === savedDraft.id &&
+        current.revision === savedDraft.revision
+      ) {
+        chapterDraftRef.current = savedDraft;
+        setChapterDraft(savedDraft);
+        setChapterSaveState("saved");
+      } else if (current?.id === savedDraft.id) {
+        setChapterSaveState("dirty");
+      }
+    } catch {
+      setChapterSaveState("error");
+    }
+  }
+
+  async function openChapterEditor(chapter: BookNode) {
+    if (chapter.kind !== "chapter") return;
+    if (chapterSaveTimerRef.current !== null) {
+      window.clearTimeout(chapterSaveTimerRef.current);
+      chapterSaveTimerRef.current = null;
+    }
+    if (chapterDraftRef.current) {
+      await persistChapterDraft(chapterDraftRef.current);
+    }
+    setActiveChapterId(chapter.id);
+    setChapterSaveState("loading");
+    setChapterRecoveryNotice("");
+    try {
+      const recovered = await chapterDraftRepository.get(chapter.id);
+      if (recovered) {
+        chapterDraftRef.current = recovered;
+        setChapterDraft(recovered);
+        setChapterSaveState("saved");
+        setChapterRecoveryNotice(
+          "S’ha recuperat l’últim autodesat coherent d’aquest capítol.",
+        );
+        return;
+      }
+      const manuscript = manuscripts.find(
+        (item) => item.id === chapter.manuscriptId,
+      );
+      if (!manuscript) throw new Error("No s’ha trobat el manuscrit.");
+      const initial = createChapterDraft(
+        manuscript,
+        chapter,
+        bookNodes.filter(
+          (node) => node.manuscriptId === chapter.manuscriptId,
+        ),
+      );
+      const savedDraft = await chapterDraftRepository.save(initial);
+      chapterDraftRef.current = savedDraft;
+      setChapterDraft(savedDraft);
+      setChapterSaveState("saved");
+    } catch {
+      chapterDraftRef.current = null;
+      setChapterDraft(null);
+      setChapterSaveState("error");
+    }
+  }
+
+  function editChapterContent(content: string) {
+    const current = chapterDraftRef.current;
+    if (!current) return;
+    const next = updateChapterDraft(current, content);
+    chapterDraftRef.current = next;
+    setChapterDraft(next);
+    setChapterSaveState("dirty");
+    setChapterRecoveryNotice("");
+    if (chapterSaveTimerRef.current !== null) {
+      window.clearTimeout(chapterSaveTimerRef.current);
+    }
+    chapterSaveTimerRef.current = window.setTimeout(() => {
+      chapterSaveTimerRef.current = null;
+      void persistChapterDraft(next);
+    }, 500);
+  }
+
+  async function selectManuscript(id: string) {
+    if (chapterSaveTimerRef.current !== null) {
+      window.clearTimeout(chapterSaveTimerRef.current);
+      chapterSaveTimerRef.current = null;
+    }
+    await persistChapterDraft();
+    setActiveManuscriptId(id);
+    setBookNodeDraft(null);
+    setActiveChapterId("");
+    setChapterDraft(null);
+    chapterDraftRef.current = null;
+    setChapterSaveState("idle");
+    setChapterRecoveryNotice("");
   }
 
   async function seedHypotheses() {
@@ -1358,6 +1493,29 @@ export default function Workspace() {
   }, [project, ready]);
 
   useEffect(() => {
+    const flush = () => {
+      if (chapterSaveTimerRef.current !== null) {
+        window.clearTimeout(chapterSaveTimerRef.current);
+        chapterSaveTimerRef.current = null;
+      }
+      const current = chapterDraftRef.current;
+      if (current) void chapterDraftRepository.save(current);
+    };
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "hidden") flush();
+    };
+    window.addEventListener("pagehide", flush);
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => {
+      window.removeEventListener("pagehide", flush);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+      if (chapterSaveTimerRef.current !== null) {
+        window.clearTimeout(chapterSaveTimerRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
     if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(() => undefined);
   }, []);
 
@@ -1398,6 +1556,11 @@ export default function Workspace() {
   }, []);
 
   async function openProject(nextProject: Project) {
+    if (chapterSaveTimerRef.current !== null) {
+      window.clearTimeout(chapterSaveTimerRef.current);
+      chapterSaveTimerRef.current = null;
+    }
+    await persistChapterDraft();
     setProject(nextProject);
     setDraftTitle(nextProject.title);
     setView("tauler");
@@ -1811,19 +1974,23 @@ export default function Workspace() {
             bookNodes={bookNodes}
             activeManuscriptId={activeManuscriptId}
             bookNodeDraft={bookNodeDraft}
+            activeChapterId={activeChapterId}
+            chapterDraft={chapterDraft}
+            chapterSaveState={chapterSaveState}
+            chapterRecoveryNotice={chapterRecoveryNotice}
             onExport={exportProject}
             onImport={() => fileInput.current?.click()}
             onImportManuscript={() => manuscriptInput.current?.click()}
             onDownloadOriginal={downloadOriginal}
-            onSelectManuscript={(id) => {
-              setActiveManuscriptId(id);
-              setBookNodeDraft(null);
-            }}
+            onSelectManuscript={selectManuscript}
             onDetectStructure={detectStructure}
             onEditBookNode={editBookNode}
             onBookNodeDraftChange={updateBookNodeDraft}
             onSaveBookNode={saveBookNode}
             onReorderBookNode={reorderBookNode}
+            onOpenChapter={openChapterEditor}
+            onChapterContentChange={editChapterContent}
+            onSaveChapter={() => persistChapterDraft()}
           />
         )}
       </section>
@@ -2208,6 +2375,10 @@ function ModuleView({
   bookNodes,
   activeManuscriptId,
   bookNodeDraft,
+  activeChapterId,
+  chapterDraft,
+  chapterSaveState,
+  chapterRecoveryNotice,
   onExport,
   onImport,
   onImportManuscript,
@@ -2218,6 +2389,9 @@ function ModuleView({
   onBookNodeDraftChange,
   onSaveBookNode,
   onReorderBookNode,
+  onOpenChapter,
+  onChapterContentChange,
+  onSaveChapter,
 }: {
   view: Exclude<ViewId, "tauler" | "salut" | "privadesa" | "fonts" | "extractes" | "hipotesis" | "evidencies" | "afirmacions" | "matriu">;
   manuscripts: ManuscriptRecord[];
@@ -2226,6 +2400,10 @@ function ModuleView({
   bookNodes: BookNode[];
   activeManuscriptId: string;
   bookNodeDraft: BookNode | null;
+  activeChapterId: string;
+  chapterDraft: ChapterDraft | null;
+  chapterSaveState: ChapterSaveState;
+  chapterRecoveryNotice: string;
   onExport: () => void;
   onImport: () => void;
   onImportManuscript: () => void;
@@ -2236,6 +2414,9 @@ function ModuleView({
   onBookNodeDraftChange: (patch: Partial<BookNode>) => void;
   onSaveBookNode: () => void;
   onReorderBookNode: (id: string, direction: -1 | 1) => void;
+  onOpenChapter: (chapter: BookNode) => void;
+  onChapterContentChange: (content: string) => void;
+  onSaveChapter: () => void;
 }) {
   const copy = moduleCopy[view];
   return (
@@ -2270,6 +2451,10 @@ function ModuleView({
           bookNodes={bookNodes}
           activeManuscriptId={activeManuscriptId}
           draft={bookNodeDraft}
+          activeChapterId={activeChapterId}
+          chapterDraft={chapterDraft}
+          chapterSaveState={chapterSaveState}
+          chapterRecoveryNotice={chapterRecoveryNotice}
           onImport={onImportManuscript}
           onDownloadOriginal={onDownloadOriginal}
           onSelectManuscript={onSelectManuscript}
@@ -2278,6 +2463,9 @@ function ModuleView({
           onDraftChange={onBookNodeDraftChange}
           onSaveNode={onSaveBookNode}
           onReorder={onReorderBookNode}
+          onOpenChapter={onOpenChapter}
+          onChapterContentChange={onChapterContentChange}
+          onSaveChapter={onSaveChapter}
         />
       ) : (
         <section className="empty-state">
@@ -2300,6 +2488,10 @@ function ManuscriptImporter({
   bookNodes,
   activeManuscriptId,
   draft,
+  activeChapterId,
+  chapterDraft,
+  chapterSaveState,
+  chapterRecoveryNotice,
   onImport,
   onDownloadOriginal,
   onSelectManuscript,
@@ -2308,6 +2500,9 @@ function ManuscriptImporter({
   onDraftChange,
   onSaveNode,
   onReorder,
+  onOpenChapter,
+  onChapterContentChange,
+  onSaveChapter,
 }: {
   manuscripts: ManuscriptRecord[];
   error: string;
@@ -2315,6 +2510,10 @@ function ManuscriptImporter({
   bookNodes: BookNode[];
   activeManuscriptId: string;
   draft: BookNode | null;
+  activeChapterId: string;
+  chapterDraft: ChapterDraft | null;
+  chapterSaveState: ChapterSaveState;
+  chapterRecoveryNotice: string;
   onImport: () => void;
   onDownloadOriginal: (manuscript: ManuscriptRecord) => void;
   onSelectManuscript: (id: string) => void;
@@ -2323,6 +2522,9 @@ function ManuscriptImporter({
   onDraftChange: (patch: Partial<BookNode>) => void;
   onSaveNode: () => void;
   onReorder: (id: string, direction: -1 | 1) => void;
+  onOpenChapter: (chapter: BookNode) => void;
+  onChapterContentChange: (content: string) => void;
+  onSaveChapter: () => void;
 }) {
   const activeManuscript =
     manuscripts.find((manuscript) => manuscript.id === activeManuscriptId) ??
@@ -2336,6 +2538,15 @@ function ManuscriptImporter({
     parts: activeNodes.filter((node) => node.kind === "part").length,
     chapters: activeNodes.filter((node) => node.kind === "chapter").length,
     sections: activeNodes.filter((node) => node.kind === "section").length,
+  };
+  const chapters = rows.filter((node) => node.kind === "chapter");
+  const chapterSaveCopy: Record<ChapterSaveState, string> = {
+    idle: "Selecciona un capítol",
+    loading: "Carregant…",
+    dirty: "Canvis pendents",
+    saving: "Desant…",
+    saved: "Desat localment",
+    error: "Error d’autodesat",
   };
 
   return (
@@ -2417,7 +2628,8 @@ function ManuscriptImporter({
       )}
 
       {activeManuscript && (
-        <section className="book-structure">
+        <>
+          <section className="book-structure">
           <header className="book-structure-head">
             <div>
               <span className="eyebrow">Funció 302</span>
@@ -2554,7 +2766,118 @@ function ManuscriptImporter({
               )}
             </div>
           )}
-        </section>
+          </section>
+
+          <section className="chapter-workbench">
+            <header className="chapter-workbench-head">
+              <div>
+                <span className="eyebrow">Funció 303</span>
+                <h2>Editor de capítols</h2>
+                <p>
+                  Escriu sense connexió. Cada canvi es desa com un registre
+                  complet i coherent dins d’aquest dispositiu.
+                </p>
+              </div>
+              <span className={`chapter-save-state ${chapterSaveState}`}>
+                {chapterSaveCopy[chapterSaveState]}
+              </span>
+            </header>
+
+            {chapterRecoveryNotice && (
+              <div className="chapter-recovery" role="status">
+                <strong>Recuperació completada</strong>
+                <span>{chapterRecoveryNotice}</span>
+              </div>
+            )}
+
+            {chapters.length === 0 ? (
+              <div className="structure-empty">
+                <strong>Primer cal detectar els capítols</strong>
+                <span>
+                  Quan l’estructura estigui creada, aquí podràs editar cada
+                  capítol amb autodesat.
+                </span>
+              </div>
+            ) : (
+              <div className="chapter-editor-layout">
+                <nav className="chapter-picker" aria-label="Capítols editables">
+                  {chapters.map((chapter, index) => (
+                    <button
+                      key={chapter.id}
+                      className={
+                        activeChapterId === chapter.id ? "active" : undefined
+                      }
+                      onClick={() => onOpenChapter(chapter)}
+                    >
+                      <span>{String(index + 1).padStart(2, "0")}</span>
+                      <strong>{chapter.title}</strong>
+                    </button>
+                  ))}
+                </nav>
+
+                {chapterSaveState === "loading" ? (
+                  <div className="chapter-editor-empty" role="status">
+                    <strong>Carregant l’últim text coherent…</strong>
+                  </div>
+                ) : chapterDraft &&
+                  chapterDraft.manuscriptId === activeManuscript.id ? (
+                  <div className="chapter-text-editor">
+                    <div className="chapter-editor-toolbar">
+                      <div>
+                        <strong>
+                          {
+                            chapters.find(
+                              (chapter) =>
+                                chapter.id === chapterDraft.chapterId,
+                            )?.title
+                          }
+                        </strong>
+                        <small>
+                          {formatNumber(chapterDraft.wordCount)} paraules ·
+                          revisió local {chapterDraft.revision}
+                          {chapterDraft.savedAt
+                            ? ` · desat a les ${new Date(
+                                chapterDraft.savedAt,
+                              ).toLocaleTimeString("ca-ES", {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}`
+                            : ""}
+                        </small>
+                      </div>
+                      <button
+                        className="quiet-button"
+                        disabled={
+                          chapterSaveState === "saving" ||
+                          chapterSaveState === "saved"
+                        }
+                        onClick={onSaveChapter}
+                      >
+                        Desa ara
+                      </button>
+                    </div>
+                    <textarea
+                      aria-label="Text del capítol"
+                      value={chapterDraft.content}
+                      onChange={(event) =>
+                        onChapterContentChange(event.target.value)
+                      }
+                      spellCheck
+                    />
+                  </div>
+                ) : (
+                  <div className="chapter-editor-empty">
+                    <strong>Tria un capítol per començar</strong>
+                    <span>
+                      Es recuperarà automàticament l’últim text desat si la
+                      sessió anterior es va interrompre.
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
+          </section>
+        </>
       )}
     </section>
   );
