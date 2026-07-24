@@ -57,10 +57,10 @@ Prioritats: **P0** imprescindible per al primer ús real; **P1** nucli metodolò
 
 | Situació | Funcions |
 |---|---|
-| **FET** | 001, 002, 003, 004, 006, 007, 009, 010, 101, 102, 103, 104, 105, 107, 201, 204, 205, 206, 209, 301, 302, 303 i 502 |
+| **FET** | 001, 002, 003, 004, 006, 007, 009, 010, 101, 102, 103, 104, 105, 107, 201, 204, 205, 206, 209, 301, 302, 303, 304 i 502 |
 | **EN CURS** | — |
 | **PARCIAL** | 005, 008, 501, 503 i 505 |
-| **SEGÜENT BLOC FUNCIONAL** | 304 → 305: versions i perfil d’estil de l’autor |
+| **SEGÜENT BLOC FUNCIONAL** | 305: perfil d’estil de l’autor |
 
 Aquesta foto s’ha d’actualitzar dins de la mateixa PR que canviï qualsevol estat.
 
@@ -127,7 +127,7 @@ Aquesta foto s’ha d’actualitzar dins de la mateixa PR que canviï qualsevol 
 | **301** | Importació del manuscrit | P0 | 002, 003, 102 | **FET** | Importar DOCX, TXT o Markdown localment, conservar l'original intacte i crear una còpia de treball. |
 | **302** | Estructura de llibre i capítols | P0 | 301 | **FET** | Detectar/reordenar parts, capítols i seccions amb títols, estat i objectiu argumental. |
 | **303** | Editor de capítols amb autodesat | P0 | 302 | **FET** | Editar offline, autodesar transaccionalment i recuperar l'última versió coherent després d'un tancament inesperat. |
-| **304** | Versions i comparació textual | P1 | 303 | **PENDENT** | Crear instantànies, comparar canvis, restaurar una versió i conservar-ne l'autoria/origen. |
+| **304** | Versions i comparació textual | P1 | 303 | **FET** | Crear instantànies, comparar canvis, restaurar una versió i conservar-ne l'autoria/origen. |
 | **305** | Perfil d'estil de l'autor | P0 | 301 | **PENDENT** | Extreure del primer llibre un perfil revisable: veu, ritme, lèxic, estructura, assertivitat, atribució i usos que s'han d'evitar. |
 | **306** | Dossier d'evidència per capítol | P0 | 206, 302 | **PENDENT** | Reunir objectiu, esquema, AID/EID, cites, objeccions, incerteses i límits en un paquet autocontingut. |
 | **307** | Paquet per treballar amb ChatGPT Plus | P0 | 214, 305, 306 | **PENDENT** | Exportar instruccions i context dins límits configurables, sense API, amb checklist de retorn i cap dada no seleccionada. |
@@ -216,6 +216,7 @@ S'afegeix una fila després de cada funció acabada. No s'esborren entrades.
 | 2026-07-24 | 301 | `feat/301-importacio-manuscrit` | FET | Importació local de **DOCX, TXT i Markdown** des de la vista «Capítols». Desa l’original en un magatzem separat i no sobreescrivible, identificat amb **SHA-256**, i crea una còpia de treball textual independent amb recompte de paraules i paràgrafs. Esquema **v12** amb magatzems `manuscripts` i `manuscriptOriginals`, transacció atòmica i recuperació per baixada de l’original. 4 proves noves (133 totals), incloent migració v11→v12, independència dels bytes i protecció contra sobreescriptura; lint, build i interfície verificats. |
 | 2026-07-24 | 302 | `feat/302-estructura-llibre` | FET | Detecció conservadora de l’estructura explícita del manuscrit en **Markdown** o amb encapçalaments «Part/Capítol/Secció», sense inventar divisions: si no n’hi ha, crea un únic capítol inicial. Arbre jeràrquic de parts, capítols i seccions amb reordenació entre germans i edició de **títol, estat i objectiu argumental**. Esquema **v13** amb magatzem `bookNodes`; 8 proves noves (141 totals), incloent migració v12→v13, persistència, edició i reordenació. Lint, build i interfície verificats. |
 | 2026-07-24 | 303 | `feat/303-editor-autodesat` | FET | Editor offline per capítol amb text inicial extret de la còpia de treball, recompte de paraules, revisió local i estat visible de l’autodesat. Cada escriptura desa el capítol complet dins una transacció; les revisions antigues no poden substituir-ne una de posterior i, en reobrir, es recupera l’últim registre coherent. El canvi de capítol, de manuscrit o de projecte força el desat pendent, igual que ocultar o tancar la pàgina. Esquema **v14** amb magatzem `chapterDrafts`; 7 proves noves (148 totals), incloent migració v13→v14, extracció delimitada, persistència, recuperació i protecció contra escriptures obsoletes. Lint, build i interfície sense errors de consola verificats. |
+| 2026-07-24 | 304 | `feat/304-versions-comparacio` | FET | Instantànies immutables per capítol amb nom, autoria, nota, origen i revisió font. Comparació línia a línia amb el text actual i recompte de línies afegides, eliminades i conservades. La restauració és reversible: crea automàticament una còpia del text substituït i desa còpia + nou esborrany dins una única transacció. Esquema **v15** amb magatzem `chapterVersions` indexat per projecte, manuscrit i capítol; 8 proves noves (156 totals), incloent migració v14→v15, immutabilitat, comparació, identitat entre capítols i restauració atòmica. Lint i build verificats. |
 
 ## 7. Definició global de «fet»
 

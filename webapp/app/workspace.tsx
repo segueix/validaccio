@@ -18,6 +18,7 @@ import {
   aidEidLinkRepository,
   bookNodeRepository,
   chapterDraftRepository,
+  chapterVersionRepository,
   citableNoteRepository,
   ensureProjectsMigrated,
   matrixCellRepository,
@@ -66,6 +67,13 @@ import {
   createChapterDraft,
   updateChapterDraft,
 } from "../lib/chapter-editor";
+import {
+  type ChapterVersion,
+  compareChapterTexts,
+  createChapterVersion,
+  prepareChapterRestoration,
+  summarizeTextDiff,
+} from "../lib/chapter-versions";
 import { createPdfReference, type PdfReference } from "../lib/pdf-references";
 import {
   type CitableNote,
@@ -393,6 +401,14 @@ export default function Workspace() {
   const [chapterSaveState, setChapterSaveState] =
     useState<ChapterSaveState>("idle");
   const [chapterRecoveryNotice, setChapterRecoveryNotice] = useState("");
+  const [chapterVersions, setChapterVersions] = useState<ChapterVersion[]>([]);
+  const [selectedChapterVersionId, setSelectedChapterVersionId] = useState("");
+  const [chapterVersionInput, setChapterVersionInput] = useState({
+    label: "",
+    author: "",
+    note: "",
+  });
+  const [chapterVersionNotice, setChapterVersionNotice] = useState("");
   const fileInput = useRef<HTMLInputElement>(null);
   const sourceInput = useRef<HTMLInputElement>(null);
   const manuscriptInput = useRef<HTMLInputElement>(null);
@@ -810,6 +826,9 @@ export default function Workspace() {
     setActiveChapterId("");
     setChapterDraft(null);
     chapterDraftRef.current = null;
+    setChapterVersions([]);
+    setSelectedChapterVersionId("");
+    setChapterVersionNotice("");
     setChapterSaveState("idle");
     setChapterRecoveryNotice("");
   }
@@ -999,7 +1018,13 @@ export default function Workspace() {
     setActiveChapterId(chapter.id);
     setChapterSaveState("loading");
     setChapterRecoveryNotice("");
+    setChapterVersionNotice("");
+    setSelectedChapterVersionId("");
     try {
+      const versions = await chapterVersionRepository.getAllForChapter(
+        chapter.id,
+      );
+      setChapterVersions(versions);
       const recovered = await chapterDraftRepository.get(chapter.id);
       if (recovered) {
         chapterDraftRef.current = recovered;
@@ -1028,6 +1053,7 @@ export default function Workspace() {
     } catch {
       chapterDraftRef.current = null;
       setChapterDraft(null);
+      setChapterVersions([]);
       setChapterSaveState("error");
     }
   }
@@ -1049,6 +1075,80 @@ export default function Workspace() {
     }, 500);
   }
 
+  async function createChapterSnapshot() {
+    const current = chapterDraftRef.current;
+    if (!current) return;
+    setChapterVersionNotice("");
+    try {
+      await persistChapterDraft(current);
+      const version = createChapterVersion(current, chapterVersionInput);
+      await chapterVersionRepository.add(version);
+      setChapterVersions((versions) => [version, ...versions]);
+      setSelectedChapterVersionId(version.id);
+      setChapterVersionInput((input) => ({ ...input, label: "", note: "" }));
+      setChapterVersionNotice("Instantània creada i conservada localment.");
+    } catch (error) {
+      setChapterVersionNotice(
+        error instanceof Error
+          ? error.message
+          : "No s’ha pogut crear la instantània.",
+      );
+    }
+  }
+
+  async function restoreChapterVersion(version: ChapterVersion) {
+    const current = chapterDraftRef.current;
+    if (!current) return;
+    const author = chapterVersionInput.author.trim();
+    if (!author) {
+      setChapterVersionNotice(
+        "Indica l’autoria abans de restaurar: quedarà registrada a la còpia prèvia.",
+      );
+      return;
+    }
+    if (
+      !window.confirm(
+        `Vols restaurar «${version.label}»? Abans es conservarà una còpia del text actual.`,
+      )
+    ) {
+      return;
+    }
+    if (chapterSaveTimerRef.current !== null) {
+      window.clearTimeout(chapterSaveTimerRef.current);
+      chapterSaveTimerRef.current = null;
+    }
+    setChapterVersionNotice("");
+    setChapterSaveState("saving");
+    try {
+      await persistChapterDraft(current);
+      const { restoredDraft, backupVersion } = prepareChapterRestoration(
+        current,
+        version,
+        author,
+      );
+      const savedDraft = await chapterVersionRepository.restore(
+        restoredDraft,
+        backupVersion,
+      );
+      chapterDraftRef.current = savedDraft;
+      setChapterDraft(savedDraft);
+      setChapterSaveState("saved");
+      setChapterVersions(
+        await chapterVersionRepository.getAllForChapter(current.chapterId),
+      );
+      setChapterVersionNotice(
+        `S’ha restaurat «${version.label}». El text anterior continua disponible a l’historial.`,
+      );
+    } catch (error) {
+      setChapterSaveState("error");
+      setChapterVersionNotice(
+        error instanceof Error
+          ? error.message
+          : "No s’ha pogut restaurar la versió.",
+      );
+    }
+  }
+
   async function selectManuscript(id: string) {
     if (chapterSaveTimerRef.current !== null) {
       window.clearTimeout(chapterSaveTimerRef.current);
@@ -1060,6 +1160,9 @@ export default function Workspace() {
     setActiveChapterId("");
     setChapterDraft(null);
     chapterDraftRef.current = null;
+    setChapterVersions([]);
+    setSelectedChapterVersionId("");
+    setChapterVersionNotice("");
     setChapterSaveState("idle");
     setChapterRecoveryNotice("");
   }
@@ -1978,6 +2081,10 @@ export default function Workspace() {
             chapterDraft={chapterDraft}
             chapterSaveState={chapterSaveState}
             chapterRecoveryNotice={chapterRecoveryNotice}
+            chapterVersions={chapterVersions}
+            selectedChapterVersionId={selectedChapterVersionId}
+            chapterVersionInput={chapterVersionInput}
+            chapterVersionNotice={chapterVersionNotice}
             onExport={exportProject}
             onImport={() => fileInput.current?.click()}
             onImportManuscript={() => manuscriptInput.current?.click()}
@@ -1991,6 +2098,12 @@ export default function Workspace() {
             onOpenChapter={openChapterEditor}
             onChapterContentChange={editChapterContent}
             onSaveChapter={() => persistChapterDraft()}
+            onSelectChapterVersion={setSelectedChapterVersionId}
+            onChapterVersionInputChange={(patch) =>
+              setChapterVersionInput((input) => ({ ...input, ...patch }))
+            }
+            onCreateChapterSnapshot={createChapterSnapshot}
+            onRestoreChapterVersion={restoreChapterVersion}
           />
         )}
       </section>
@@ -2379,6 +2492,10 @@ function ModuleView({
   chapterDraft,
   chapterSaveState,
   chapterRecoveryNotice,
+  chapterVersions,
+  selectedChapterVersionId,
+  chapterVersionInput,
+  chapterVersionNotice,
   onExport,
   onImport,
   onImportManuscript,
@@ -2392,6 +2509,10 @@ function ModuleView({
   onOpenChapter,
   onChapterContentChange,
   onSaveChapter,
+  onSelectChapterVersion,
+  onChapterVersionInputChange,
+  onCreateChapterSnapshot,
+  onRestoreChapterVersion,
 }: {
   view: Exclude<ViewId, "tauler" | "salut" | "privadesa" | "fonts" | "extractes" | "hipotesis" | "evidencies" | "afirmacions" | "matriu">;
   manuscripts: ManuscriptRecord[];
@@ -2404,6 +2525,10 @@ function ModuleView({
   chapterDraft: ChapterDraft | null;
   chapterSaveState: ChapterSaveState;
   chapterRecoveryNotice: string;
+  chapterVersions: ChapterVersion[];
+  selectedChapterVersionId: string;
+  chapterVersionInput: { label: string; author: string; note: string };
+  chapterVersionNotice: string;
   onExport: () => void;
   onImport: () => void;
   onImportManuscript: () => void;
@@ -2417,6 +2542,12 @@ function ModuleView({
   onOpenChapter: (chapter: BookNode) => void;
   onChapterContentChange: (content: string) => void;
   onSaveChapter: () => void;
+  onSelectChapterVersion: (id: string) => void;
+  onChapterVersionInputChange: (
+    patch: Partial<{ label: string; author: string; note: string }>,
+  ) => void;
+  onCreateChapterSnapshot: () => void;
+  onRestoreChapterVersion: (version: ChapterVersion) => void;
 }) {
   const copy = moduleCopy[view];
   return (
@@ -2455,6 +2586,10 @@ function ModuleView({
           chapterDraft={chapterDraft}
           chapterSaveState={chapterSaveState}
           chapterRecoveryNotice={chapterRecoveryNotice}
+          chapterVersions={chapterVersions}
+          selectedChapterVersionId={selectedChapterVersionId}
+          chapterVersionInput={chapterVersionInput}
+          chapterVersionNotice={chapterVersionNotice}
           onImport={onImportManuscript}
           onDownloadOriginal={onDownloadOriginal}
           onSelectManuscript={onSelectManuscript}
@@ -2466,6 +2601,10 @@ function ModuleView({
           onOpenChapter={onOpenChapter}
           onChapterContentChange={onChapterContentChange}
           onSaveChapter={onSaveChapter}
+          onSelectChapterVersion={onSelectChapterVersion}
+          onChapterVersionInputChange={onChapterVersionInputChange}
+          onCreateChapterSnapshot={onCreateChapterSnapshot}
+          onRestoreChapterVersion={onRestoreChapterVersion}
         />
       ) : (
         <section className="empty-state">
@@ -2492,6 +2631,10 @@ function ManuscriptImporter({
   chapterDraft,
   chapterSaveState,
   chapterRecoveryNotice,
+  chapterVersions,
+  selectedChapterVersionId,
+  chapterVersionInput,
+  chapterVersionNotice,
   onImport,
   onDownloadOriginal,
   onSelectManuscript,
@@ -2503,6 +2646,10 @@ function ManuscriptImporter({
   onOpenChapter,
   onChapterContentChange,
   onSaveChapter,
+  onSelectChapterVersion,
+  onChapterVersionInputChange,
+  onCreateChapterSnapshot,
+  onRestoreChapterVersion,
 }: {
   manuscripts: ManuscriptRecord[];
   error: string;
@@ -2514,6 +2661,10 @@ function ManuscriptImporter({
   chapterDraft: ChapterDraft | null;
   chapterSaveState: ChapterSaveState;
   chapterRecoveryNotice: string;
+  chapterVersions: ChapterVersion[];
+  selectedChapterVersionId: string;
+  chapterVersionInput: { label: string; author: string; note: string };
+  chapterVersionNotice: string;
   onImport: () => void;
   onDownloadOriginal: (manuscript: ManuscriptRecord) => void;
   onSelectManuscript: (id: string) => void;
@@ -2525,6 +2676,12 @@ function ManuscriptImporter({
   onOpenChapter: (chapter: BookNode) => void;
   onChapterContentChange: (content: string) => void;
   onSaveChapter: () => void;
+  onSelectChapterVersion: (id: string) => void;
+  onChapterVersionInputChange: (
+    patch: Partial<{ label: string; author: string; note: string }>,
+  ) => void;
+  onCreateChapterSnapshot: () => void;
+  onRestoreChapterVersion: (version: ChapterVersion) => void;
 }) {
   const activeManuscript =
     manuscripts.find((manuscript) => manuscript.id === activeManuscriptId) ??
@@ -2548,6 +2705,18 @@ function ManuscriptImporter({
     saved: "Desat localment",
     error: "Error d’autodesat",
   };
+  const selectedChapterVersion =
+    chapterVersions.find(
+      (version) => version.id === selectedChapterVersionId,
+    ) ?? null;
+  const chapterDiff =
+    selectedChapterVersion && chapterDraft
+      ? compareChapterTexts(
+          selectedChapterVersion.content,
+          chapterDraft.content,
+        )
+      : [];
+  const chapterDiffSummary = summarizeTextDiff(chapterDiff);
 
   return (
     <section className="manuscript-importer">
@@ -2864,6 +3033,191 @@ function ManuscriptImporter({
                       }
                       spellCheck
                     />
+                    <section className="chapter-versions-panel">
+                      <header>
+                        <div>
+                          <span className="eyebrow">Funció 304</span>
+                          <h3>Versions i comparació textual</h3>
+                          <p>
+                            Crea punts de retorn amb autoria. Les instantànies
+                            són immutables i una restauració conserva abans el
+                            text actual.
+                          </p>
+                        </div>
+                        <span className="version-count">
+                          {chapterVersions.length}{" "}
+                          {chapterVersions.length === 1 ? "versió" : "versions"}
+                        </span>
+                      </header>
+
+                      <div className="chapter-version-create">
+                        <label>
+                          <span>Nom de la instantània</span>
+                          <input
+                            value={chapterVersionInput.label}
+                            placeholder="Ex. Argument revisat"
+                            onChange={(event) =>
+                              onChapterVersionInputChange({
+                                label: event.target.value,
+                              })
+                            }
+                          />
+                        </label>
+                        <label>
+                          <span>Autoria</span>
+                          <input
+                            value={chapterVersionInput.author}
+                            placeholder="Nom de l’autor/a"
+                            onChange={(event) =>
+                              onChapterVersionInputChange({
+                                author: event.target.value,
+                              })
+                            }
+                          />
+                        </label>
+                        <label className="version-note-field">
+                          <span>Nota opcional</span>
+                          <input
+                            value={chapterVersionInput.note}
+                            placeholder="Què consolida aquesta versió?"
+                            onChange={(event) =>
+                              onChapterVersionInputChange({
+                                note: event.target.value,
+                              })
+                            }
+                          />
+                        </label>
+                        <button
+                          className="primary-button"
+                          onClick={onCreateChapterSnapshot}
+                        >
+                          Crea instantània
+                        </button>
+                      </div>
+
+                      {chapterVersionNotice && (
+                        <div className="version-notice" role="status">
+                          {chapterVersionNotice}
+                        </div>
+                      )}
+
+                      {chapterVersions.length === 0 ? (
+                        <div className="version-empty">
+                          <strong>Encara no hi ha cap instantània</strong>
+                          <span>
+                            El text actual continua protegit per l’autodesat.
+                            Crea una versió quan vulguis fixar una fita.
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="chapter-version-workspace">
+                          <nav
+                            className="version-history"
+                            aria-label="Historial de versions del capítol"
+                          >
+                            {chapterVersions.map((version) => (
+                              <button
+                                key={version.id}
+                                className={
+                                  selectedChapterVersion?.id === version.id
+                                    ? "active"
+                                    : undefined
+                                }
+                                onClick={() =>
+                                  onSelectChapterVersion(version.id)
+                                }
+                              >
+                                <strong>{version.label}</strong>
+                                <small>
+                                  {version.author} ·{" "}
+                                  {new Date(version.createdAt).toLocaleString(
+                                    "ca-ES",
+                                    {
+                                      day: "2-digit",
+                                      month: "2-digit",
+                                      year: "numeric",
+                                      hour: "2-digit",
+                                      minute: "2-digit",
+                                    },
+                                  )}
+                                </small>
+                                <span>
+                                  {version.origin === "manual"
+                                    ? "Instantània manual"
+                                    : "Còpia prèvia a restauració"}{" "}
+                                  · revisió {version.sourceRevision}
+                                </span>
+                              </button>
+                            ))}
+                          </nav>
+
+                          {selectedChapterVersion ? (
+                            <div className="version-comparison">
+                              <div className="version-comparison-head">
+                                <div>
+                                  <strong>
+                                    «{selectedChapterVersion.label}» → text
+                                    actual
+                                  </strong>
+                                  <small>
+                                    +{chapterDiffSummary.added} afegides · −
+                                    {chapterDiffSummary.removed} eliminades ·{" "}
+                                    {chapterDiffSummary.unchanged} conservades
+                                  </small>
+                                </div>
+                                <button
+                                  className="quiet-button"
+                                  onClick={() =>
+                                    onRestoreChapterVersion(
+                                      selectedChapterVersion,
+                                    )
+                                  }
+                                >
+                                  Restaura aquesta versió
+                                </button>
+                              </div>
+                              {selectedChapterVersion.note && (
+                                <p className="version-note">
+                                  {selectedChapterVersion.note}
+                                </p>
+                              )}
+                              <div
+                                className="text-diff"
+                                aria-label="Comparació entre la versió i el text actual"
+                              >
+                                {chapterDiff.map((line, index) => (
+                                  <div
+                                    key={`${line.kind}-${line.beforeLine}-${line.afterLine}-${index}`}
+                                    className={`diff-line ${line.kind}`}
+                                  >
+                                    <span>
+                                      {line.beforeLine ?? "·"} /{" "}
+                                      {line.afterLine ?? "·"}
+                                    </span>
+                                    <b>
+                                      {line.kind === "added"
+                                        ? "+"
+                                        : line.kind === "removed"
+                                          ? "−"
+                                          : " "}
+                                    </b>
+                                    <code>{line.text || " "}</code>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="version-empty">
+                              <strong>Selecciona una versió</strong>
+                              <span>
+                                En veuràs els canvis respecte del text actual i
+                                la podràs restaurar.
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </section>
                   </div>
                 ) : (
                   <div className="chapter-editor-empty">

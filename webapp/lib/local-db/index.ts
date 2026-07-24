@@ -10,6 +10,7 @@ export {
   aidEidLinkRepository,
   bookNodeRepository,
   chapterDraftRepository,
+  chapterVersionRepository,
   citableNoteRepository,
   evidenceRepository,
   hypothesisRepository,
