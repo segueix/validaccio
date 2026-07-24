@@ -16,6 +16,7 @@ import {
   duplicateProjectRecord,
   affirmationRepository,
   aidEidLinkRepository,
+  bookNodeRepository,
   citableNoteRepository,
   ensureProjectsMigrated,
   matrixCellRepository,
@@ -50,6 +51,15 @@ import {
   originalToObjectUrl,
   prepareManuscriptImport,
 } from "../lib/manuscripts";
+import {
+  BOOK_NODE_STATUSES,
+  type BookNode,
+  bookNodeKindLabel,
+  bookTree,
+  detectBookStructure,
+  moveBookNode,
+  siblingsOf,
+} from "../lib/book-structure";
 import { createPdfReference, type PdfReference } from "../lib/pdf-references";
 import {
   type CitableNote,
@@ -360,6 +370,9 @@ export default function Workspace() {
   const [manuscripts, setManuscripts] = useState<ManuscriptRecord[]>([]);
   const [manuscriptError, setManuscriptError] = useState("");
   const [manuscriptImporting, setManuscriptImporting] = useState(false);
+  const [bookNodes, setBookNodes] = useState<BookNode[]>([]);
+  const [activeManuscriptId, setActiveManuscriptId] = useState("");
+  const [bookNodeDraft, setBookNodeDraft] = useState<BookNode | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
   const sourceInput = useRef<HTMLInputElement>(null);
   const manuscriptInput = useRef<HTMLInputElement>(null);
@@ -752,10 +765,26 @@ export default function Workspace() {
 
   async function loadManuscripts(projectId: string) {
     try {
-      setManuscripts(await manuscriptRepository.getAllForProject(projectId));
+      const loaded = await manuscriptRepository.getAllForProject(projectId);
+      setManuscripts(loaded);
+      setActiveManuscriptId((current) =>
+        loaded.some((manuscript) => manuscript.id === current)
+          ? current
+          : (loaded[0]?.id ?? ""),
+      );
     } catch {
       setManuscripts([]);
+      setActiveManuscriptId("");
     }
+  }
+
+  async function loadBookNodes(projectId: string) {
+    try {
+      setBookNodes(await bookNodeRepository.getAllForProject(projectId));
+    } catch {
+      setBookNodes([]);
+    }
+    setBookNodeDraft(null);
   }
 
   async function importManuscript(event: ChangeEvent<HTMLInputElement>) {
@@ -774,6 +803,7 @@ export default function Workspace() {
         prepared.original,
       );
       setManuscripts((current) => [imported, ...current]);
+      setActiveManuscriptId(imported.id);
       setProject((current) => ({
         ...current,
         words: imported.wordCount,
@@ -812,6 +842,91 @@ export default function Workspace() {
     } catch {
       setManuscriptError("No s’ha pogut recuperar l’original.");
     }
+  }
+
+  async function detectStructure(manuscriptId: string) {
+    const manuscript = manuscripts.find((item) => item.id === manuscriptId);
+    if (!manuscript) return;
+    const previous = bookNodes.filter(
+      (node) => node.manuscriptId === manuscriptId,
+    );
+    if (
+      previous.length > 0 &&
+      !window.confirm(
+        "Vols tornar a detectar l’estructura? Es substituiran els títols, estats i objectius editats d’aquest manuscrit.",
+      )
+    ) {
+      return;
+    }
+    try {
+      const detected = detectBookStructure(manuscript);
+      const saved = await bookNodeRepository.replaceForManuscript(
+        manuscriptId,
+        detected,
+      );
+      setBookNodes((current) => [
+        ...current.filter((node) => node.manuscriptId !== manuscriptId),
+        ...saved,
+      ]);
+      setBookNodeDraft(saved[0] ?? null);
+      const chapters = saved.filter((node) => node.kind === "chapter").length;
+      setProject((current) => ({
+        ...current,
+        chapters,
+        updatedAt: new Date().toISOString(),
+      }));
+      setSaved(false);
+      setNotice(
+        `${chapters} ${chapters === 1 ? "capítol detectat" : "capítols detectats"} · estructura local desada`,
+      );
+    } catch {
+      setManuscriptError("No s’ha pogut detectar i desar l’estructura.");
+    }
+  }
+
+  function editBookNode(node: BookNode) {
+    setBookNodeDraft({ ...node });
+  }
+
+  function updateBookNodeDraft(patch: Partial<BookNode>) {
+    setBookNodeDraft((current) =>
+      current ? { ...current, ...patch } : current,
+    );
+  }
+
+  async function saveBookNode() {
+    if (!bookNodeDraft) return;
+    try {
+      const saved = await bookNodeRepository.save({
+        ...bookNodeDraft,
+        updatedAt: new Date().toISOString(),
+      });
+      setBookNodes((current) =>
+        current.map((node) => (node.id === saved.id ? saved : node)),
+      );
+      setBookNodeDraft(saved);
+      setNotice(`${bookNodeKindLabel(saved.kind)} desat`);
+    } catch (error) {
+      setManuscriptError(
+        error instanceof Error
+          ? error.message
+          : "No s’ha pogut desar l’element.",
+      );
+    }
+  }
+
+  async function reorderBookNode(id: string, direction: -1 | 1) {
+    const next = moveBookNode(bookNodes, id, direction);
+    const changed = next.filter((node) => {
+      const previous = bookNodes.find((candidate) => candidate.id === node.id);
+      return previous?.order !== node.order;
+    });
+    if (changed.length === 0) return;
+    await bookNodeRepository.saveMany(changed);
+    setBookNodes(next);
+    setBookNodeDraft((current) =>
+      current ? (next.find((node) => node.id === current.id) ?? current) : null,
+    );
   }
 
   async function seedHypotheses() {
@@ -1217,6 +1332,7 @@ export default function Workspace() {
       await loadLinks(activeProject.id);
       await loadCells(activeProject.id);
       await loadManuscripts(activeProject.id);
+      await loadBookNodes(activeProject.id);
     }
 
     prepareWorkspace()
@@ -1296,6 +1412,7 @@ export default function Workspace() {
     await loadLinks(nextProject.id);
     await loadCells(nextProject.id);
     await loadManuscripts(nextProject.id);
+    await loadBookNodes(nextProject.id);
   }
 
   async function createProject(title: string) {
@@ -1691,10 +1808,22 @@ export default function Workspace() {
             manuscripts={manuscripts}
             manuscriptError={manuscriptError}
             manuscriptImporting={manuscriptImporting}
+            bookNodes={bookNodes}
+            activeManuscriptId={activeManuscriptId}
+            bookNodeDraft={bookNodeDraft}
             onExport={exportProject}
             onImport={() => fileInput.current?.click()}
             onImportManuscript={() => manuscriptInput.current?.click()}
             onDownloadOriginal={downloadOriginal}
+            onSelectManuscript={(id) => {
+              setActiveManuscriptId(id);
+              setBookNodeDraft(null);
+            }}
+            onDetectStructure={detectStructure}
+            onEditBookNode={editBookNode}
+            onBookNodeDraftChange={updateBookNodeDraft}
+            onSaveBookNode={saveBookNode}
+            onReorderBookNode={reorderBookNode}
           />
         )}
       </section>
@@ -2076,19 +2205,37 @@ function ModuleView({
   manuscripts,
   manuscriptError,
   manuscriptImporting,
+  bookNodes,
+  activeManuscriptId,
+  bookNodeDraft,
   onExport,
   onImport,
   onImportManuscript,
   onDownloadOriginal,
+  onSelectManuscript,
+  onDetectStructure,
+  onEditBookNode,
+  onBookNodeDraftChange,
+  onSaveBookNode,
+  onReorderBookNode,
 }: {
   view: Exclude<ViewId, "tauler" | "salut" | "privadesa" | "fonts" | "extractes" | "hipotesis" | "evidencies" | "afirmacions" | "matriu">;
   manuscripts: ManuscriptRecord[];
   manuscriptError: string;
   manuscriptImporting: boolean;
+  bookNodes: BookNode[];
+  activeManuscriptId: string;
+  bookNodeDraft: BookNode | null;
   onExport: () => void;
   onImport: () => void;
   onImportManuscript: () => void;
   onDownloadOriginal: (manuscript: ManuscriptRecord) => void;
+  onSelectManuscript: (id: string) => void;
+  onDetectStructure: (id: string) => void;
+  onEditBookNode: (node: BookNode) => void;
+  onBookNodeDraftChange: (patch: Partial<BookNode>) => void;
+  onSaveBookNode: () => void;
+  onReorderBookNode: (id: string, direction: -1 | 1) => void;
 }) {
   const copy = moduleCopy[view];
   return (
@@ -2120,8 +2267,17 @@ function ModuleView({
           manuscripts={manuscripts}
           error={manuscriptError}
           importing={manuscriptImporting}
+          bookNodes={bookNodes}
+          activeManuscriptId={activeManuscriptId}
+          draft={bookNodeDraft}
           onImport={onImportManuscript}
           onDownloadOriginal={onDownloadOriginal}
+          onSelectManuscript={onSelectManuscript}
+          onDetectStructure={onDetectStructure}
+          onEditBookNode={onEditBookNode}
+          onDraftChange={onBookNodeDraftChange}
+          onSaveNode={onSaveBookNode}
+          onReorder={onReorderBookNode}
         />
       ) : (
         <section className="empty-state">
@@ -2141,15 +2297,47 @@ function ManuscriptImporter({
   manuscripts,
   error,
   importing,
+  bookNodes,
+  activeManuscriptId,
+  draft,
   onImport,
   onDownloadOriginal,
+  onSelectManuscript,
+  onDetectStructure,
+  onEditBookNode,
+  onDraftChange,
+  onSaveNode,
+  onReorder,
 }: {
   manuscripts: ManuscriptRecord[];
   error: string;
   importing: boolean;
+  bookNodes: BookNode[];
+  activeManuscriptId: string;
+  draft: BookNode | null;
   onImport: () => void;
   onDownloadOriginal: (manuscript: ManuscriptRecord) => void;
+  onSelectManuscript: (id: string) => void;
+  onDetectStructure: (id: string) => void;
+  onEditBookNode: (node: BookNode) => void;
+  onDraftChange: (patch: Partial<BookNode>) => void;
+  onSaveNode: () => void;
+  onReorder: (id: string, direction: -1 | 1) => void;
 }) {
+  const activeManuscript =
+    manuscripts.find((manuscript) => manuscript.id === activeManuscriptId) ??
+    manuscripts[0] ??
+    null;
+  const activeNodes = activeManuscript
+    ? bookNodes.filter((node) => node.manuscriptId === activeManuscript.id)
+    : [];
+  const rows = bookTree(activeNodes);
+  const counts = {
+    parts: activeNodes.filter((node) => node.kind === "part").length,
+    chapters: activeNodes.filter((node) => node.kind === "chapter").length,
+    sections: activeNodes.filter((node) => node.kind === "section").length,
+  };
+
   return (
     <section className="manuscript-importer">
       <div className="manuscript-callout">
@@ -2181,7 +2369,14 @@ function ManuscriptImporter({
       ) : (
         <div className="manuscript-list">
           {manuscripts.map((manuscript) => (
-            <article key={manuscript.id} className="manuscript-item">
+            <article
+              key={manuscript.id}
+              className={
+                manuscript.id === activeManuscript?.id
+                  ? "manuscript-item active"
+                  : "manuscript-item"
+              }
+            >
               <div className="manuscript-filemark">
                 {manuscript.kind === "docx"
                   ? "DOCX"
@@ -2204,6 +2399,12 @@ function ManuscriptImporter({
               <div className="manuscript-actions">
                 <span className="status-chip live">Local</span>
                 <button
+                  className="text-button"
+                  onClick={() => onSelectManuscript(manuscript.id)}
+                >
+                  Estructura
+                </button>
+                <button
                   className="quiet-button"
                   onClick={() => onDownloadOriginal(manuscript)}
                 >
@@ -2213,6 +2414,147 @@ function ManuscriptImporter({
             </article>
           ))}
         </div>
+      )}
+
+      {activeManuscript && (
+        <section className="book-structure">
+          <header className="book-structure-head">
+            <div>
+              <span className="eyebrow">Funció 302</span>
+              <h2>Estructura del llibre</h2>
+              <p>
+                {activeManuscript.name} · {counts.parts} parts ·{" "}
+                {counts.chapters} capítols · {counts.sections} seccions
+              </p>
+            </div>
+            <button
+              className="primary-button"
+              onClick={() => onDetectStructure(activeManuscript.id)}
+            >
+              {activeNodes.length > 0
+                ? "Torna a detectar"
+                : "Detecta l’estructura"}
+            </button>
+          </header>
+
+          {activeNodes.length === 0 ? (
+            <div className="structure-empty">
+              <strong>Encara no s’ha detectat l’estructura</strong>
+              <span>
+                Validacció buscarà encapçalaments explícits sense interpretar ni
+                dividir arbitràriament el contingut.
+              </span>
+            </div>
+          ) : (
+            <div className="structure-layout">
+              <div className="structure-tree" aria-label="Estructura detectada">
+                {rows.map((node) => {
+                  const siblings = siblingsOf(activeNodes, node);
+                  const position = siblings.findIndex(
+                    (candidate) => candidate.id === node.id,
+                  );
+                  return (
+                    <div
+                      key={node.id}
+                      className={
+                        draft?.id === node.id
+                          ? `structure-row depth-${node.depth} active`
+                          : `structure-row depth-${node.depth}`
+                      }
+                    >
+                      <button
+                        className="structure-main"
+                        onClick={() => onEditBookNode(node)}
+                      >
+                        <span>{bookNodeKindLabel(node.kind)}</span>
+                        <strong>{node.title}</strong>
+                        <small>
+                          {
+                            BOOK_NODE_STATUSES.find(
+                              (status) => status.value === node.status,
+                            )?.label
+                          }
+                        </small>
+                      </button>
+                      <div className="structure-order">
+                        <button
+                          aria-label={`Puja ${node.title}`}
+                          disabled={position <= 0}
+                          onClick={() => onReorder(node.id, -1)}
+                        >
+                          ↑
+                        </button>
+                        <button
+                          aria-label={`Baixa ${node.title}`}
+                          disabled={position === siblings.length - 1}
+                          onClick={() => onReorder(node.id, 1)}
+                        >
+                          ↓
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {draft &&
+              draft.manuscriptId === activeManuscript.id ? (
+                <div className="structure-editor">
+                  <span className="eyebrow">
+                    {bookNodeKindLabel(draft.kind)}
+                  </span>
+                  <label>
+                    <span>Títol</span>
+                    <input
+                      value={draft.title}
+                      onChange={(event) =>
+                        onDraftChange({ title: event.target.value })
+                      }
+                    />
+                  </label>
+                  <label>
+                    <span>Estat</span>
+                    <select
+                      value={draft.status}
+                      onChange={(event) =>
+                        onDraftChange({
+                          status: event.target.value as BookNode["status"],
+                        })
+                      }
+                    >
+                      {BOOK_NODE_STATUSES.map((status) => (
+                        <option key={status.value} value={status.value}>
+                          {status.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    <span>Objectiu argumental</span>
+                    <textarea
+                      rows={7}
+                      value={draft.objective}
+                      onChange={(event) =>
+                        onDraftChange({ objective: event.target.value })
+                      }
+                      placeholder="Què ha de demostrar, establir o preparar aquesta unitat?"
+                    />
+                  </label>
+                  <button className="primary-button" onClick={onSaveNode}>
+                    Desa els canvis
+                  </button>
+                </div>
+              ) : (
+                <div className="structure-editor structure-editor-empty">
+                  <strong>Selecciona una unitat</strong>
+                  <span>
+                    Podràs editar-ne el títol, l’estat i l’objectiu argumental.
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
+        </section>
       )}
     </section>
   );
