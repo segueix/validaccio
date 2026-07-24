@@ -21,6 +21,7 @@ export {
   projectRepository,
   sourceBlobRepository,
   sourceRepository,
+  styleProfileRepository,
 } from "./repositories.ts";
 export {
   createProjectRecord,
