@@ -2,6 +2,7 @@ export {
   LOCAL_DATABASE_SCHEMA,
   openLocalDatabase,
   requestResult,
+  withStoresTransaction,
   withTransaction,
 } from "./database.ts";
 export {
@@ -10,6 +11,7 @@ export {
   citableNoteRepository,
   evidenceRepository,
   hypothesisRepository,
+  manuscriptRepository,
   matrixCellRepository,
   metadataRepository,
   pdfReferenceRepository,

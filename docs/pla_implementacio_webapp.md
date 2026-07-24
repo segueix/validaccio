@@ -53,14 +53,14 @@ Format recomanat de commit i PR: `[NNN] Nom de la funció`.
 
 Prioritats: **P0** imprescindible per al primer ús real; **P1** nucli metodològic; **P2** millora important; **P3** opcional o futura.
 
-### Foto d’estat — 2026-07-23
+### Foto d’estat — 2026-07-24
 
 | Situació | Funcions |
 |---|---|
-| **FET** | 001, 002, 003, 004, 006, 007, 009, 010, 101, 102, 103, 104, 105, 107, 201, 204, 205, 206, 209 i 502 |
+| **FET** | 001, 002, 003, 004, 006, 007, 009, 010, 101, 102, 103, 104, 105, 107, 201, 204, 205, 206, 209, 301 i 502 |
 | **EN CURS** | — |
 | **PARCIAL** | 005, 008, 501, 503 i 505 |
-| **SEGÜENT BLOC FUNCIONAL** | 211 → 216: anàlisi de sensibilitat i mapa d'abast del llibre 1 (Visconti vs. naips) |
+| **SEGÜENT BLOC FUNCIONAL** | 302 → 305: estructura de llibre, editor, versions i perfil d’estil de l’autor |
 
 Aquesta foto s’ha d’actualitzar dins de la mateixa PR que canviï qualsevol estat.
 
@@ -124,7 +124,7 @@ Aquesta foto s’ha d’actualitzar dins de la mateixa PR que canviï qualsevol 
 
 | ID | Funció | Prioritat | Depèn de | Estat | Criteri d'acceptació |
 |---:|---|:---:|---|---|---|
-| **301** | Importació del manuscrit | P0 | 002, 003, 102 | **PENDENT** | Importar DOCX, TXT o Markdown localment, conservar l'original intacte i crear una còpia de treball. |
+| **301** | Importació del manuscrit | P0 | 002, 003, 102 | **FET** | Importar DOCX, TXT o Markdown localment, conservar l'original intacte i crear una còpia de treball. |
 | **302** | Estructura de llibre i capítols | P0 | 301 | **PENDENT** | Detectar/reordenar parts, capítols i seccions amb títols, estat i objectiu argumental. |
 | **303** | Editor de capítols amb autodesat | P0 | 302 | **PENDENT** | Editar offline, autodesar transaccionalment i recuperar l'última versió coherent després d'un tancament inesperat. |
 | **304** | Versions i comparació textual | P1 | 303 | **PENDENT** | Crear instantànies, comparar canvis, restaurar una versió i conservar-ne l'autoria/origen. |
@@ -213,6 +213,7 @@ S'afegeix una fila després de cada funció acabada. No s'esborren entrades.
 | 2026-07-23 | 205 | `feat/205-registre-aid` | FET | Registre d'afirmacions amb codi **AID** seqüencial i estable (A1, A2…), **text exacte**, **capítol**, **estat** i **grau d'assertivitat** (escala ordinal de cinc nivells del marc). Cada afirmació es classifica per la **bifurcació de la certesa**: incondicional (fet mecànic verificable) o condicional (atributiva), amb recordatori que la condicional exigeix evidència documental diagnòstica. Nova vista «Afirmacions». Lògica pura provada (`lib/affirmations.ts`: model, tipus, assertivitat, estats, generació de codi) i esquema **v9** amb magatzem `affirmations` (índex per projecte); 8 proves noves (112 totals), incloent integració v8→v9 amb `fake-indexeddb`. Flux complet (crea afirmació condicional amb assertivitat + recàrrega persistent) verificat end-to-end en Chromium; lint i build verificats. |
 | 2026-07-23 | 206 | `feat/206-enllac-aid-eid` | FET | Enllaç **AID ↔ EID** amb **postura** (a favor / en contra / context) i **derivació** (cita literal / paràfrasi / inferència). Navegable en tots dos sentits: des de l'afirmació es veuen les evidències vinculades amb resum de postures, i des de l'evidència les afirmacions que hi depenen. Id determinista per parella (un únic enllaç per AID–EID) i **esborrat en cascada** en eliminar l'afirmació o l'evidència. Lògica pura provada (`lib/aid-eid-links.ts`: model, consultes bidireccionals, resum de postures) i esquema **v10** amb magatzem `links` (índexs projecte/AID/EID); 8 proves noves (120 totals), incloent integració v9→v10 amb `fake-indexeddb`. Flux complet (crea AID + EID, vincula, comprova la vista inversa, recàrrega persistent) verificat end-to-end en Chromium; lint i build verificats. |
 | 2026-07-23 | 209 | `feat/209-matriu-ach` | FET | Matriu ACH editable (files EID × columnes d'hipòtesi) amb valors **C/I/N** i **comentari obligatori** per a C i I. Calcula la **diagnosticitat** de cada evidència (discrimina / ornamental / incompleta) i la **puntuació de refutació** per hipòtesi (menys inconsistències = més sòlida, mètode de Heuer), amb la menys refutada ressaltada. Filtre «només diagnòstiques» i **exportació CSV** compatible amb fulls de càlcul. Lògica pura provada (`lib/ach-matrix.ts`: cel·les, diagnosticitat, puntuació, CSV) i esquema **v11** amb magatzem `cells` (índexs projecte/EID/hipòtesi) amb esborrat en cascada; 9 proves noves (129 totals), incloent integració v10→v11 amb `fake-indexeddb`. Flux complet (sembra H1/H2/H3, crea evidències, marca C/I/N, comprova diagnosticitat i puntuació, recàrrega persistent) verificat end-to-end en Chromium; lint i build verificats. |
+| 2026-07-24 | 301 | `feat/301-importacio-manuscrit` | FET | Importació local de **DOCX, TXT i Markdown** des de la vista «Capítols». Desa l’original en un magatzem separat i no sobreescrivible, identificat amb **SHA-256**, i crea una còpia de treball textual independent amb recompte de paraules i paràgrafs. Esquema **v12** amb magatzems `manuscripts` i `manuscriptOriginals`, transacció atòmica i recuperació per baixada de l’original. 4 proves noves (133 totals), incloent migració v11→v12, independència dels bytes i protecció contra sobreescriptura; lint, build i interfície verificats. |
 
 ## 7. Definició global de «fet»
 

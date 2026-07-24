@@ -11,10 +11,15 @@ import {
 
 test("l'esquema local té una versió explícita i magatzems separats", () => {
   assert.equal(LOCAL_DATABASE_SCHEMA.name, "validaccio-local");
-  assert.equal(LOCAL_DATABASE_SCHEMA.version, 11);
+  assert.equal(LOCAL_DATABASE_SCHEMA.version, 12);
   assert.equal(LOCAL_DATABASE_SCHEMA.dataVersion, PROJECT_DATA_VERSION);
   assert.equal(LOCAL_DATABASE_SCHEMA.stores.projects, "projects");
   assert.equal(LOCAL_DATABASE_SCHEMA.stores.metadata, "metadata");
+  assert.equal(LOCAL_DATABASE_SCHEMA.stores.manuscripts, "manuscripts");
+  assert.equal(
+    LOCAL_DATABASE_SCHEMA.stores.manuscriptOriginals,
+    "manuscriptOriginals",
+  );
 });
 
 test("normalitza un projecte de l'esquema antic sense perdre dades", () => {
