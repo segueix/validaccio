@@ -1,4 +1,8 @@
-import { requestResult, withTransaction } from "./database.ts";
+import {
+  requestResult,
+  withStoresTransaction,
+  withTransaction,
+} from "./database.ts";
 import {
   type DatabaseMetadata,
   normalizeProjectRecord,
@@ -13,6 +17,10 @@ import { type EvidenceRecord, normalizeEvidence } from "../evidence.ts";
 import { type Affirmation, normalizeAffirmation } from "../affirmations.ts";
 import { type AidEidLink, normalizeLink } from "../aid-eid-links.ts";
 import { type MatrixCell, normalizeCell } from "../ach-matrix.ts";
+import {
+  type ManuscriptOriginalRecord,
+  type ManuscriptRecord,
+} from "../manuscripts.ts";
 
 export class IndexedDbRepository<T extends { id: string }> {
   private readonly storeName: "projects";
@@ -408,6 +416,46 @@ class MatrixCellRepository {
   }
 }
 
+class ManuscriptRepository {
+  import(
+    manuscript: ManuscriptRecord,
+    original: ManuscriptOriginalRecord,
+  ): Promise<ManuscriptRecord> {
+    return withStoresTransaction(
+      ["manuscripts", "manuscriptOriginals"],
+      "readwrite",
+      async (transaction) => {
+        await requestResult(
+          transaction.objectStore("manuscripts").add(manuscript),
+        );
+        // `add`, i no `put`: un original existent no es pot sobreescriure.
+        await requestResult(
+          transaction.objectStore("manuscriptOriginals").add(original),
+        );
+        return manuscript;
+      },
+    );
+  }
+
+  getAllForProject(projectId: string): Promise<ManuscriptRecord[]> {
+    return withTransaction("manuscripts", "readonly", async (store) => {
+      const records = (await requestResult(
+        store.index("projectId").getAll(projectId),
+      )) as ManuscriptRecord[];
+      return records.sort((left, right) =>
+        right.importedAt.localeCompare(left.importedAt),
+      );
+    });
+  }
+
+  getOriginal(manuscriptId: string): Promise<ManuscriptOriginalRecord | null> {
+    return withTransaction("manuscriptOriginals", "readonly", async (store) => {
+      const result = await requestResult(store.get(manuscriptId));
+      return (result as ManuscriptOriginalRecord | undefined) ?? null;
+    });
+  }
+}
+
 export const projectRepository = new ProjectRepository();
 export const metadataRepository = new MetadataRepository();
 export const sourceRepository = new SourceRepository();
@@ -419,3 +467,4 @@ export const evidenceRepository = new EvidenceRepository();
 export const affirmationRepository = new AffirmationRepository();
 export const aidEidLinkRepository = new AidEidLinkRepository();
 export const matrixCellRepository = new MatrixCellRepository();
+export const manuscriptRepository = new ManuscriptRepository();

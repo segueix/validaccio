@@ -21,6 +21,7 @@ import {
   matrixCellRepository,
   evidenceRepository,
   hypothesisRepository,
+  manuscriptRepository,
   metadataRepository,
   pdfReferenceRepository,
   projectRepository,
@@ -42,6 +43,13 @@ import {
   createSourceBlobRecord,
   sourceBlobToObjectUrl,
 } from "../lib/source-blobs";
+import {
+  MANUSCRIPT_ACCEPT_ATTR,
+  ManuscriptImportError,
+  type ManuscriptRecord,
+  originalToObjectUrl,
+  prepareManuscriptImport,
+} from "../lib/manuscripts";
 import { createPdfReference, type PdfReference } from "../lib/pdf-references";
 import {
   type CitableNote,
@@ -254,9 +262,9 @@ const moduleCopy: Record<Exclude<ViewId, "tauler" | "salut" | "privadesa" | "fon
   },
   capitols: {
     eyebrow: "Taller d’obra",
-    title: "Capítols i versions",
-    body: "Prepara dossiers per a ChatGPT, importa les reescriptures i conserva la traça entre versions.",
-    status: "Prototip visible",
+    title: "Manuscrit i capítols",
+    body: "Importa l’obra localment i conserva l’original mentre prepares una còpia de treball.",
+    status: "Disponible",
   },
   validacio: {
     eyebrow: "Auditoria",
@@ -349,8 +357,12 @@ export default function Workspace() {
   const [links, setLinks] = useState<AidEidLink[]>([]);
   const [cells, setCells] = useState<MatrixCell[]>([]);
   const [cellDraft, setCellDraft] = useState<CellDraft | null>(null);
+  const [manuscripts, setManuscripts] = useState<ManuscriptRecord[]>([]);
+  const [manuscriptError, setManuscriptError] = useState("");
+  const [manuscriptImporting, setManuscriptImporting] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
   const sourceInput = useRef<HTMLInputElement>(null);
+  const manuscriptInput = useRef<HTMLInputElement>(null);
   const firewallRef = useRef<PrivacyFirewall | null>(null);
 
   async function loadSources(projectId: string) {
@@ -735,6 +747,70 @@ export default function Workspace() {
       setCells(await matrixCellRepository.getAllForProject(projectId));
     } catch {
       setCells([]);
+    }
+  }
+
+  async function loadManuscripts(projectId: string) {
+    try {
+      setManuscripts(await manuscriptRepository.getAllForProject(projectId));
+    } catch {
+      setManuscripts([]);
+    }
+  }
+
+  async function importManuscript(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setManuscriptImporting(true);
+    setManuscriptError("");
+    try {
+      const prepared = await prepareManuscriptImport({
+        projectId: project.id,
+        file: { name: file.name, type: file.type, size: file.size },
+        data: await file.arrayBuffer(),
+      });
+      const imported = await manuscriptRepository.import(
+        prepared.manuscript,
+        prepared.original,
+      );
+      setManuscripts((current) => [imported, ...current]);
+      setProject((current) => ({
+        ...current,
+        words: imported.wordCount,
+        updatedAt: new Date().toISOString(),
+      }));
+      setSaved(false);
+      setNotice("Manuscrit importat · original protegit i còpia de treball creada");
+    } catch (error) {
+      const message =
+        error instanceof ManuscriptImportError || error instanceof Error
+          ? error.message
+          : "No s’ha pogut importar el manuscrit.";
+      setManuscriptError(message);
+      setNotice("Importació del manuscrit incompleta");
+    } finally {
+      setManuscriptImporting(false);
+      event.target.value = "";
+    }
+  }
+
+  async function downloadOriginal(manuscript: ManuscriptRecord) {
+    try {
+      const original = await manuscriptRepository.getOriginal(manuscript.id);
+      if (!original) {
+        setManuscriptError("No s’ha trobat l’original protegit.");
+        return;
+      }
+      const url = originalToObjectUrl(original);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = manuscript.name;
+      document.body.append(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 0);
+    } catch {
+      setManuscriptError("No s’ha pogut recuperar l’original.");
     }
   }
 
@@ -1140,6 +1216,7 @@ export default function Workspace() {
       await loadAffirmations(activeProject.id);
       await loadLinks(activeProject.id);
       await loadCells(activeProject.id);
+      await loadManuscripts(activeProject.id);
     }
 
     prepareWorkspace()
@@ -1218,6 +1295,7 @@ export default function Workspace() {
     await loadAffirmations(nextProject.id);
     await loadLinks(nextProject.id);
     await loadCells(nextProject.id);
+    await loadManuscripts(nextProject.id);
   }
 
   async function createProject(title: string) {
@@ -1610,14 +1688,25 @@ export default function Workspace() {
         ) : (
           <ModuleView
             view={view}
-            project={project}
+            manuscripts={manuscripts}
+            manuscriptError={manuscriptError}
+            manuscriptImporting={manuscriptImporting}
             onExport={exportProject}
             onImport={() => fileInput.current?.click()}
+            onImportManuscript={() => manuscriptInput.current?.click()}
+            onDownloadOriginal={downloadOriginal}
           />
         )}
       </section>
 
       <input ref={fileInput} type="file" accept="application/json,.json" hidden onChange={importProject} />
+      <input
+        ref={manuscriptInput}
+        type="file"
+        accept={MANUSCRIPT_ACCEPT_ATTR}
+        hidden
+        onChange={importManuscript}
+      />
       <input
         ref={sourceInput}
         type="file"
@@ -1984,14 +2073,22 @@ function Dashboard({ project, setView }: { project: Project; setView: (view: Vie
 
 function ModuleView({
   view,
-  project,
+  manuscripts,
+  manuscriptError,
+  manuscriptImporting,
   onExport,
   onImport,
+  onImportManuscript,
+  onDownloadOriginal,
 }: {
   view: Exclude<ViewId, "tauler" | "salut" | "privadesa" | "fonts" | "extractes" | "hipotesis" | "evidencies" | "afirmacions" | "matriu">;
-  project: Project;
+  manuscripts: ManuscriptRecord[];
+  manuscriptError: string;
+  manuscriptImporting: boolean;
   onExport: () => void;
   onImport: () => void;
+  onImportManuscript: () => void;
+  onDownloadOriginal: (manuscript: ManuscriptRecord) => void;
 }) {
   const copy = moduleCopy[view];
   return (
@@ -2019,16 +2116,13 @@ function ModuleView({
           </button>
         </section>
       ) : view === "capitols" ? (
-        <section className="chapter-list">
-          {Array.from({ length: project.chapters }, (_, index) => (
-            <button key={index}>
-              <span>{String(index + 1).padStart(2, "0")}</span>
-              <strong>Capítol {index + 1}</strong>
-              <small>{index < 3 ? "Esborrany existent" : "Pendent d’importar"}</small>
-              <em>{index < 3 ? "Revisar" : "Preparar"} →</em>
-            </button>
-          ))}
-        </section>
+        <ManuscriptImporter
+          manuscripts={manuscripts}
+          error={manuscriptError}
+          importing={manuscriptImporting}
+          onImport={onImportManuscript}
+          onDownloadOriginal={onDownloadOriginal}
+        />
       ) : (
         <section className="empty-state">
           <div className="empty-orbit"><span>{views.find((item) => item.id === view)?.short}</span></div>
@@ -2040,6 +2134,87 @@ function ModuleView({
         </section>
       )}
     </div>
+  );
+}
+
+function ManuscriptImporter({
+  manuscripts,
+  error,
+  importing,
+  onImport,
+  onDownloadOriginal,
+}: {
+  manuscripts: ManuscriptRecord[];
+  error: string;
+  importing: boolean;
+  onImport: () => void;
+  onDownloadOriginal: (manuscript: ManuscriptRecord) => void;
+}) {
+  return (
+    <section className="manuscript-importer">
+      <div className="manuscript-callout">
+        <div>
+          <span className="eyebrow">Funció 301</span>
+          <h2>Importa el manuscrit sense tocar l’original</h2>
+          <p>
+            Accepta DOCX, TXT i Markdown. El fitxer original queda protegit al
+            navegador i Validacció crea una còpia de treball textual independent.
+          </p>
+        </div>
+        <button className="primary-button" onClick={onImport} disabled={importing}>
+          {importing ? "Important…" : "+ Importa un manuscrit"}
+        </button>
+      </div>
+
+      {error && (
+        <div className="import-error" role="alert">
+          <strong>No s’ha completat la importació</strong>
+          <span>{error}</span>
+        </div>
+      )}
+
+      {manuscripts.length === 0 ? (
+        <div className="manuscript-empty">
+          <strong>Encara no hi ha cap manuscrit importat</strong>
+          <span>El document no s’enviarà a internet ni s’afegirà al repositori.</span>
+        </div>
+      ) : (
+        <div className="manuscript-list">
+          {manuscripts.map((manuscript) => (
+            <article key={manuscript.id} className="manuscript-item">
+              <div className="manuscript-filemark">
+                {manuscript.kind === "docx"
+                  ? "DOCX"
+                  : manuscript.kind === "markdown"
+                    ? "MD"
+                    : "TXT"}
+              </div>
+              <div className="manuscript-copy">
+                <strong>{manuscript.name}</strong>
+                <span>
+                  {formatNumber(manuscript.wordCount)} paraules ·{" "}
+                  {formatNumber(manuscript.paragraphCount)} paràgrafs ·{" "}
+                  {formatSourceSize(manuscript.size)}
+                </span>
+                <small>
+                  Original SHA-256: {manuscript.originalSha256.slice(0, 12)}… ·
+                  còpia de treball preparada
+                </small>
+              </div>
+              <div className="manuscript-actions">
+                <span className="status-chip live">Local</span>
+                <button
+                  className="quiet-button"
+                  onClick={() => onDownloadOriginal(manuscript)}
+                >
+                  Baixa l’original
+                </button>
+              </div>
+            </article>
+          ))}
+        </div>
+      )}
+    </section>
   );
 }
 

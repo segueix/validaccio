@@ -2,7 +2,7 @@ import { normalizeProjectRecord, PROJECT_DATA_VERSION } from "./types.ts";
 
 export const LOCAL_DATABASE_SCHEMA = {
   name: "validaccio-local",
-  version: 11,
+  version: 12,
   dataVersion: PROJECT_DATA_VERSION,
   stores: {
     metadata: "metadata",
@@ -16,6 +16,8 @@ export const LOCAL_DATABASE_SCHEMA = {
     affirmations: "affirmations",
     links: "links",
     cells: "cells",
+    manuscripts: "manuscripts",
+    manuscriptOriginals: "manuscriptOriginals",
     legacyWorkspace: "workspace",
   },
 } as const;
@@ -31,7 +33,9 @@ export type LocalStoreName =
   | typeof LOCAL_DATABASE_SCHEMA.stores.evidence
   | typeof LOCAL_DATABASE_SCHEMA.stores.affirmations
   | typeof LOCAL_DATABASE_SCHEMA.stores.links
-  | typeof LOCAL_DATABASE_SCHEMA.stores.cells;
+  | typeof LOCAL_DATABASE_SCHEMA.stores.cells
+  | typeof LOCAL_DATABASE_SCHEMA.stores.manuscripts
+  | typeof LOCAL_DATABASE_SCHEMA.stores.manuscriptOriginals;
 
 let databasePromise: Promise<IDBDatabase> | null = null;
 
@@ -86,6 +90,30 @@ export async function withTransaction<T>(
       transaction.abort();
     } catch {
       // La transacció ja pot haver finalitzat abans que l'operació llanci l'error.
+    }
+    await completion.catch(() => undefined);
+    throw error;
+  }
+}
+
+export async function withStoresTransaction<T>(
+  storeNames: readonly LocalStoreName[],
+  mode: IDBTransactionMode,
+  operation: (transaction: IDBTransaction) => Promise<T> | T,
+): Promise<T> {
+  const database = await openLocalDatabase();
+  const transaction = database.transaction([...storeNames], mode);
+  const completion = transactionCompletion(transaction);
+
+  try {
+    const result = await operation(transaction);
+    await completion;
+    return result;
+  } catch (error) {
+    try {
+      transaction.abort();
+    } catch {
+      // Pot haver acabat abans que l'operació llanci l'error.
     }
     await completion.catch(() => undefined);
     throw error;
@@ -257,6 +285,29 @@ function upgradeDatabase(
   }
   if (!cells.indexNames.contains("hypothesisId")) {
     cells.createIndex("hypothesisId", "hypothesisId");
+  }
+
+  const manuscripts = database.objectStoreNames.contains(
+    LOCAL_DATABASE_SCHEMA.stores.manuscripts,
+  )
+    ? transaction.objectStore(LOCAL_DATABASE_SCHEMA.stores.manuscripts)
+    : database.createObjectStore(LOCAL_DATABASE_SCHEMA.stores.manuscripts, {
+        keyPath: "id",
+      });
+  if (!manuscripts.indexNames.contains("projectId")) {
+    manuscripts.createIndex("projectId", "projectId");
+  }
+
+  const manuscriptOriginals = database.objectStoreNames.contains(
+    LOCAL_DATABASE_SCHEMA.stores.manuscriptOriginals,
+  )
+    ? transaction.objectStore(LOCAL_DATABASE_SCHEMA.stores.manuscriptOriginals)
+    : database.createObjectStore(
+        LOCAL_DATABASE_SCHEMA.stores.manuscriptOriginals,
+        { keyPath: "manuscriptId" },
+      );
+  if (!manuscriptOriginals.indexNames.contains("projectId")) {
+    manuscriptOriginals.createIndex("projectId", "projectId");
   }
 
   metadata.put({

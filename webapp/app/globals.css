@@ -140,6 +140,47 @@ button { color: inherit; }
 .chapter-list small { color: var(--muted); font-size: 10px; }
 .chapter-list em { color: var(--forest-2); font-size: 10px; font-style: normal; font-weight: 700; }
 
+/* Funció 301 — Importació local del manuscrit */
+.manuscript-importer { display: grid; gap: 16px; }
+.manuscript-callout {
+  display: flex; align-items: center; justify-content: space-between; gap: 30px;
+  padding: 28px 30px; border-radius: 14px; background: var(--forest); color: white;
+}
+.manuscript-callout h2 { margin: 8px 0; font: 700 24px Georgia, serif; }
+.manuscript-callout p {
+  max-width: 650px; margin: 0; color: rgba(255,255,255,.68);
+  font-size: 12px; line-height: 1.65;
+}
+.manuscript-callout .eyebrow { color: var(--lime); }
+.manuscript-callout .primary-button { flex: 0 0 auto; background: var(--lime); color: var(--ink); }
+.manuscript-empty {
+  display: grid; justify-items: center; gap: 8px; padding: 54px 30px;
+  border: 1px dashed #bfc8c3; border-radius: 14px; background: rgba(255,255,255,.48);
+  text-align: center;
+}
+.manuscript-empty strong { font: 700 17px Georgia, serif; }
+.manuscript-empty span { color: var(--muted); font-size: 11px; }
+.import-error {
+  display: grid; gap: 4px; padding: 13px 16px; border: 1px solid #e2b7b0;
+  border-radius: 10px; background: #f8e9e6; color: #7e342a; font-size: 12px;
+}
+.manuscript-list { display: grid; gap: 10px; }
+.manuscript-item {
+  display: grid; grid-template-columns: 58px minmax(0, 1fr) auto;
+  align-items: center; gap: 16px; padding: 17px 19px;
+  border: 1px solid var(--line); border-radius: 12px; background: white;
+}
+.manuscript-filemark {
+  width: 52px; height: 58px; display: grid; place-items: center;
+  border-radius: 8px; background: var(--sand); color: var(--forest-2);
+  font-size: 10px; font-weight: 800; letter-spacing: .05em;
+}
+.manuscript-copy { min-width: 0; display: grid; gap: 5px; }
+.manuscript-copy strong { overflow: hidden; text-overflow: ellipsis; font: 700 15px Georgia, serif; }
+.manuscript-copy span, .manuscript-copy small { color: var(--muted); font-size: 10px; }
+.manuscript-copy small { font-family: "Courier New", monospace; }
+.manuscript-actions { display: flex; align-items: center; gap: 12px; }
+
 .modal-backdrop { position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; padding: 20px; background: rgba(16,31,27,.47); backdrop-filter: blur(4px); }
 .modal { width: min(450px, 100%); padding: 30px; border-radius: 16px; background: white; box-shadow: 0 30px 90px rgba(0,0,0,.18); }
 .modal h2 { margin: 8px 0 25px; font: 700 26px Georgia, serif; }
@@ -327,6 +368,10 @@ button { color: inherit; }
   .module-hero .status-chip { display: inline-block; margin-top: 22px; }
   .chapter-list button { grid-template-columns: 36px 1fr auto; }
   .chapter-list small { display: none; }
+  .manuscript-callout { display: grid; padding: 23px; }
+  .manuscript-callout .primary-button { justify-self: start; }
+  .manuscript-item { grid-template-columns: 50px 1fr; }
+  .manuscript-actions { grid-column: 1 / -1; justify-content: space-between; }
 }
 
 
