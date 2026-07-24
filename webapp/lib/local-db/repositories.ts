@@ -29,6 +29,10 @@ import {
   type ChapterDraft,
   normalizeChapterDraft,
 } from "../chapter-editor.ts";
+import {
+  type ChapterVersion,
+  normalizeChapterVersion,
+} from "../chapter-versions.ts";
 
 export class IndexedDbRepository<T extends { id: string }> {
   private readonly storeName: "projects";
@@ -546,6 +550,56 @@ class ChapterDraftRepository {
   }
 }
 
+class ChapterVersionRepository {
+  add(record: ChapterVersion): Promise<ChapterVersion> {
+    const normalized = normalizeChapterVersion(record);
+    return withTransaction("chapterVersions", "readwrite", async (store) => {
+      await requestResult(store.add(normalized));
+      return normalized;
+    });
+  }
+
+  getAllForChapter(chapterId: string): Promise<ChapterVersion[]> {
+    return withTransaction("chapterVersions", "readonly", async (store) => {
+      const records = (await requestResult(
+        store.index("chapterId").getAll(chapterId),
+      )) as ChapterVersion[];
+      return records
+        .map(normalizeChapterVersion)
+        .sort((left, right) => right.createdAt.localeCompare(left.createdAt));
+    });
+  }
+
+  restore(
+    draft: ChapterDraft,
+    backup: ChapterVersion,
+    savedAt = new Date().toISOString(),
+  ): Promise<ChapterDraft> {
+    const normalizedDraft = normalizeChapterDraft(draft);
+    const normalizedBackup = normalizeChapterVersion(backup);
+    if (
+      normalizedDraft.projectId !== normalizedBackup.projectId ||
+      normalizedDraft.manuscriptId !== normalizedBackup.manuscriptId ||
+      normalizedDraft.chapterId !== normalizedBackup.chapterId ||
+      normalizedBackup.origin !== "pre-restauracio"
+    ) {
+      throw new TypeError("La restauració i la còpia prèvia no coincideixen.");
+    }
+    return withStoresTransaction(
+      ["chapterDrafts", "chapterVersions"],
+      "readwrite",
+      async (transaction) => {
+        const versionStore = transaction.objectStore("chapterVersions");
+        const draftStore = transaction.objectStore("chapterDrafts");
+        await requestResult(versionStore.add(normalizedBackup));
+        const saved = { ...normalizedDraft, savedAt };
+        await requestResult(draftStore.put(saved));
+        return saved;
+      },
+    );
+  }
+}
+
 export const projectRepository = new ProjectRepository();
 export const metadataRepository = new MetadataRepository();
 export const sourceRepository = new SourceRepository();
@@ -560,3 +614,4 @@ export const matrixCellRepository = new MatrixCellRepository();
 export const manuscriptRepository = new ManuscriptRepository();
 export const bookNodeRepository = new BookNodeRepository();
 export const chapterDraftRepository = new ChapterDraftRepository();
+export const chapterVersionRepository = new ChapterVersionRepository();

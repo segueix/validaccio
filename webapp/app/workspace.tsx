@@ -1,3 +1,6 @@
+Warning: truncated output (original token count: 43685)
+Total output lines: 4976
+
 "use client";
 
 import { ChangeEvent, FormEvent, lazy, Suspense, useEffect, useRef, useState } from "react";
@@ -18,6 +21,7 @@ import {
   aidEidLinkRepository,
   bookNodeRepository,
   chapterDraftRepository,
+  chapterVersionRepository,
   citableNoteRepository,
   ensureProjectsMigrated,
   matrixCellRepository,
@@ -66,6 +70,13 @@ import {
   createChapterDraft,
   updateChapterDraft,
 } from "../lib/chapter-editor";
+import {
+  type ChapterVersion,
+  compareChapterTexts,
+  createChapterVersion,
+  prepareChapterRestoration,
+  summarizeTextDiff,
+} from "../lib/chapter-versions";
 import { createPdfReference, type PdfReference } from "../lib/pdf-references";
 import {
   type CitableNote,
@@ -393,6 +404,14 @@ export default function Workspace() {
   const [chapterSaveState, setChapterSaveState] =
     useState<ChapterSaveState>("idle");
   const [chapterRecoveryNotice, setChapterRecoveryNotice] = useState("");
+  const [chapterVersions, setChapterVersions] = useState<ChapterVersion[]>([]);
+  const [selectedChapterVersionId, setSelectedChapterVersionId] = useState("");
+  const [chapterVersionInput, setChapterVersionInput] = useState({
+    label: "",
+    author: "",
+    note: "",
+  });
+  const [chapterVersionNotice, setChapterVersionNotice] = useState("");
   const fileInput = useRef<HTMLInputElement>(null);
   const sourceInput = useRef<HTMLInputElement>(null);
   const manuscriptInput = useRef<HTMLInputElement>(null);
@@ -810,6 +829,9 @@ export default function Workspace() {
     setActiveChapterId("");
     setChapterDraft(null);
     chapterDraftRef.current = null;
+    setChapterVersions([]);
+    setSelectedChapterVersionId("");
+    setChapterVersionNotice("");
     setChapterSaveState("idle");
     setChapterRecoveryNotice("");
   }
@@ -999,7 +1021,13 @@ export default function Workspace() {
     setActiveChapterId(chapter.id);
     setChapterSaveState("loading");
     setChapterRecoveryNotice("");
+    setChapterVersionNotice("");
+    setSelectedChapterVersionId("");
     try {
+      const versions = await chapterVersionRepository.getAllForChapter(
+        chapter.id,
+      );
+      setChapterVersions(versions);
       const recovered = await chapterDraftRepository.get(chapter.id);
       if (recovered) {
         chapterDraftRef.current = recovered;
@@ -1028,6 +1056,7 @@ export default function Workspace() {
     } catch {
       chapterDraftRef.current = null;
       setChapterDraft(null);
+      setChapterVersions([]);
       setChapterSaveState("error");
     }
   }
@@ -1049,6 +1078,80 @@ export default function Workspace() {
     }, 500);
   }
 
+  async function createChapterSnapshot() {
+    const current = chapterDraftRef.current;
+    if (!current) return;
+    setChapterVersionNotice("");
+    try {
+      await persistChapterDraft(current);
+      const version = createChapterVersion(current, chapterVersionInput);
+      await chapterVersionRepository.add(version);
+      setChapterVersions((versions) => [version, ...versions]);
+      setSelectedChapterVersionId(version.id);
+      setChapterVersionInput((input) => ({ ...input, label: "", note: "" }));
+      setChapterVersionNotice("Instantània creada i conservada localment.");
+    } catch (error) {
+      setChapterVersionNotice(
+        error instanceof Error
+          ? error.message
+          : "No s’ha pogut crear la instantània.",
+      );
+    }
+  }
+
+  async function restoreChapterVersion(version: ChapterVersion) {
+    const current = chapterDraftRef.current;
+    if (!current) return;
+    const author = chapterVersionInput.author.trim();
+    if (!author) {
+      setChapterVersionNotice(
+        "Indica l’autoria abans de restaurar: quedarà registrada a la còpia prèvia.",
+      );
+      return;
+    }
+    if (
+      !window.confirm(
+        `Vols restaurar «${version.label}»? Abans es conservarà una còpia del text actual.`,
+      )
+    ) {
+      return;
+    }
+    if (chapterSaveTimerRef.current !== null) {
+      window.clearTimeout(chapterSaveTimerRef.current);
+      chapterSaveTimerRef.current = null;
+    }
+    setChapterVersionNotice("");
+    setChapterSaveState("saving");
+    try {
+      await persistChapterDraft(current);
+      const { restoredDraft, backupVersion } = prepareChapterRestoration(
+        current,
+        version,
+        author,
+      );
+      const savedDraft = await chapterVersionRepository.restore(
+        restoredDraft,
+        backupVersion,
+      );
+      chapterDraftRef.current = savedDraft;
+      setChapterDraft(savedDraft);
+      setChapterSaveState("saved");
+      setChapterVersions(
+        await chapterVersionRepository.getAllForChapter(current.chapterId),
+      );
+      setChapterVersionNotice(
+        `S’ha restaurat «${version.label}». El text anterior continua disponible a l’historial.`,
+      );
+    } catch (error) {
+      setChapterSaveState("error");
+      setChapterVersionNotice(
+        error instanceof Error
+          ? error.message
+          : "No s’ha pogut restaurar la versió.",
+      );
+    }
+  }
+
   async function selectManuscript(id: string) {
     if (chapterSaveTimerRef.current !== null) {
       window.clearTimeout(chapterSaveTimerRef.current);
@@ -1060,6 +1163,9 @@ export default function Workspace() {
     setActiveChapterId("");
     setChapterDraft(null);
     chapterDraftRef.current = null;
+    setChapterVersions([]);
+    setSelectedChapterVersionId("");
+    setChapterVersionNotice("");
     setChapterSaveState("idle");
     setChapterRecoveryNotice("");
   }
@@ -1978,6 +2084,10 @@ export default function Workspace() {
             chapterDraft={chapterDraft}
             chapterSaveState={chapterSaveState}
             chapterRecoveryNotice={chapterRecoveryNotice}
+            chapterVersions={chapterVersions}
+            selectedChapterVersionId={selectedChapterVersionId}
+            chapterVersionInput={chapterVersionInput}
+            chapterVersionNotice={chapterVersionNotice}
             onExport={exportProject}
             onImport={() => fileInput.current?.click()}
             onImportManuscript={() => manuscriptInput.current?.click()}
@@ -1991,6 +2101,12 @@ export default function Workspace() {
             onOpenChapter={openChapterEditor}
             onChapterContentChange={editChapterContent}
             onSaveChapter={() => persistChapterDraft()}
+            onSelectChapterVersion={setSelectedChapterVersionId}
+            onChapterVersionInputChange={(patch) =>
+              setChapterVersionInput((input) => ({ ...input, ...patch }))
+            }
+            onCreateChapterSnapshot={createChapterSnapshot}
+            onRestoreChapterVersion={restoreChapterVersion}
           />
         )}
       </section>
@@ -2316,347 +2432,7 @@ function Dashboard({ project, setView }: { project: Project; setView: (view: Vie
           <span className="outline-badge">Fase {project.phase} de 7</span>
         </div>
         <div className="phase-track">
-          {phases.map((phase, index) => (
-            <button key={phase} className={index <= project.phase ? "phase active" : "phase"}>
-              <span>{index === 0 ? "✓" : index}</span>
-              <small>{phase}</small>
-            </button>
-          ))}
-        </div>
-      </section>
-
-      <section className="dashboard-grid">
-        <article className="stat-panel manuscript-panel">
-          <div className="panel-topline">
-            <span className="eyebrow">Manuscrit actual</span>
-            <span className="status-chip live">Local</span>
-          </div>
-          <h3>{project.title}</h3>
-          <p>La interfície no conté el document: només mostra el projecte de treball guardat en aquest dispositiu.</p>
-          <div className="metrics">
-            <div><strong>{project.chapters}</strong><span>capítols</span></div>
-            <div><strong>{formatNumber(project.words)}</strong><span>paraules</span></div>
-            <div><strong>{project.notes}</strong><span>notes</span></div>
-          </div>
-          <button className="text-button" onClick={() => setView("capitols")}>Gestiona els capítols →</button>
-        </article>
-
-        <article className="stat-panel">
-          <div className="panel-topline">
-            <span className="eyebrow">Traçabilitat</span>
-            <span className="status-chip">Estructura</span>
-          </div>
-          <div className="trace-score"><strong>0%</strong><span>encara sense dades importades</span></div>
-          <div className="bar"><span style={{ width: "2%" }} /></div>
-          <ul className="check-list">
-            <li><span>○</span> Afirmacions amb AID</li>
-            <li><span>○</span> Evidències amb pàgina</li>
-            <li><span>○</span> Inferències justificades</li>
-          </ul>
-          <button className="text-button" onClick={() => setView("validacio")}>Obre la validació →</button>
-        </article>
-      </section>
-
-      <section className="module-strip">
-        <button onClick={() => setView("fonts")}><span>01</span><strong>Fonts</strong><small>Biblioteca i extractes</small></button>
-        <button onClick={() => setView("evidencies")}><span>02</span><strong>Evidències</strong><small>Registre EID</small></button>
-        <button onClick={() => setView("matriu")}><span>03</span><strong>Matriu ACH</strong><small>Consistència H×E</small></button>
-        <button onClick={() => setView("capitols")}><span>04</span><strong>Obra</strong><small>Versions i dossiers</small></button>
-      </section>
-    </div>
-  );
-}
-
-function ModuleView({
-  view,
-  manuscripts,
-  manuscriptError,
-  manuscriptImporting,
-  bookNodes,
-  activeManuscriptId,
-  bookNodeDraft,
-  activeChapterId,
-  chapterDraft,
-  chapterSaveState,
-  chapterRecoveryNotice,
-  onExport,
-  onImport,
-  onImportManuscript,
-  onDownloadOriginal,
-  onSelectManuscript,
-  onDetectStructure,
-  onEditBookNode,
-  onBookNodeDraftChange,
-  onSaveBookNode,
-  onReorderBookNode,
-  onOpenChapter,
-  onChapterContentChange,
-  onSaveChapter,
-}: {
-  view: Exclude<ViewId, "tauler" | "salut" | "privadesa" | "fonts" | "extractes" | "hipotesis" | "evidencies" | "afirmacions" | "matriu">;
-  manuscripts: ManuscriptRecord[];
-  manuscriptError: string;
-  manuscriptImporting: boolean;
-  bookNodes: BookNode[];
-  activeManuscriptId: string;
-  bookNodeDraft: BookNode | null;
-  activeChapterId: string;
-  chapterDraft: ChapterDraft | null;
-  chapterSaveState: ChapterSaveState;
-  chapterRecoveryNotice: string;
-  onExport: () => void;
-  onImport: () => void;
-  onImportManuscript: () => void;
-  onDownloadOriginal: (manuscript: ManuscriptRecord) => void;
-  onSelectManuscript: (id: string) => void;
-  onDetectStructure: (id: string) => void;
-  onEditBookNode: (node: BookNode) => void;
-  onBookNodeDraftChange: (patch: Partial<BookNode>) => void;
-  onSaveBookNode: () => void;
-  onReorderBookNode: (id: string, direction: -1 | 1) => void;
-  onOpenChapter: (chapter: BookNode) => void;
-  onChapterContentChange: (content: string) => void;
-  onSaveChapter: () => void;
-}) {
-  const copy = moduleCopy[view];
-  return (
-    <div className="page-content module-page">
-      <section className="module-hero">
-        <div>
-          <span className="eyebrow">{copy.eyebrow}</span>
-          <h1>{copy.title}</h1>
-          <p>{copy.body}</p>
-        </div>
-        <span className={copy.status === "Disponible" ? "status-chip live" : "status-chip"}>{copy.status}</span>
-      </section>
-
-      {view === "exporta" ? (
-        <section className="action-grid">
-          <button className="action-card" onClick={onExport}>
-            <span className="action-icon">↓</span>
-            <strong>Exporta el projecte</strong>
-            <small>Descarrega un paquet versionat amb manifest i integritat SHA-256.</small>
-          </button>
-          <button className="action-card" onClick={onImport}>
-            <span className="action-icon">↑</span>
-            <strong>Restaura una còpia</strong>
-            <small>Valida la còpia abans de restaurar-la o substituir dades locals.</small>
-          </button>
-        </section>
-      ) : view === "capitols" ? (
-        <ManuscriptImporter
-          manuscripts={manuscripts}
-          error={manuscriptError}
-          importing={manuscriptImporting}
-          bookNodes={bookNodes}
-          activeManuscriptId={activeManuscriptId}
-          draft={bookNodeDraft}
-          activeChapterId={activeChapterId}
-          chapterDraft={chapterDraft}
-          chapterSaveState={chapterSaveState}
-          chapterRecoveryNotice={chapterRecoveryNotice}
-          onImport={onImportManuscript}
-          onDownloadOriginal={onDownloadOriginal}
-          onSelectManuscript={onSelectManuscript}
-          onDetectStructure={onDetectStructure}
-          onEditBookNode={onEditBookNode}
-          onDraftChange={onBookNodeDraftChange}
-          onSaveNode={onSaveBookNode}
-          onReorder={onReorderBookNode}
-          onOpenChapter={onOpenChapter}
-          onChapterContentChange={onChapterContentChange}
-          onSaveChapter={onSaveChapter}
-        />
-      ) : (
-        <section className="empty-state">
-          <div className="empty-orbit"><span>{views.find((item) => item.id === view)?.short}</span></div>
-          <h2>La funció ja té lloc dins del flux</h2>
-          <p>
-            Aquesta primera interfície permet validar l’arquitectura. En la següent iteració hi connectarem les dades reals del repositori i l’edició local.
-          </p>
-          <button className="primary-button">Prepara la primera acció</button>
-        </section>
-      )}
-    </div>
-  );
-}
-
-function ManuscriptImporter({
-  manuscripts,
-  error,
-  importing,
-  bookNodes,
-  activeManuscriptId,
-  draft,
-  activeChapterId,
-  chapterDraft,
-  chapterSaveState,
-  chapterRecoveryNotice,
-  onImport,
-  onDownloadOriginal,
-  onSelectManuscript,
-  onDetectStructure,
-  onEditBookNode,
-  onDraftChange,
-  onSaveNode,
-  onReorder,
-  onOpenChapter,
-  onChapterContentChange,
-  onSaveChapter,
-}: {
-  manuscripts: ManuscriptRecord[];
-  error: string;
-  importing: boolean;
-  bookNodes: BookNode[];
-  activeManuscriptId: string;
-  draft: BookNode | null;
-  activeChapterId: string;
-  chapterDraft: ChapterDraft | null;
-  chapterSaveState: ChapterSaveState;
-  chapterRecoveryNotice: string;
-  onImport: () => void;
-  onDownloadOriginal: (manuscript: ManuscriptRecord) => void;
-  onSelectManuscript: (id: string) => void;
-  onDetectStructure: (id: string) => void;
-  onEditBookNode: (node: BookNode) => void;
-  onDraftChange: (patch: Partial<BookNode>) => void;
-  onSaveNode: () => void;
-  onReorder: (id: string, direction: -1 | 1) => void;
-  onOpenChapter: (chapter: BookNode) => void;
-  onChapterContentChange: (content: string) => void;
-  onSaveChapter: () => void;
-}) {
-  const activeManuscript =
-    manuscripts.find((manuscript) => manuscript.id === activeManuscriptId) ??
-    manuscripts[0] ??
-    null;
-  const activeNodes = activeManuscript
-    ? bookNodes.filter((node) => node.manuscriptId === activeManuscript.id)
-    : [];
-  const rows = bookTree(activeNodes);
-  const counts = {
-    parts: activeNodes.filter((node) => node.kind === "part").length,
-    chapters: activeNodes.filter((node) => node.kind === "chapter").length,
-    sections: activeNodes.filter((node) => node.kind === "section").length,
-  };
-  const chapters = rows.filter((node) => node.kind === "chapter");
-  const chapterSaveCopy: Record<ChapterSaveState, string> = {
-    idle: "Selecciona un capítol",
-    loading: "Carregant…",
-    dirty: "Canvis pendents",
-    saving: "Desant…",
-    saved: "Desat localment",
-    error: "Error d’autodesat",
-  };
-
-  return (
-    <section className="manuscript-importer">
-      <div className="manuscript-callout">
-        <div>
-          <span className="eyebrow">Funció 301</span>
-          <h2>Importa el manuscrit sense tocar l’original</h2>
-          <p>
-            Accepta DOCX, TXT i Markdown. El fitxer original queda protegit al
-            navegador i Validacció crea una còpia de treball textual independent.
-          </p>
-        </div>
-        <button className="primary-button" onClick={onImport} disabled={importing}>
-          {importing ? "Important…" : "+ Importa un manuscrit"}
-        </button>
-      </div>
-
-      {error && (
-        <div className="import-error" role="alert">
-          <strong>No s’ha completat la importació</strong>
-          <span>{error}</span>
-        </div>
-      )}
-
-      {manuscripts.length === 0 ? (
-        <div className="manuscript-empty">
-          <strong>Encara no hi ha cap manuscrit importat</strong>
-          <span>El document no s’enviarà a internet ni s’afegirà al repositori.</span>
-        </div>
-      ) : (
-        <div className="manuscript-list">
-          {manuscripts.map((manuscript) => (
-            <article
-              key={manuscript.id}
-              className={
-                manuscript.id === activeManuscript?.id
-                  ? "manuscript-item active"
-                  : "manuscript-item"
-              }
-            >
-              <div className="manuscript-filemark">
-                {manuscript.kind === "docx"
-                  ? "DOCX"
-                  : manuscript.kind === "markdown"
-                    ? "MD"
-                    : "TXT"}
-              </div>
-              <div className="manuscript-copy">
-                <strong>{manuscript.name}</strong>
-                <span>
-                  {formatNumber(manuscript.wordCount)} paraules ·{" "}
-                  {formatNumber(manuscript.paragraphCount)} paràgrafs ·{" "}
-                  {formatSourceSize(manuscript.size)}
-                </span>
-                <small>
-                  Original SHA-256: {manuscript.originalSha256.slice(0, 12)}… ·
-                  còpia de treball preparada
-                </small>
-              </div>
-              <div className="manuscript-actions">
-                <span className="status-chip live">Local</span>
-                <button
-                  className="text-button"
-                  onClick={() => onSelectManuscript(manuscript.id)}
-                >
-                  Estructura
-                </button>
-                <button
-                  className="quiet-button"
-                  onClick={() => onDownloadOriginal(manuscript)}
-                >
-                  Baixa l’original
-                </button>
-              </div>
-            </article>
-          ))}
-        </div>
-      )}
-
-      {activeManuscript && (
-        <>
-          <section className="book-structure">
-          <header className="book-structure-head">
-            <div>
-              <span className="eyebrow">Funció 302</span>
-              <h2>Estructura del llibre</h2>
-              <p>
-                {activeManuscript.name} · {counts.parts} parts ·{" "}
-                {counts.chapters} capítols · {counts.sections} seccions
-              </p>
-            </div>
-            <button
-              className="primary-button"
-              onClick={() => onDetectStructure(activeManuscript.id)}
-            >
-              {activeNodes.length > 0
-                ? "Torna a detectar"
-                : "Detecta l’estructura"}
-            </button>
-          </header>
-
-          {activeNodes.length === 0 ? (
-            <div className="structure-empty">
-              <strong>Encara no s’ha detectat l’estructura</strong>
-              <span>
-                Validacció buscarà encapçalaments explícits sense interpretar ni
-                dividir arbitràriament el contingut.
-              </span>
-            </div>
+    …3685 tokens truncated…      </div>
           ) : (
             <div className="structure-layout">
               <div className="structure-tree" aria-label="Estructura detectada">
@@ -2864,6 +2640,191 @@ function ManuscriptImporter({
                       }
                       spellCheck
                     />
+                    <section className="chapter-versions-panel">
+                      <header>
+                        <div>
+                          <span className="eyebrow">Funció 304</span>
+                          <h3>Versions i comparació textual</h3>
+                          <p>
+                            Crea punts de retorn amb autoria. Les instantànies
+                            són immutables i una restauració conserva abans el
+                            text actual.
+                          </p>
+                        </div>
+                        <span className="version-count">
+                          {chapterVersions.length}{" "}
+                          {chapterVersions.length === 1 ? "versió" : "versions"}
+                        </span>
+                      </header>
+
+                      <div className="chapter-version-create">
+                        <label>
+                          <span>Nom de la instantània</span>
+                          <input
+                            value={chapterVersionInput.label}
+                            placeholder="Ex. Argument revisat"
+                            onChange={(event) =>
+                              onChapterVersionInputChange({
+                                label: event.target.value,
+                              })
+                            }
+                          />
+                        </label>
+                        <label>
+                          <span>Autoria</span>
+                          <input
+                            value={chapterVersionInput.author}
+                            placeholder="Nom de l’autor/a"
+                            onChange={(event) =>
+                              onChapterVersionInputChange({
+                                author: event.target.value,
+                              })
+                            }
+                          />
+                        </label>
+                        <label className="version-note-field">
+                          <span>Nota opcional</span>
+                          <input
+                            value={chapterVersionInput.note}
+                            placeholder="Què consolida aquesta versió?"
+                            onChange={(event) =>
+                              onChapterVersionInputChange({
+                                note: event.target.value,
+                              })
+                            }
+                          />
+                        </label>
+                        <button
+                          className="primary-button"
+                          onClick={onCreateChapterSnapshot}
+                        >
+                          Crea instantània
+                        </button>
+                      </div>
+
+                      {chapterVersionNotice && (
+                        <div className="version-notice" role="status">
+                          {chapterVersionNotice}
+                        </div>
+                      )}
+
+                      {chapterVersions.length === 0 ? (
+                        <div className="version-empty">
+                          <strong>Encara no hi ha cap instantània</strong>
+                          <span>
+                            El text actual continua protegit per l’autodesat.
+                            Crea una versió quan vulguis fixar una fita.
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="chapter-version-workspace">
+                          <nav
+                            className="version-history"
+                            aria-label="Historial de versions del capítol"
+                          >
+                            {chapterVersions.map((version) => (
+                              <button
+                                key={version.id}
+                                className={
+                                  selectedChapterVersion?.id === version.id
+                                    ? "active"
+                                    : undefined
+                                }
+                                onClick={() =>
+                                  onSelectChapterVersion(version.id)
+                                }
+                              >
+                                <strong>{version.label}</strong>
+                                <small>
+                                  {version.author} ·{" "}
+                                  {new Date(version.createdAt).toLocaleString(
+                                    "ca-ES",
+                                    {
+                                      day: "2-digit",
+                                      month: "2-digit",
+                                      year: "numeric",
+                                      hour: "2-digit",
+                                      minute: "2-digit",
+                                    },
+                                  )}
+                                </small>
+                                <span>
+                                  {version.origin === "manual"
+                                    ? "Instantània manual"
+                                    : "Còpia prèvia a restauració"}{" "}
+                                  · revisió {version.sourceRevision}
+                                </span>
+                              </button>
+                            ))}
+                          </nav>
+
+                          {selectedChapterVersion ? (
+                            <div className="version-comparison">
+                              <div className="version-comparison-head">
+                                <div>
+                                  <strong>
+                                    «{selectedChapterVersion.label}» → text
+                                    actual
+                                  </strong>
+                                  <small>
+                                    +{chapterDiffSummary.added} afegides · −
+                                    {chapterDiffSummary.removed} eliminades ·{" "}
+                                    {chapterDiffSummary.unchanged} conservades
+                                  </small>
+                                </div>
+                                <button
+                                  className="quiet-button"
+                                  onClick={() =>
+                                    onRestoreChapterVersion(
+                                      selectedChapterVersion,
+                                    )
+                                  }
+                                >
+                                  Restaura aquesta versió
+                                </button>
+                              </div>
+                              {selectedChapterVersion.note && (
+                                <p className="version-note">
+                                  {selectedChapterVersion.note}
+                                </p>
+                              )}
+                              <div
+                                className="text-diff"
+                                aria-label="Comparació entre la versió i el text actual"
+                              >
+                                {chapterDiff.map((line, index) => (
+                                  <div
+                                    key={`${line.kind}-${line.beforeLine}-${line.afterLine}-${index}`}
+                                    className={`diff-line ${line.kind}`}
+                                  >
+                                    <span>
+                                      {line.beforeLine ?? "·"} /{" "}
+                                      {line.afterLine ?? "·"}
+                                    </span>
+                                    <b>
+                                      {line.kind === "added"
+                                        ? "+"
+                                        : line.kind === "removed"
+                                          ? "−"
+                                          : " "}
+                                    </b>
+                                    <code>{line.text || " "}</code>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="version-empty">
+                              <strong>Selecciona una versió</strong>
+                              <span>
+                                En veuràs els canvis respecte del text actual i
+                                la podràs restaurar.
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </section>
                   </div>
                 ) : (
                   <div className="chapter-editor-empty">

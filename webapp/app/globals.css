@@ -315,6 +315,99 @@ button { color: inherit; }
 .chapter-editor-empty strong { color: var(--ink); font: 700 16px Georgia, serif; }
 .chapter-editor-empty span { max-width: 440px; font-size: 11px; line-height: 1.55; }
 
+/* Funció 304 — Versions, comparació textual i restauració reversible */
+.chapter-versions-panel { border-top: 1px solid var(--line); background: #f8f8f3; }
+.chapter-versions-panel > header {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 20px;
+  padding: 22px 24px 16px;
+}
+.chapter-versions-panel h3 { margin: 5px 0; font: 700 19px Georgia, serif; }
+.chapter-versions-panel header p {
+  max-width: 610px; margin: 0; color: var(--muted); font-size: 10px; line-height: 1.55;
+}
+.version-count {
+  flex: 0 0 auto; padding: 5px 9px; border: 1px solid var(--line);
+  border-radius: 999px; background: white; color: var(--forest-2);
+  font-size: 9px; font-weight: 800;
+}
+.chapter-version-create {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 11px;
+  padding: 0 24px 20px;
+}
+.chapter-version-create label { display: grid; gap: 5px; }
+.chapter-version-create label > span {
+  color: var(--muted); font-size: 9px; font-weight: 800;
+}
+.chapter-version-create input {
+  width: 100%; padding: 10px 11px; border: 1px solid var(--line);
+  border-radius: 8px; background: white; outline: none; font: inherit;
+}
+.chapter-version-create input:focus {
+  border-color: var(--forest-2); box-shadow: 0 0 0 3px rgba(36,91,79,.1);
+}
+.chapter-version-create .primary-button { align-self: end; justify-self: start; }
+.version-notice {
+  margin: 0 24px 18px; padding: 10px 12px; border: 1px solid #bdd4bd;
+  border-radius: 8px; background: #edf6e9; color: #356331; font-size: 10px;
+}
+.chapter-version-workspace {
+  display: grid; grid-template-columns: 265px minmax(0, 1fr);
+  min-height: 330px; border-top: 1px solid var(--line); background: white;
+}
+.version-history {
+  overflow-y: auto; max-height: 480px; padding: 10px; border-right: 1px solid var(--line);
+  background: #f4f4ee;
+}
+.version-history button {
+  width: 100%; display: grid; gap: 4px; margin-bottom: 6px; padding: 11px;
+  border: 1px solid transparent; border-radius: 8px; background: transparent;
+  text-align: left; cursor: pointer;
+}
+.version-history button:hover, .version-history button.active {
+  border-color: #b7c9c0; background: white;
+}
+.version-history strong { font: 700 12px Georgia, serif; }
+.version-history small, .version-history span {
+  color: var(--muted); font-size: 8px; line-height: 1.4;
+}
+.version-history span { color: var(--forest-2); font-weight: 700; }
+.version-comparison { min-width: 0; padding: 15px; }
+.version-comparison-head {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+  margin-bottom: 10px;
+}
+.version-comparison-head > div { display: grid; gap: 4px; }
+.version-comparison-head strong { font: 700 13px Georgia, serif; }
+.version-comparison-head small { color: var(--muted); font-size: 9px; }
+.version-note {
+  margin: 0 0 10px; padding: 9px 11px; border-left: 3px solid var(--lime-dark);
+  background: #f6f8ec; color: var(--muted); font-size: 10px; line-height: 1.5;
+}
+.text-diff {
+  overflow: auto; max-height: 390px; border: 1px solid var(--line);
+  border-radius: 8px; background: #fbfbf8;
+}
+.diff-line {
+  display: grid; grid-template-columns: 62px 18px minmax(max-content, 1fr);
+  min-width: max-content; border-bottom: 1px solid #ecece5;
+}
+.diff-line:last-child { border-bottom: 0; }
+.diff-line > span, .diff-line > b, .diff-line > code {
+  padding: 5px 7px; font: 10px/1.45 "Courier New", monospace; white-space: pre;
+}
+.diff-line > span { color: #89918d; text-align: right; user-select: none; }
+.diff-line > b { padding-inline: 3px; color: #89918d; text-align: center; }
+.diff-line.added { background: #ecf7e8; }
+.diff-line.added > b { color: #32702c; }
+.diff-line.removed { background: #fff0ed; }
+.diff-line.removed > b { color: #a74738; }
+.version-empty {
+  display: grid; align-content: center; justify-items: center; gap: 7px;
+  min-height: 150px; padding: 30px; color: var(--muted); text-align: center;
+}
+.version-empty strong { color: var(--ink); font: 700 14px Georgia, serif; }
+.version-empty span { max-width: 420px; font-size: 10px; line-height: 1.5; }
+
 .modal-backdrop { position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; padding: 20px; background: rgba(16,31,27,.47); backdrop-filter: blur(4px); }
 .modal { width: min(450px, 100%); padding: 30px; border-radius: 16px; background: white; box-shadow: 0 30px 90px rgba(0,0,0,.18); }
 .modal h2 { margin: 8px 0 25px; font: 700 26px Georgia, serif; }
@@ -523,6 +616,15 @@ button { color: inherit; }
   .chapter-picker button { flex: 0 0 210px; margin: 0 5px 0 0; }
   .chapter-editor-toolbar { align-items: flex-start; }
   .chapter-text-editor > textarea { min-height: 480px; padding: 24px 20px; }
+  .chapter-versions-panel > header { display: grid; }
+  .version-count { justify-self: start; }
+  .chapter-version-create { grid-template-columns: 1fr; padding-inline: 18px; }
+  .chapter-version-workspace { grid-template-columns: 1fr; }
+  .version-history {
+    display: flex; overflow-x: auto; border-right: 0; border-bottom: 1px solid var(--line);
+  }
+  .version-history button { flex: 0 0 235px; margin: 0 6px 0 0; }
+  .version-comparison-head { display: grid; }
 }
 
 
