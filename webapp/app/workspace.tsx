@@ -32,6 +32,7 @@ import {
   recoverProjectsFromBackup,
   sourceBlobRepository,
   sourceRepository,
+  styleProfileRepository,
   type ProjectRecord,
 } from "../lib/local-db";
 import {
@@ -74,6 +75,14 @@ import {
   prepareChapterRestoration,
   summarizeTextDiff,
 } from "../lib/chapter-versions";
+import {
+  type AuthorStyleProfile,
+  approveAuthorStyleProfile,
+  extractAuthorStyleProfile,
+  reviseAuthorStyleProfile,
+  type StyleProfileSectionKey,
+  STYLE_PROFILE_SECTION_KEYS,
+} from "../lib/author-style-profile";
 import { createPdfReference, type PdfReference } from "../lib/pdf-references";
 import {
   type CitableNote,
@@ -409,6 +418,10 @@ export default function Workspace() {
     note: "",
   });
   const [chapterVersionNotice, setChapterVersionNotice] = useState("");
+  const [styleProfile, setStyleProfile] =
+    useState<AuthorStyleProfile | null>(null);
+  const [styleSourceManuscriptId, setStyleSourceManuscriptId] = useState("");
+  const [styleProfileNotice, setStyleProfileNotice] = useState("");
   const fileInput = useRef<HTMLInputElement>(null);
   const sourceInput = useRef<HTMLInputElement>(null);
   const manuscriptInput = useRef<HTMLInputElement>(null);
@@ -810,10 +823,27 @@ export default function Workspace() {
           ? current
           : (loaded[0]?.id ?? ""),
       );
+      setStyleSourceManuscriptId((current) =>
+        loaded.some((manuscript) => manuscript.id === current)
+          ? current
+          : (loaded.at(-1)?.id ?? ""),
+      );
     } catch {
       setManuscripts([]);
       setActiveManuscriptId("");
+      setStyleSourceManuscriptId("");
     }
+  }
+
+  async function loadStyleProfile(projectId: string) {
+    try {
+      const loaded = await styleProfileRepository.getForProject(projectId);
+      setStyleProfile(loaded);
+      if (loaded) setStyleSourceManuscriptId(loaded.sourceManuscriptId);
+    } catch {
+      setStyleProfile(null);
+    }
+    setStyleProfileNotice("");
   }
 
   async function loadBookNodes(projectId: string) {
@@ -850,6 +880,7 @@ export default function Workspace() {
       );
       setManuscripts((current) => [imported, ...current]);
       setActiveManuscriptId(imported.id);
+      setStyleSourceManuscriptId((current) => current || imported.id);
       setProject((current) => ({
         ...current,
         words: imported.wordCount,
@@ -1145,6 +1176,94 @@ export default function Workspace() {
         error instanceof Error
           ? error.message
           : "No s’ha pogut restaurar la versió.",
+      );
+    }
+  }
+
+  async function extractStyleProfile(manuscriptId: string) {
+    const source = manuscripts.find(
+      (manuscript) => manuscript.id === manuscriptId,
+    );
+    if (!source) {
+      setStyleProfileNotice("Selecciona un llibre de referència vàlid.");
+      return;
+    }
+    if (
+      styleProfile &&
+      !window.confirm(
+        "Vols tornar a extreure el perfil? Les revisions manuals actuals se substituiran per una proposta nova.",
+      )
+    ) {
+      return;
+    }
+    setStyleProfileNotice("");
+    try {
+      const extracted = extractAuthorStyleProfile(source);
+      const savedProfile = await styleProfileRepository.save(extracted);
+      setStyleProfile(savedProfile);
+      setStyleSourceManuscriptId(source.id);
+      setStyleProfileNotice(
+        "Proposta extreta localment. Revisa-la abans d’aprovar-la.",
+      );
+    } catch (error) {
+      setStyleProfileNotice(
+        error instanceof Error
+          ? error.message
+          : "No s’ha pogut extreure el perfil.",
+      );
+    }
+  }
+
+  function editStyleProfileSection(
+    key: StyleProfileSectionKey,
+    value: string,
+  ) {
+    setStyleProfile((current) =>
+      current
+        ? {
+            ...current,
+            sections: { ...current.sections, [key]: value },
+            status: "draft",
+            approvedAt: null,
+          }
+        : null,
+    );
+    setStyleProfileNotice("Canvis pendents de desar.");
+  }
+
+  async function saveStyleProfile() {
+    if (!styleProfile) return;
+    try {
+      const revised = reviseAuthorStyleProfile(
+        styleProfile,
+        styleProfile.sections,
+      );
+      const savedProfile = await styleProfileRepository.save(revised);
+      setStyleProfile(savedProfile);
+      setStyleProfileNotice("Perfil revisat i desat localment.");
+    } catch (error) {
+      setStyleProfileNotice(
+        error instanceof Error
+          ? error.message
+          : "No s’ha pogut desar el perfil.",
+      );
+    }
+  }
+
+  async function approveStyleProfile() {
+    if (!styleProfile) return;
+    try {
+      const approved = approveAuthorStyleProfile(styleProfile);
+      const savedProfile = await styleProfileRepository.save(approved);
+      setStyleProfile(savedProfile);
+      setStyleProfileNotice(
+        "Perfil aprovat per l’autor. Es podrà reobrir i revisar quan calgui.",
+      );
+    } catch (error) {
+      setStyleProfileNotice(
+        error instanceof Error
+          ? error.message
+          : "No s’ha pogut aprovar el perfil.",
       );
     }
   }
@@ -1570,6 +1689,7 @@ export default function Workspace() {
       await loadLinks(activeProject.id);
       await loadCells(activeProject.id);
       await loadManuscripts(activeProject.id);
+      await loadStyleProfile(activeProject.id);
       await loadBookNodes(activeProject.id);
     }
 
@@ -1678,6 +1798,7 @@ export default function Workspace() {
     await loadLinks(nextProject.id);
     await loadCells(nextProject.id);
     await loadManuscripts(nextProject.id);
+    await loadStyleProfile(nextProject.id);
     await loadBookNodes(nextProject.id);
   }
 
@@ -2085,6 +2206,9 @@ export default function Workspace() {
             selectedChapterVersionId={selectedChapterVersionId}
             chapterVersionInput={chapterVersionInput}
             chapterVersionNotice={chapterVersionNotice}
+            styleProfile={styleProfile}
+            styleSourceManuscriptId={styleSourceManuscriptId}
+            styleProfileNotice={styleProfileNotice}
             onExport={exportProject}
             onImport={() => fileInput.current?.click()}
             onImportManuscript={() => manuscriptInput.current?.click()}
@@ -2104,6 +2228,11 @@ export default function Workspace() {
             }
             onCreateChapterSnapshot={createChapterSnapshot}
             onRestoreChapterVersion={restoreChapterVersion}
+            onStyleSourceChange={setStyleSourceManuscriptId}
+            onExtractStyleProfile={extractStyleProfile}
+            onStyleProfileSectionChange={editStyleProfileSection}
+            onSaveStyleProfile={saveStyleProfile}
+            onApproveStyleProfile={approveStyleProfile}
           />
         )}
       </section>
@@ -2496,6 +2625,9 @@ function ModuleView({
   selectedChapterVersionId,
   chapterVersionInput,
   chapterVersionNotice,
+  styleProfile,
+  styleSourceManuscriptId,
+  styleProfileNotice,
   onExport,
   onImport,
   onImportManuscript,
@@ -2513,6 +2645,11 @@ function ModuleView({
   onChapterVersionInputChange,
   onCreateChapterSnapshot,
   onRestoreChapterVersion,
+  onStyleSourceChange,
+  onExtractStyleProfile,
+  onStyleProfileSectionChange,
+  onSaveStyleProfile,
+  onApproveStyleProfile,
 }: {
   view: Exclude<ViewId, "tauler" | "salut" | "privadesa" | "fonts" | "extractes" | "hipotesis" | "evidencies" | "afirmacions" | "matriu">;
   manuscripts: ManuscriptRecord[];
@@ -2529,6 +2666,9 @@ function ModuleView({
   selectedChapterVersionId: string;
   chapterVersionInput: { label: string; author: string; note: string };
   chapterVersionNotice: string;
+  styleProfile: AuthorStyleProfile | null;
+  styleSourceManuscriptId: string;
+  styleProfileNotice: string;
   onExport: () => void;
   onImport: () => void;
   onImportManuscript: () => void;
@@ -2548,6 +2688,14 @@ function ModuleView({
   ) => void;
   onCreateChapterSnapshot: () => void;
   onRestoreChapterVersion: (version: ChapterVersion) => void;
+  onStyleSourceChange: (id: string) => void;
+  onExtractStyleProfile: (manuscriptId: string) => void;
+  onStyleProfileSectionChange: (
+    key: StyleProfileSectionKey,
+    value: string,
+  ) => void;
+  onSaveStyleProfile: () => void;
+  onApproveStyleProfile: () => void;
 }) {
   const copy = moduleCopy[view];
   return (
@@ -2590,6 +2738,9 @@ function ModuleView({
           selectedChapterVersionId={selectedChapterVersionId}
           chapterVersionInput={chapterVersionInput}
           chapterVersionNotice={chapterVersionNotice}
+          styleProfile={styleProfile}
+          styleSourceManuscriptId={styleSourceManuscriptId}
+          styleProfileNotice={styleProfileNotice}
           onImport={onImportManuscript}
           onDownloadOriginal={onDownloadOriginal}
           onSelectManuscript={onSelectManuscript}
@@ -2605,6 +2756,11 @@ function ModuleView({
           onChapterVersionInputChange={onChapterVersionInputChange}
           onCreateChapterSnapshot={onCreateChapterSnapshot}
           onRestoreChapterVersion={onRestoreChapterVersion}
+          onStyleSourceChange={onStyleSourceChange}
+          onExtractStyleProfile={onExtractStyleProfile}
+          onStyleProfileSectionChange={onStyleProfileSectionChange}
+          onSaveStyleProfile={onSaveStyleProfile}
+          onApproveStyleProfile={onApproveStyleProfile}
         />
       ) : (
         <section className="empty-state">
@@ -2635,6 +2791,9 @@ function ManuscriptImporter({
   selectedChapterVersionId,
   chapterVersionInput,
   chapterVersionNotice,
+  styleProfile,
+  styleSourceManuscriptId,
+  styleProfileNotice,
   onImport,
   onDownloadOriginal,
   onSelectManuscript,
@@ -2650,6 +2809,11 @@ function ManuscriptImporter({
   onChapterVersionInputChange,
   onCreateChapterSnapshot,
   onRestoreChapterVersion,
+  onStyleSourceChange,
+  onExtractStyleProfile,
+  onStyleProfileSectionChange,
+  onSaveStyleProfile,
+  onApproveStyleProfile,
 }: {
   manuscripts: ManuscriptRecord[];
   error: string;
@@ -2665,6 +2829,9 @@ function ManuscriptImporter({
   selectedChapterVersionId: string;
   chapterVersionInput: { label: string; author: string; note: string };
   chapterVersionNotice: string;
+  styleProfile: AuthorStyleProfile | null;
+  styleSourceManuscriptId: string;
+  styleProfileNotice: string;
   onImport: () => void;
   onDownloadOriginal: (manuscript: ManuscriptRecord) => void;
   onSelectManuscript: (id: string) => void;
@@ -2682,11 +2849,24 @@ function ManuscriptImporter({
   ) => void;
   onCreateChapterSnapshot: () => void;
   onRestoreChapterVersion: (version: ChapterVersion) => void;
+  onStyleSourceChange: (id: string) => void;
+  onExtractStyleProfile: (manuscriptId: string) => void;
+  onStyleProfileSectionChange: (
+    key: StyleProfileSectionKey,
+    value: string,
+  ) => void;
+  onSaveStyleProfile: () => void;
+  onApproveStyleProfile: () => void;
 }) {
   const activeManuscript =
     manuscripts.find((manuscript) => manuscript.id === activeManuscriptId) ??
     manuscripts[0] ??
     null;
+  const oldestManuscript = [...manuscripts].sort((left, right) =>
+    left.importedAt.localeCompare(right.importedAt),
+  )[0];
+  const effectiveStyleSourceId =
+    styleSourceManuscriptId || oldestManuscript?.id || "";
   const activeNodes = activeManuscript
     ? bookNodes.filter((node) => node.manuscriptId === activeManuscript.id)
     : [];
@@ -2717,6 +2897,39 @@ function ManuscriptImporter({
         )
       : [];
   const chapterDiffSummary = summarizeTextDiff(chapterDiff);
+  const styleSectionCopy: Record<
+    StyleProfileSectionKey,
+    { label: string; help: string }
+  > = {
+    voice: {
+      label: "Veu",
+      help: "Persona narrativa i distància respecte de l’argument.",
+    },
+    rhythm: {
+      label: "Ritme",
+      help: "Longitud de frases, paràgrafs i alternança argumental.",
+    },
+    lexicon: {
+      label: "Lèxic",
+      help: "Termes recurrents, connectors i preferències de vocabulari.",
+    },
+    structure: {
+      label: "Estructura",
+      help: "Ordre habitual de documentació, connexió i conclusió.",
+    },
+    assertiveness: {
+      label: "Assertivitat",
+      help: "Com es formula una conclusió quan les evidències convergeixen.",
+    },
+    attribution: {
+      label: "Atribució i hipòtesi",
+      help: "Quan atribuir directament i quan conservar una reserva explícita.",
+    },
+    avoid: {
+      label: "Usos que cal evitar",
+      help: "Fórmules, cauteles o automatismes que no representen la veu pròpia.",
+    },
+  };
 
   return (
     <section className="manuscript-importer">
@@ -2794,6 +3007,188 @@ function ManuscriptImporter({
             </article>
           ))}
         </div>
+      )}
+
+      {manuscripts.length > 0 && (
+        <section className="style-profile-panel">
+          <header className="style-profile-head">
+            <div>
+              <span className="eyebrow">Funció 305</span>
+              <h2>Perfil d’estil de l’autor</h2>
+              <p>
+                Mesura el primer llibre, proposa una guia editable i conserva
+                la decisió final en mans de l’autor. Tot el procés es fa en
+                aquest dispositiu.
+              </p>
+            </div>
+            <span
+              className={
+                styleProfile?.status === "approved"
+                  ? "status-chip live"
+                  : "status-chip"
+              }
+            >
+              {styleProfile?.status === "approved"
+                ? "Aprovat per l’autor"
+                : "Pendent de revisió"}
+            </span>
+          </header>
+
+          <div className="style-source-row">
+            <label>
+              <span>Llibre de referència</span>
+              <select
+                value={effectiveStyleSourceId}
+                onChange={(event) => onStyleSourceChange(event.target.value)}
+              >
+                {[...manuscripts]
+                  .sort((left, right) =>
+                    left.importedAt.localeCompare(right.importedAt),
+                  )
+                  .map((manuscript, index) => (
+                    <option key={manuscript.id} value={manuscript.id}>
+                      {index === 0 ? "Primer importat · " : ""}
+                      {manuscript.name}
+                    </option>
+                  ))}
+              </select>
+            </label>
+            <button
+              className="primary-button"
+              onClick={() => onExtractStyleProfile(effectiveStyleSourceId)}
+            >
+              {styleProfile ? "Torna a extreure" : "Extreu el perfil"}
+            </button>
+          </div>
+
+          {styleProfileNotice && (
+            <div className="style-profile-notice" role="status">
+              {styleProfileNotice}
+            </div>
+          )}
+
+          {!styleProfile ? (
+            <div className="style-profile-empty">
+              <strong>Encara no hi ha cap perfil</strong>
+              <span>
+                Selecciona el llibre que representa la teva veu real.
+                Validacció comptarà patrons textuals sense enviar-ne el
+                contingut fora.
+              </span>
+            </div>
+          ) : (
+            <>
+              <div className="style-profile-origin">
+                <div>
+                  <strong>{styleProfile.sourceName}</strong>
+                  <span>
+                    Origen {styleProfile.sourceSha256.slice(0, 12)}… · revisió{" "}
+                    {styleProfile.revision}
+                  </span>
+                </div>
+                <small>
+                  Proposta automàtica basada en mesures; no és una decisió
+                  editorial fins que l’aprovis.
+                </small>
+              </div>
+
+              <div className="style-metrics">
+                <article>
+                  <strong>
+                    {formatNumber(styleProfile.metrics.wordCount)}
+                  </strong>
+                  <span>paraules analitzades</span>
+                </article>
+                <article>
+                  <strong>
+                    {styleProfile.metrics.averageSentenceWords}
+                  </strong>
+                  <span>paraules per frase</span>
+                </article>
+                <article className="assertive">
+                  <strong>{styleProfile.metrics.assertiveMarkers}</strong>
+                  <span>marcadors assertius</span>
+                </article>
+                <article className="cautious">
+                  <strong>{styleProfile.metrics.hedgeMarkers}</strong>
+                  <span>marcadors de cautela</span>
+                </article>
+                <article>
+                  <strong>{styleProfile.metrics.attributionMarkers}</strong>
+                  <span>marcadors d’atribució</span>
+                </article>
+                <article>
+                  <strong>{styleProfile.metrics.hypothesisMarkers}</strong>
+                  <span>marcadors d’hipòtesi</span>
+                </article>
+              </div>
+
+              <div className="style-profile-editor">
+                {STYLE_PROFILE_SECTION_KEYS.map((key) => (
+                  <label
+                    key={key}
+                    className={key === "avoid" ? "wide" : undefined}
+                  >
+                    <span>{styleSectionCopy[key].label}</span>
+                    <small>{styleSectionCopy[key].help}</small>
+                    <textarea
+                      value={styleProfile.sections[key]}
+                      onChange={(event) =>
+                        onStyleProfileSectionChange(key, event.target.value)
+                      }
+                      rows={key === "avoid" ? 5 : 4}
+                    />
+                  </label>
+                ))}
+              </div>
+
+              {(styleProfile.topTerms.length > 0 ||
+                styleProfile.markerExamples.length > 0) && (
+                <details className="style-signals">
+                  <summary>Mostra els senyals que sustenten la proposta</summary>
+                  {styleProfile.topTerms.length > 0 && (
+                    <div className="style-term-list">
+                      {styleProfile.topTerms.map((item) => (
+                        <span key={item.term}>
+                          {item.term} <b>{item.count}</b>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  {styleProfile.markerExamples.length > 0 && (
+                    <ul>
+                      {styleProfile.markerExamples.map((example, index) => (
+                        <li key={`${index}-${example}`}>{example}</li>
+                      ))}
+                    </ul>
+                  )}
+                </details>
+              )}
+
+              <footer className="style-profile-actions">
+                <div>
+                  <strong>
+                    {styleProfile.status === "approved"
+                      ? "Perfil editorial vigent"
+                      : "Proposta encara editable"}
+                  </strong>
+                  <span>
+                    Qualsevol canvi posterior torna a obrir la revisió.
+                  </span>
+                </div>
+                <button className="quiet-button" onClick={onSaveStyleProfile}>
+                  Desa la revisió
+                </button>
+                <button
+                  className="primary-button"
+                  onClick={onApproveStyleProfile}
+                >
+                  Aprova el perfil
+                </button>
+              </footer>
+            </>
+          )}
+        </section>
       )}
 
       {activeManuscript && (

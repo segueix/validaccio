@@ -33,6 +33,10 @@ import {
   type ChapterVersion,
   normalizeChapterVersion,
 } from "../chapter-versions.ts";
+import {
+  type AuthorStyleProfile,
+  normalizeAuthorStyleProfile,
+} from "../author-style-profile.ts";
 
 export class IndexedDbRepository<T extends { id: string }> {
   private readonly storeName: "projects";
@@ -600,6 +604,25 @@ class ChapterVersionRepository {
   }
 }
 
+class StyleProfileRepository {
+  save(record: AuthorStyleProfile): Promise<AuthorStyleProfile> {
+    const normalized = normalizeAuthorStyleProfile(record);
+    return withTransaction("styleProfiles", "readwrite", async (store) => {
+      await requestResult(store.put(normalized));
+      return normalized;
+    });
+  }
+
+  getForProject(projectId: string): Promise<AuthorStyleProfile | null> {
+    return withTransaction("styleProfiles", "readonly", async (store) => {
+      const record = (await requestResult(
+        store.index("projectId").get(projectId),
+      )) as AuthorStyleProfile | undefined;
+      return record ? normalizeAuthorStyleProfile(record) : null;
+    });
+  }
+}
+
 export const projectRepository = new ProjectRepository();
 export const metadataRepository = new MetadataRepository();
 export const sourceRepository = new SourceRepository();
@@ -615,3 +638,4 @@ export const manuscriptRepository = new ManuscriptRepository();
 export const bookNodeRepository = new BookNodeRepository();
 export const chapterDraftRepository = new ChapterDraftRepository();
 export const chapterVersionRepository = new ChapterVersionRepository();
+export const styleProfileRepository = new StyleProfileRepository();

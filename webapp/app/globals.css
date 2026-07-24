@@ -182,6 +182,115 @@ button { color: inherit; }
 .manuscript-copy small { font-family: "Courier New", monospace; }
 .manuscript-actions { display: flex; align-items: center; gap: 12px; }
 
+/* Funció 305 — Perfil d'estil de l'autor */
+.style-profile-panel {
+  margin-top: 18px; overflow: hidden; border: 1px solid var(--line);
+  border-radius: 14px; background: white;
+}
+.style-profile-head {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 28px;
+  padding: 25px 27px; border-bottom: 1px solid var(--line); background: #f5f3e8;
+}
+.style-profile-head h2 { margin: 7px 0 5px; font: 700 24px Georgia, serif; }
+.style-profile-head p {
+  max-width: 690px; margin: 0; color: var(--muted); font-size: 11px; line-height: 1.6;
+}
+.style-source-row {
+  display: flex; align-items: end; justify-content: space-between; gap: 18px;
+  padding: 18px 27px; border-bottom: 1px solid var(--line); background: #fcfcf8;
+}
+.style-source-row label { min-width: 0; flex: 1; display: grid; gap: 6px; }
+.style-source-row label > span {
+  color: var(--muted); font-size: 9px; font-weight: 800; text-transform: uppercase;
+  letter-spacing: .05em;
+}
+.style-source-row select {
+  width: 100%; padding: 10px 12px; border: 1px solid var(--line);
+  border-radius: 8px; background: white; outline: none; font: inherit;
+}
+.style-source-row select:focus {
+  border-color: var(--forest-2); box-shadow: 0 0 0 3px rgba(36,91,79,.1);
+}
+.style-profile-notice {
+  margin: 16px 27px 0; padding: 10px 12px; border: 1px solid #bdd4bd;
+  border-radius: 8px; background: #edf6e9; color: #356331; font-size: 10px;
+}
+.style-profile-empty {
+  display: grid; justify-items: center; gap: 7px; padding: 48px 28px;
+  color: var(--muted); text-align: center;
+}
+.style-profile-empty strong { color: var(--ink); font: 700 16px Georgia, serif; }
+.style-profile-empty span { max-width: 540px; font-size: 11px; line-height: 1.55; }
+.style-profile-origin {
+  display: flex; align-items: center; justify-content: space-between; gap: 20px;
+  padding: 18px 27px;
+}
+.style-profile-origin > div { display: grid; gap: 4px; }
+.style-profile-origin strong { font: 700 14px Georgia, serif; }
+.style-profile-origin span, .style-profile-origin small {
+  color: var(--muted); font-size: 9px; line-height: 1.5;
+}
+.style-profile-origin small { max-width: 410px; text-align: right; }
+.style-metrics {
+  display: grid; grid-template-columns: repeat(6, 1fr);
+  border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);
+}
+.style-metrics article {
+  display: grid; gap: 4px; padding: 15px 13px; border-right: 1px solid var(--line);
+  background: #fbfbf7; text-align: center;
+}
+.style-metrics article:last-child { border-right: 0; }
+.style-metrics article.assertive { background: #eef6e9; }
+.style-metrics article.cautious { background: #fff6e6; }
+.style-metrics strong { color: var(--forest-2); font: 700 19px Georgia, serif; }
+.style-metrics span { color: var(--muted); font-size: 8px; line-height: 1.35; }
+.style-profile-editor {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
+  padding: 24px 27px;
+}
+.style-profile-editor label { display: grid; align-content: start; gap: 5px; }
+.style-profile-editor label.wide { grid-column: 1 / -1; }
+.style-profile-editor label > span { font: 700 13px Georgia, serif; }
+.style-profile-editor label > small {
+  min-height: 27px; color: var(--muted); font-size: 9px; line-height: 1.45;
+}
+.style-profile-editor textarea {
+  width: 100%; resize: vertical; padding: 11px 12px; border: 1px solid var(--line);
+  border-radius: 8px; background: #fff; outline: none; color: var(--ink);
+  font: 12px/1.55 Georgia, serif;
+}
+.style-profile-editor textarea:focus {
+  border-color: var(--forest-2); box-shadow: 0 0 0 3px rgba(36,91,79,.1);
+}
+.style-signals {
+  margin: 0 27px 22px; border: 1px solid var(--line);
+  border-radius: 9px; background: #f9f9f5;
+}
+.style-signals summary {
+  padding: 12px 14px; color: var(--forest-2); font-size: 10px;
+  font-weight: 800; cursor: pointer;
+}
+.style-term-list { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 14px 12px; }
+.style-term-list span {
+  padding: 5px 8px; border: 1px solid #ccd6d0; border-radius: 999px;
+  background: white; color: var(--muted); font-size: 9px;
+}
+.style-term-list b { color: var(--forest-2); }
+.style-signals ul {
+  display: grid; gap: 6px; margin: 0; padding: 0 30px 16px 34px;
+  color: var(--muted); font: 10px/1.55 Georgia, serif;
+}
+.style-profile-actions {
+  display: flex; align-items: center; justify-content: flex-end; gap: 10px;
+  padding: 17px 27px; border-top: 1px solid var(--line); background: var(--forest);
+}
+.style-profile-actions > div { display: grid; gap: 3px; margin-right: auto; color: white; }
+.style-profile-actions strong { font: 700 12px Georgia, serif; }
+.style-profile-actions span { color: rgba(255,255,255,.62); font-size: 9px; }
+.style-profile-actions .quiet-button {
+  border-color: rgba(255,255,255,.28); background: rgba(255,255,255,.08); color: white;
+}
+
 /* Funció 302 — Estructura del llibre */
 .book-structure {
   margin-top: 18px; overflow: hidden; border: 1px solid var(--line);
@@ -599,6 +708,19 @@ button { color: inherit; }
   .manuscript-callout .primary-button { justify-self: start; }
   .manuscript-item { grid-template-columns: 50px 1fr; }
   .manuscript-actions { grid-column: 1 / -1; justify-content: space-between; }
+  .style-profile-head, .style-source-row, .style-profile-origin,
+  .style-profile-actions { display: grid; }
+  .style-profile-head { padding: 21px; }
+  .style-source-row, .style-profile-origin, .style-profile-editor,
+  .style-profile-actions { padding-inline: 18px; }
+  .style-profile-origin small { text-align: left; }
+  .style-metrics { grid-template-columns: repeat(2, 1fr); }
+  .style-metrics article:nth-child(2n) { border-right: 0; }
+  .style-metrics article { border-bottom: 1px solid var(--line); }
+  .style-profile-editor { grid-template-columns: 1fr; }
+  .style-profile-editor label.wide { grid-column: auto; }
+  .style-profile-actions .quiet-button,
+  .style-profile-actions .primary-button { justify-self: start; }
   .book-structure-head { display: grid; padding: 21px; }
   .book-structure-head .primary-button { justify-self: start; }
   .structure-layout { grid-template-columns: 1fr; }
