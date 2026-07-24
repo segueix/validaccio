@@ -8,6 +8,7 @@ export {
 export {
   affirmationRepository,
   aidEidLinkRepository,
+  bookNodeRepository,
   citableNoteRepository,
   evidenceRepository,
   hypothesisRepository,

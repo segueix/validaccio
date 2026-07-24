@@ -21,6 +21,10 @@ import {
   type ManuscriptOriginalRecord,
   type ManuscriptRecord,
 } from "../manuscripts.ts";
+import {
+  type BookNode,
+  normalizeBookNode,
+} from "../book-structure.ts";
 
 export class IndexedDbRepository<T extends { id: string }> {
   private readonly storeName: "projects";
@@ -456,6 +460,50 @@ class ManuscriptRepository {
   }
 }
 
+class BookNodeRepository {
+  save(record: BookNode): Promise<BookNode> {
+    const normalized = normalizeBookNode(record);
+    return withTransaction("bookNodes", "readwrite", async (store) => {
+      await requestResult(store.put(normalized));
+      return normalized;
+    });
+  }
+
+  saveMany(records: readonly BookNode[]): Promise<BookNode[]> {
+    const normalized = records.map(normalizeBookNode);
+    return withTransaction("bookNodes", "readwrite", async (store) => {
+      for (const record of normalized) {
+        await requestResult(store.put(record));
+      }
+      return normalized;
+    });
+  }
+
+  replaceForManuscript(
+    manuscriptId: string,
+    records: readonly BookNode[],
+  ): Promise<BookNode[]> {
+    const normalized = records.map(normalizeBookNode);
+    return withTransaction("bookNodes", "readwrite", async (store) => {
+      const keys = (await requestResult(
+        store.index("manuscriptId").getAllKeys(manuscriptId),
+      )) as IDBValidKey[];
+      for (const key of keys) await requestResult(store.delete(key));
+      for (const record of normalized) await requestResult(store.add(record));
+      return normalized;
+    });
+  }
+
+  getAllForProject(projectId: string): Promise<BookNode[]> {
+    return withTransaction("bookNodes", "readonly", async (store) => {
+      const records = (await requestResult(
+        store.index("projectId").getAll(projectId),
+      )) as BookNode[];
+      return records.map(normalizeBookNode);
+    });
+  }
+}
+
 export const projectRepository = new ProjectRepository();
 export const metadataRepository = new MetadataRepository();
 export const sourceRepository = new SourceRepository();
@@ -468,3 +516,4 @@ export const affirmationRepository = new AffirmationRepository();
 export const aidEidLinkRepository = new AidEidLinkRepository();
 export const matrixCellRepository = new MatrixCellRepository();
 export const manuscriptRepository = new ManuscriptRepository();
+export const bookNodeRepository = new BookNodeRepository();
